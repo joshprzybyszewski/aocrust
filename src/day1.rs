@@ -1,5 +1,10 @@
-#[aoc(day1, part1)]
-pub fn part1(input: &str) -> u32 {
+pub struct Lists {
+    left: [u32; 1000],
+    right: [u32; 1000],
+}
+
+#[aoc_generator(day1)]
+pub fn input_generator(input: &str) -> Lists {
     let mut left: [u32; 1000] = [0; 1000];
     let mut right: [u32; 1000] = [0; 1000];
 
@@ -28,24 +33,53 @@ pub fn part1(input: &str) -> u32 {
         right[i] = val;
     }
 
-    // TODO concurrently?
+    // TODO sort concurrently?
     left.sort();
     right.sort();
 
+    return Lists { left, right };
+}
+
+#[aoc(day1, part1, Lists)]
+pub fn part1(input: &Lists) -> u32 {
     let mut sum: u32 = 0;
 
-    for (i, l) in left.iter().enumerate() {
-        if *l > right[i] {
-            sum += *l - right[i]
+    for (i, l) in input.left.iter().enumerate() {
+        if *l > input.right[i] {
+            sum += *l - input.right[i]
         } else {
-            sum += right[i] - *l
+            sum += input.right[i] - *l
         }
     }
 
     return sum;
 }
 
-#[aoc(day1, part2)]
-pub fn part2(_input: &str) -> usize {
-    return 0;
+#[aoc(day1, part2, Lists)]
+pub fn part2(input: &Lists) -> u32 {
+    let mut sum: u32 = 0;
+
+    let mut ri = 0;
+    let mut num_right: u32;
+
+    for v in input.left {
+        if v < input.right[ri] {
+            continue;
+        }
+        while ri < input.right.len() && input.right[ri] < v {
+            ri += 1;
+        }
+        num_right = 0;
+        while ri + (num_right as usize) < input.right.len()
+            && input.right[ri] == input.right[ri + (num_right as usize)]
+        {
+            num_right += 1;
+        }
+
+        if v == input.right[ri] {
+            sum += v * num_right;
+        }
+    }
+
+    return sum;
 }
