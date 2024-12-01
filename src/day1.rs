@@ -60,16 +60,17 @@ pub fn part2(input: &Lists) -> u32 {
     let mut sum: u32 = 0;
 
     let mut ri = 0;
-    let mut num_right: u32;
+    let mut num_right: u32 = 1;
 
     for v in input.left {
         if v < input.right[ri] {
             continue;
         }
+        ri += num_right as usize;
         while ri < input.right.len() && input.right[ri] < v {
             ri += 1;
         }
-        num_right = 0;
+        num_right = 1;
         while ri + (num_right as usize) < input.right.len()
             && input.right[ri] == input.right[ri + (num_right as usize)]
         {
