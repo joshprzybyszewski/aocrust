@@ -1,26 +1,24 @@
 pub struct Lists {
-    left: [u32; 1000],
-    right: [u32; 1000],
+    left: Vec<u32>,
+    right: Vec<u32>,
 }
 
 // #[aoc_generator(day1)]
 pub fn input_generator(input: &str) -> Lists {
-    let mut left: [u32; 1000] = [0; 1000];
-    let mut right: [u32; 1000] = [0; 1000];
+    let mut left = Vec::with_capacity(1000);
+    let mut right = Vec::with_capacity(1000);
 
-    let mut i = 0;
     let mut val: u32 = 0;
 
     for (_, c) in input.as_bytes().iter().enumerate() {
         match c {
             b'\n' => {
-                right[i] = val;
+                right.push(val);
                 val = 0;
-                i += 1;
             }
             b' ' => {
                 if val != 0 {
-                    left[i] = val;
+                    left.push(val);
                 }
                 val = 0;
             }
@@ -30,7 +28,7 @@ pub fn input_generator(input: &str) -> Lists {
         }
     }
     if val != 0 {
-        right[i] = val;
+        right.push(val);
     }
 
     // TODO sort concurrently?
