@@ -3,7 +3,7 @@ pub struct Lists {
     right: [u32; 1000],
 }
 
-#[aoc_generator(day1)]
+// #[aoc_generator(day1)]
 pub fn input_generator(input: &str) -> Lists {
     let mut left: [u32; 1000] = [0; 1000];
     let mut right: [u32; 1000] = [0; 1000];
@@ -40,8 +40,11 @@ pub fn input_generator(input: &str) -> Lists {
     return Lists { left, right };
 }
 
-#[aoc(day1, part1, Lists)]
-pub fn part1(input: &Lists) -> u32 {
+#[aoc(day1, part1)]
+// #[aoc(day1, part1, Lists)]
+pub fn part1(input_str: &str) -> u32 {
+    // pub fn part1(input: &Lists) -> u32 {
+    let input = input_generator(input_str);
     let mut sum: u32 = 0;
 
     for (i, l) in input.left.iter().enumerate() {
@@ -55,8 +58,11 @@ pub fn part1(input: &Lists) -> u32 {
     return sum;
 }
 
-#[aoc(day1, part2, Lists)]
-pub fn part2(input: &Lists) -> u32 {
+// #[aoc(day1, part2, Lists)]
+#[aoc(day1, part2)]
+pub fn part2(input_str: &str) -> u32 {
+    // pub fn part2(input: &Lists) -> u32 {
+    let input = input_generator(input_str);
     let mut sum: u32 = 0;
 
     let mut ri = 0;
