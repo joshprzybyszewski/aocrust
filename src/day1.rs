@@ -66,6 +66,12 @@ pub fn part2(input: &Lists) -> u32 {
         if v < input.right[ri] {
             continue;
         }
+        if v == input.right[ri] {
+            sum += v * num_right;
+            continue;
+        }
+        // v is more than the right value. Iterate forward.
+
         ri += num_right as usize;
         while ri < input.right.len() && input.right[ri] < v {
             ri += 1;
