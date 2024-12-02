@@ -5,12 +5,12 @@ pub fn part1(input: &str) -> i32 {
     let mut l2: i32 = 0;
     let mut i: i32 = 0;
     let mut is_ascending: bool = false;
-    let mut is_safe: bool = true;
+    let mut is_not_safe: bool = false;
 
     for b in input.bytes() {
-        if !is_safe {
+        if is_not_safe {
             if b == b'\n' {
-                is_safe = true;
+                is_not_safe = false;
                 l1 = 0;
                 l2 = 0;
                 i = 0;
@@ -29,10 +29,10 @@ pub fn part1(input: &str) -> i32 {
                     if i == 1 {
                         is_ascending = l2 > l1;
                     }
-                    if is_ascending && (l2 <= l1 || l2 > l1 + 3) {
-                        is_safe = false
-                    } else if !is_ascending && (l2 >= l1 || l2 < l1 - 3) {
-                        is_safe = false
+                    if is_ascending {
+                        is_not_safe = l2 <= l1 || l2 > l1 + 3
+                    } else {
+                        is_not_safe = l2 >= l1 || l2 < l1 - 3
                     }
                 }
                 i += 1;
@@ -40,15 +40,15 @@ pub fn part1(input: &str) -> i32 {
                 l2 = 0;
             }
             b'\n' => {
-                if is_ascending && (l2 <= l1 || l2 > l1 + 3) {
-                    is_safe = false
-                } else if !is_ascending && (l2 >= l1 || l2 < l1 - 3) {
-                    is_safe = false
+                if is_ascending {
+                    is_not_safe = l2 <= l1 || l2 > l1 + 3
+                } else {
+                    is_not_safe = l2 >= l1 || l2 < l1 - 3
                 }
-                if is_safe {
+                if !is_not_safe {
                     num_safe += 1;
                 }
-                is_safe = true;
+                is_not_safe = false;
                 l1 = 0;
                 l2 = 0;
                 i = 0;
@@ -56,12 +56,12 @@ pub fn part1(input: &str) -> i32 {
             _ => unreachable!(),
         }
     }
-    if is_ascending && (l2 <= l1 || l2 > l1 + 3) {
-        is_safe = false
-    } else if !is_ascending && (l2 >= l1 || l2 < l1 - 3) {
-        is_safe = false
+    if is_ascending {
+        is_not_safe = l2 <= l1 || l2 > l1 + 3
+    } else {
+        is_not_safe = l2 >= l1 || l2 < l1 - 3
     }
-    if is_safe {
+    if !is_not_safe {
         num_safe += 1;
     }
 
