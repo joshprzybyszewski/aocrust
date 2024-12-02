@@ -4,7 +4,7 @@ fn read_input(input: &str, left: &mut Vec<i32>, right: &mut Vec<i32>) {
 
     input.bytes().into_iter().for_each(|c| match c {
         // b'0' is value 48 in ascii.
-        b'0'..=b'9' => val = (val * 10) + ((c as i32) - 48),
+        b'0'..=b'9' => val = (val * 10) + (c - 48) as i32,
         b' ' => {
             if val != 0 {
                 left.push(val);
