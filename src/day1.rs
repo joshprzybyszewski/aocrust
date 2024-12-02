@@ -23,8 +23,8 @@ fn read_input(input: &str, left: &mut Vec<i32>, right: &mut Vec<i32>) {
     }
 
     // TODO sort concurrently?
-    left.sort();
-    right.sort();
+    left.sort_unstable();
+    right.sort_unstable();
 }
 
 #[aoc(day1, part1)]
