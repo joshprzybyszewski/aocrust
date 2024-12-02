@@ -1,8 +1,8 @@
 #[inline(always)]
-fn read_input(input: &str, left: &mut Vec<usize>, right: &mut Vec<usize>) {
-    let mut val: usize = 0;
+fn read_input(input: &str, left: &mut Vec<i32>, right: &mut Vec<i32>) {
+    let mut val: i32 = 0;
 
-    input.as_bytes().iter().for_each(|c| match c {
+    input.as_bytes().into_iter().for_each(|c| match c {
         b'\n' => {
             right.push(val);
             val = 0;
@@ -14,7 +14,7 @@ fn read_input(input: &str, left: &mut Vec<usize>, right: &mut Vec<usize>) {
             val = 0;
         }
         // b'0' is value 48 in ascii.
-        b'0'..=b'9' => val = (val * 10) + ((*c as usize) - 48),
+        b'0'..=b'9' => val = (val * 10) + ((*c as i32) - 48),
         _ => unreachable!(),
     });
 
@@ -28,28 +28,32 @@ fn read_input(input: &str, left: &mut Vec<usize>, right: &mut Vec<usize>) {
 }
 
 #[aoc(day1, part1)]
-pub fn part1(input_str: &str) -> usize {
+pub fn part1(input_str: &str) -> i32 {
     let mut left = Vec::with_capacity(1000);
     let mut right = Vec::with_capacity(1000);
 
     read_input(input_str, &mut left, &mut right);
 
-    return left.iter().zip(right.iter()).fold(0, |sum, (&l, &r)| {
-        return if l > r { sum + l - r } else { sum + r - l };
-    });
+    return left
+        .into_iter()
+        .zip(right.into_iter())
+        .fold(0, |sum, (l, r)| {
+            return sum + (l - r).abs();
+        });
 }
 
 #[aoc(day1, part2)]
-pub fn part2(input_str: &str) -> usize {
+pub fn part2(input_str: &str) -> i32 {
     let mut left = Vec::with_capacity(1000);
     let mut right = Vec::with_capacity(1000);
 
     read_input(input_str, &mut left, &mut right);
+
     let mut right_iter = right.into_iter();
     let mut current = right_iter.next().expect("must have a first value");
     let mut next_val = right_iter.next();
 
-    let mut num_right: usize = 1;
+    let mut num_right: i32 = 1;
     while current == next_val.expect("should have a next value now") {
         next_val = right_iter.next();
         num_right += 1;
