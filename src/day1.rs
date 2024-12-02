@@ -2,19 +2,19 @@
 fn read_input(input: &str, left: &mut Vec<i32>, right: &mut Vec<i32>) {
     let mut val: i32 = 0;
 
-    input.as_bytes().into_iter().for_each(|c| match c {
-        b'\n' => {
-            right.push(val);
-            val = 0;
-        }
+    input.bytes().into_iter().for_each(|c| match c {
+        // b'0' is value 48 in ascii.
+        b'0'..=b'9' => val = (val * 10) + ((c as i32) - 48),
         b' ' => {
             if val != 0 {
                 left.push(val);
             }
             val = 0;
         }
-        // b'0' is value 48 in ascii.
-        b'0'..=b'9' => val = (val * 10) + ((*c as i32) - 48),
+        b'\n' => {
+            right.push(val);
+            val = 0;
+        }
         _ => unreachable!(),
     });
 
