@@ -90,9 +90,8 @@ fn is_safe_part1(levels: &[i32], n: usize) -> bool {
     return true;
 }
 
-fn is_safe_part2(levels: &Vec<i32>) -> bool {
+fn is_safe_part2(levels: &Vec<i32>, check: &mut [i32]) -> bool {
     let n = levels.len() - 1;
-    let mut check: [i32; 10] = [0; 10];
     for (i, e) in levels.iter().skip(1).enumerate() {
         check[i] = *e
     }
@@ -108,6 +107,7 @@ fn is_safe_part2(levels: &Vec<i32>) -> bool {
 #[aoc(day2, part2)]
 pub fn part2(input: &str) -> i32 {
     let mut levels = Vec::with_capacity(16);
+    let mut check: [i32; 10] = [0; 10];
 
     let mut num_safe = 0;
     let mut cur: i32 = 0;
@@ -127,7 +127,7 @@ pub fn part2(input: &str) -> i32 {
                 levels.push(cur);
                 cur = 0;
 
-                if is_safe_part2(&levels) {
+                if is_safe_part2(&levels, &mut check) {
                     num_safe += 1;
                 }
                 levels.clear();
@@ -136,7 +136,7 @@ pub fn part2(input: &str) -> i32 {
         }
     }
     levels.push(cur);
-    if is_safe_part2(&levels) {
+    if is_safe_part2(&levels, &mut check) {
         num_safe += 1;
     }
 
