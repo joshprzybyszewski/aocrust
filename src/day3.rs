@@ -15,30 +15,35 @@ pub fn part1(input_string: &str) -> i32 {
             i += 1;
             continue;
         }
-        if input[i + 1] != b'u' {
-            i += 1;
+        i += 1;
+
+        if input[i] != b'u' {
             continue;
         }
-        if input[i + 2] != b'l' {
-            i += 2;
+        i += 1;
+
+        if input[i] != b'l' {
             continue;
         }
-        if input[i + 3] != b'(' {
-            i += 3;
+        i += 1;
+
+        if input[i] != b'(' {
             continue;
         }
-        i += 4;
+        i += 1;
+
         l1 = 0;
-        ok = true;
+        ok = false;
         while i < max_len {
             if input[i] == b',' {
                 i += 1;
+                ok = true;
                 break;
             }
-            if input[i] < b'0' || input[i] > b'9' {
-                ok = false;
+            if input[i] > b'9' || input[i] < b'0' {
                 break;
             }
+
             l1 *= 10;
             l1 += (input[i] - b'0') as i32;
             i += 1;
@@ -48,13 +53,14 @@ pub fn part1(input_string: &str) -> i32 {
         }
 
         l2 = 0;
+        ok = false;
         while i < max_len {
             if input[i] == b')' {
                 i += 1;
+                ok = true;
                 break;
             }
-            if input[i] < b'0' || input[i] > b'9' {
-                ok = false;
+            if input[i] > b'9' || input[i] < b'0' {
                 break;
             }
             l2 *= 10;
