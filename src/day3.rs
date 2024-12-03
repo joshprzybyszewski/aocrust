@@ -127,12 +127,12 @@ pub fn part2(input_string: &str) -> i32 {
 
             continue;
         }
-        if input[i] != b'm' {
+        if !is_enabled {
+            // doesn't matter
             i += 1;
             continue;
         }
-        if !is_enabled {
-            // doesn't matter
+        if input[i] != b'm' {
             i += 1;
             continue;
         }
