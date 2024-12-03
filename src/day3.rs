@@ -8,7 +8,8 @@ pub fn part1(input_string: &str) -> i32 {
     let mut i: usize = 0;
 
     let input = input_string.as_bytes();
-    let max_i = input.len() - 8; // need space at the end for mul(x,y)
+    let max_i = input.len() - 7; // need space at the end for mul(x,y)
+    let max_len = input.len();
     while i < max_i {
         if input[i] != b'm' {
             i += 1;
@@ -29,7 +30,7 @@ pub fn part1(input_string: &str) -> i32 {
         i += 4;
         l1 = 0;
         ok = true;
-        while i < max_i {
+        while i < max_len {
             if input[i] == b',' {
                 i += 1;
                 break;
@@ -47,7 +48,7 @@ pub fn part1(input_string: &str) -> i32 {
         }
 
         l2 = 0;
-        while i < max_i {
+        while i < max_len {
             if input[i] == b')' {
                 i += 1;
                 break;
@@ -81,7 +82,8 @@ pub fn part2(input_string: &str) -> i32 {
     let mut i: usize = 0;
 
     let input = input_string.as_bytes();
-    let max_i = input.len() - 8; // need space at the end for mul(x,y)
+    let max_i = input.len() - 7; // need space at the end for mul(x,y)
+    let max_len = input.len();
     while i < max_i {
         if input[i] == b'd' {
             i += 1;
@@ -109,6 +111,7 @@ pub fn part2(input_string: &str) -> i32 {
                 if input[i] != b')' {
                     continue;
                 }
+                i += 1;
                 is_enabled = false
             } else {
                 if input[i] != b'(' {
@@ -118,6 +121,7 @@ pub fn part2(input_string: &str) -> i32 {
                 if input[i] != b')' {
                     continue;
                 }
+                i += 1;
                 is_enabled = true
             }
 
@@ -146,14 +150,14 @@ pub fn part2(input_string: &str) -> i32 {
         }
         i += 4;
         l1 = 0;
-        ok = true;
-        while i < max_i {
+        ok = false;
+        while i < max_len {
             if input[i] == b',' {
                 i += 1;
+                ok = true;
                 break;
             }
             if input[i] < b'0' || input[i] > b'9' {
-                ok = false;
                 break;
             }
             l1 *= 10;
@@ -165,13 +169,14 @@ pub fn part2(input_string: &str) -> i32 {
         }
 
         l2 = 0;
-        while i < max_i {
+        ok = false;
+        while i < max_len {
             if input[i] == b')' {
                 i += 1;
+                ok = true;
                 break;
             }
             if input[i] < b'0' || input[i] > b'9' {
-                ok = false;
                 break;
             }
             l2 *= 10;
@@ -186,4 +191,41 @@ pub fn part2(input_string: &str) -> i32 {
     }
 
     return sum;
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use std::fs;
+
+    fn get_input() -> String {
+        let input_path = "input/2024/day3.txt";
+        fs::read_to_string(input_path).unwrap()
+    }
+
+    #[test]
+    fn part1_minimal() {
+        assert_eq!(part1("mul(2,3)"), 6);
+        assert_eq!(part1("mul(2,3)mul(4,5)mul(2,3"), 26);
+        assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
+    }
+
+    #[test]
+    fn part2_minimal() {
+        assert_eq!(part2("mul(2,3)"), 6);
+        assert_eq!(part2("mul(2,3)mul(4,5)mul(2,3"), 26);
+        assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
+        assert_eq!(part2("mul(2,3)don't()mul(4,5)do()mul(6,7)do"), 48);
+    }
+
+    #[test]
+    fn part1_real_input() {
+        assert_eq!(part1(&get_input()), 153469856)
+    }
+
+    #[test]
+    fn part2_real_input() {
+        assert_eq!(part2(&get_input()), 77055967)
+    }
 }
