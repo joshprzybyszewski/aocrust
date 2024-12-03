@@ -87,68 +87,83 @@ pub fn part2(input_string: &str) -> i32 {
     while i < max_i {
         if input[i] == b'd' {
             i += 1;
+
             if input[i] != b'o' {
                 continue;
             }
             i += 1;
+
             if is_enabled {
                 if input[i] != b'n' {
                     continue;
                 }
                 i += 1;
+
                 if input[i] != b'\'' {
                     continue;
                 }
                 i += 1;
+
                 if input[i] != b't' {
                     continue;
                 }
                 i += 1;
+
                 if input[i] != b'(' {
                     continue;
                 }
                 i += 1;
+
                 if input[i] != b')' {
                     continue;
                 }
                 i += 1;
+
                 is_enabled = false
             } else {
                 if input[i] != b'(' {
                     continue;
                 }
                 i += 1;
+
                 if input[i] != b')' {
                     continue;
                 }
                 i += 1;
+
                 is_enabled = true
             }
 
             continue;
         }
+
         if !is_enabled {
-            // doesn't matter
+            // doesn't matter what input[i] is. Just skip it.
             i += 1;
             continue;
         }
+
         if input[i] != b'm' {
             i += 1;
             continue;
         }
-        if input[i + 1] != b'u' {
-            i += 1;
+        i += 1;
+
+        if input[i] != b'u' {
             continue;
         }
-        if input[i + 2] != b'l' {
-            i += 2;
+        i += 1;
+
+        if input[i] != b'l' {
             continue;
         }
-        if input[i + 3] != b'(' {
-            i += 3;
+        i += 1;
+
+        if input[i] != b'(' {
             continue;
         }
-        i += 4;
+        i += 1;
+
         l1 = 0;
         ok = false;
         while i < max_len {
@@ -157,7 +172,7 @@ pub fn part2(input_string: &str) -> i32 {
                 ok = true;
                 break;
             }
-            if input[i] < b'0' || input[i] > b'9' {
+            if input[i] > b'9' || input[i] < b'0' {
                 break;
             }
             l1 *= 10;
@@ -176,7 +191,7 @@ pub fn part2(input_string: &str) -> i32 {
                 ok = true;
                 break;
             }
-            if input[i] < b'0' || input[i] > b'9' {
+            if input[i] > b'9' || input[i] < b'0' {
                 break;
             }
             l2 *= 10;
@@ -207,6 +222,7 @@ mod test {
     #[test]
     fn part1_minimal() {
         assert_eq!(part1("mul(2,3)"), 6);
+        assert_eq!(part1("mul(2,3mul(4,5)"), 20);
         assert_eq!(part1("mul(2,3)mul(4,5)mul(2,3"), 26);
         assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
     }
@@ -214,6 +230,7 @@ mod test {
     #[test]
     fn part2_minimal() {
         assert_eq!(part2("mul(2,3)"), 6);
+        assert_eq!(part1("mul(2,3mul(4,5)"), 20);
         assert_eq!(part2("mul(2,3)mul(4,5)mul(2,3"), 26);
         assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
         assert_eq!(part2("mul(2,3)don't()mul(4,5)do()mul(6,7)do"), 48);
