@@ -69,9 +69,6 @@ pub fn part1(input: &str) -> i32 {
 }
 
 fn is_safe_part1(levels: &[i32], n: usize) -> bool {
-    if levels.len() < 2 {
-        return true;
-    }
     if levels[1] > levels[0] {
         for i in 1..n {
             if levels[i] <= levels[i - 1] || levels[i] > levels[i - 1] + 3 {
@@ -80,9 +77,12 @@ fn is_safe_part1(levels: &[i32], n: usize) -> bool {
         }
         return true;
     }
+    if levels[1] == levels[0] {
+        return false;
+    }
 
     for i in 1..n {
-        if levels[i] >= levels[i - 1] || levels[i] < levels[i - 1] + 3 {
+        if levels[i] >= levels[i - 1] || levels[i] < levels[i - 1] - 3 {
             return false;
         }
     }
@@ -91,7 +91,6 @@ fn is_safe_part1(levels: &[i32], n: usize) -> bool {
 }
 
 fn is_safe_part2(levels: &Vec<i32>) -> bool {
-    println!("is_safe_part2 {:?}", levels);
     let n = levels.len() - 1;
     let mut check: [i32; 10] = [0; 10];
     for (i, e) in levels.iter().skip(1).enumerate() {
@@ -99,13 +98,11 @@ fn is_safe_part2(levels: &Vec<i32>) -> bool {
     }
     for i in 0..n {
         if is_safe_part1(&check, n) {
-            println!(" is safe: {:?}", &check[0..n]);
             return true;
         }
         check[i] = levels[i];
-        // println!("Checking {:?}", &check[0..n]);
     }
-    return false;
+    return is_safe_part1(&check, n);
 }
 
 #[aoc(day2, part2)]
@@ -128,11 +125,11 @@ pub fn part2(input: &str) -> i32 {
             }
             b'\n' => {
                 levels.push(cur);
+                cur = 0;
 
                 if is_safe_part2(&levels) {
                     num_safe += 1;
                 }
-                cur = 0;
                 levels.clear();
             }
             _ => unreachable!(),
