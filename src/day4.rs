@@ -123,10 +123,10 @@ pub fn part1(input: &str) -> i32 {
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
             match input[i] {
-                b'X' => p1set_x(&mut grid, r, c),
                 b'M' => p1set_m(&mut grid, r, c),
                 b'A' => p1set_a(&mut grid, r, c),
                 b'S' => p1set_s(&mut grid, r, c),
+                b'X' => p1set_x(&mut grid, r, c),
                 _ => unreachable!(),
             }
             i += 1;
@@ -148,9 +148,109 @@ pub fn part1(input: &str) -> i32 {
     return total;
 }
 
+const X_S_ul_SET: u8 = 1 << 0;
+const X_S_ur_SET: u8 = 1 << 1;
+const X_S_dl_SET: u8 = 1 << 2;
+const X_S_dr_SET: u8 = 1 << 3;
+const X_M_ul_SET: u8 = 1 << 4;
+const X_M_ur_SET: u8 = 1 << 5;
+const X_M_dl_SET: u8 = 1 << 6;
+const X_M_dr_SET: u8 = 1 << 7;
+
+const XMAS_1: u8 = X_S_ul_SET | X_S_ur_SET | X_M_dl_SET | X_M_dr_SET;
+const XMAS_2: u8 = X_S_ur_SET | X_S_dr_SET | X_M_dl_SET | X_M_ul_SET;
+const XMAS_3: u8 = X_S_dr_SET | X_S_dl_SET | X_M_ul_SET | X_M_ur_SET;
+const XMAS_4: u8 = X_S_dl_SET | X_S_ul_SET | X_M_ur_SET | X_M_dr_SET;
+
+#[derive(Copy, Clone)]
+struct CoordP2 {
+    isA: bool,
+    nearby: u8,
+}
+
+fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    if c > 0 {
+        if r > 0 {
+            grid[r - 1][c - 1].nearby |= X_M_dr_SET;
+        }
+        if r < GRID_SIZE - 1 {
+            grid[r + 1][c - 1].nearby |= X_M_ur_SET;
+        }
+    }
+    if c < GRID_SIZE - 1 {
+        if r > 0 {
+            grid[r - 1][c + 1].nearby |= X_M_dl_SET;
+        }
+        if r < GRID_SIZE - 1 {
+            grid[r + 1][c + 1].nearby |= X_M_ul_SET;
+        }
+    }
+}
+
+fn p2set_a(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    grid[r][c].isA = true
+}
+
+fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    if c > 0 {
+        if r > 0 {
+            grid[r - 1][c - 1].nearby |= X_S_dr_SET;
+        }
+        if r < GRID_SIZE - 1 {
+            grid[r + 1][c - 1].nearby |= X_S_ur_SET;
+        }
+    }
+    if c < GRID_SIZE - 1 {
+        if r > 0 {
+            grid[r - 1][c + 1].nearby |= X_S_dl_SET;
+        }
+        if r < GRID_SIZE - 1 {
+            grid[r + 1][c + 1].nearby |= X_S_ul_SET;
+        }
+    }
+}
+
 #[aoc(day4, part2)]
 pub fn part2(input: &str) -> i32 {
-    return 0;
+    let input = input.as_bytes();
+    let mut grid: [[CoordP2; GRID_SIZE]; GRID_SIZE] = [[CoordP2 {
+        isA: false,
+        nearby: 0,
+    }; GRID_SIZE]; GRID_SIZE];
+
+    let mut i: usize = 0;
+
+    for r in 0..GRID_SIZE {
+        for c in 0..GRID_SIZE {
+            match input[i] {
+                b'M' => p2set_m(&mut grid, r, c),
+                b'A' => p2set_a(&mut grid, r, c),
+                b'S' => p2set_s(&mut grid, r, c),
+                b'X' => {}
+                _ => unreachable!(),
+            }
+            i += 1;
+        }
+        i += 1; // input[i] is a newline
+    }
+
+    let mut total = 0;
+    for r in 0..GRID_SIZE {
+        for c in 0..GRID_SIZE {
+            if !grid[r][c].isA {
+                continue;
+            }
+            if grid[r][c].nearby == XMAS_1
+                || grid[r][c].nearby == XMAS_2
+                || grid[r][c].nearby == XMAS_3
+                || grid[r][c].nearby == XMAS_4
+            {
+                total += 1;
+            }
+        }
+    }
+
+    return total;
 }
 
 #[cfg(test)]
