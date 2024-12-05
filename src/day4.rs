@@ -3,11 +3,10 @@ const GRID_SIZE_LESS_1: usize = GRID_SIZE - 1;
 const GRID_SIZE_LESS_2: usize = GRID_SIZE - 2;
 const GRID_SIZE_LESS_3: usize = GRID_SIZE - 3;
 
-const X_SET: u8 = 1 << 0;
-const M_SET: u8 = 1 << 1;
-const A_SET: u8 = 1 << 2;
-const S_SET: u8 = 1 << 3;
-const ALL_SET: u8 = X_SET | M_SET | A_SET | S_SET;
+const M_SET: u8 = 1 << 0;
+const A_SET: u8 = 1 << 1;
+const S_SET: u8 = 1 << 2;
+const ALL_SET: u8 = M_SET | A_SET | S_SET;
 
 const RIGHT: usize = 0;
 const UR: usize = 1;
@@ -21,17 +20,11 @@ const DR: usize = 7;
 #[derive(Copy, Clone)]
 struct CoordP1 {
     dirs: [u8; 8],
+    is_x: bool,
 }
 
 fn p1set_x(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].dirs[RIGHT] |= X_SET;
-    grid[r][c].dirs[UR] |= X_SET;
-    grid[r][c].dirs[UP] |= X_SET;
-    grid[r][c].dirs[UL] |= X_SET;
-    grid[r][c].dirs[LEFT] |= X_SET;
-    grid[r][c].dirs[DL] |= X_SET;
-    grid[r][c].dirs[DOWN] |= X_SET;
-    grid[r][c].dirs[DR] |= X_SET;
+    grid[r][c].is_x = true
 }
 
 fn p1set_m(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
@@ -118,8 +111,10 @@ fn p1set_s(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 #[aoc(day4, part1)]
 pub fn part1(input: &str) -> i32 {
     let input = input.as_bytes();
-    let mut grid: [[CoordP1; GRID_SIZE]; GRID_SIZE] =
-        [[CoordP1 { dirs: [0; 8] }; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[CoordP1; GRID_SIZE]; GRID_SIZE] = [[CoordP1 {
+        dirs: [0; 8],
+        is_x: false,
+    }; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
 
@@ -140,6 +135,9 @@ pub fn part1(input: &str) -> i32 {
     let mut total = 0;
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
+            if !grid[r][c].is_x {
+                continue;
+            }
             for dir in grid[r][c].dirs {
                 if dir == ALL_SET {
                     total += 1;
