@@ -165,46 +165,18 @@ const XMAS_2: u8 = X_S_UR_SET | X_S_DR_SET | X_M_DL_SET | X_M_UL_SET;
 const XMAS_3: u8 = X_S_DR_SET | X_S_DL_SET | X_M_UL_SET | X_M_UR_SET;
 const XMAS_4: u8 = X_S_DL_SET | X_S_UL_SET | X_M_UR_SET | X_M_DR_SET;
 
-#[derive(Copy, Clone)]
-struct CoordP2 {
-    nearby: u8,
-}
-
-fn p2set_x(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].nearby = 0;
-}
-
-fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].nearby = 0;
-    // (r +/- 1) and (c +/- 1) are always in bounds
-    grid[r - 1][c - 1].nearby |= X_M_DR_SET;
-    grid[r + 1][c - 1].nearby |= X_M_UR_SET;
-    grid[r - 1][c + 1].nearby |= X_M_DL_SET;
-    grid[r + 1][c + 1].nearby |= X_M_UL_SET;
-}
-
-fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].nearby = 0;
-    // (r +/- 1) and (c +/- 1) are always in bounds
-    grid[r - 1][c - 1].nearby |= X_S_DR_SET;
-    grid[r + 1][c - 1].nearby |= X_S_UR_SET;
-    grid[r - 1][c + 1].nearby |= X_S_DL_SET;
-    grid[r + 1][c + 1].nearby |= X_S_UL_SET;
-}
-
 #[aoc(day4, part2)]
 pub fn part2(input: &str) -> i32 {
     let input = input.as_bytes();
-    let mut grid: [[CoordP2; GRID_SIZE]; GRID_SIZE] =
-        [[CoordP2 { nearby: 0 }; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[u8; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
     match input[i] {
         b'M' => {
-            grid[1][1].nearby |= X_M_UL_SET;
+            grid[1][1] |= X_M_UL_SET;
         }
         b'S' => {
-            grid[1][1].nearby |= X_S_UL_SET;
+            grid[1][1] |= X_S_UL_SET;
         }
         _ => {}
     }
@@ -214,12 +186,12 @@ pub fn part2(input: &str) -> i32 {
         // don't check up, only down
         match input[i] {
             b'M' => {
-                grid[1][c + 1].nearby |= X_M_UL_SET;
-                grid[1][c - 1].nearby |= X_M_UR_SET;
+                grid[1][c + 1] |= X_M_UL_SET;
+                grid[1][c - 1] |= X_M_UR_SET;
             }
             b'S' => {
-                grid[1][c + 1].nearby |= X_S_UL_SET;
-                grid[1][c - 1].nearby |= X_S_UR_SET;
+                grid[1][c + 1] |= X_S_UL_SET;
+                grid[1][c - 1] |= X_S_UR_SET;
             }
             _ => {}
         }
@@ -228,10 +200,10 @@ pub fn part2(input: &str) -> i32 {
 
     match input[i] {
         b'M' => {
-            grid[1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
+            grid[1][GRID_SIZE_LESS_2] |= X_M_UR_SET;
         }
         b'S' => {
-            grid[1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
+            grid[1][GRID_SIZE_LESS_2] |= X_S_UR_SET;
         }
         _ => {}
     }
@@ -243,12 +215,12 @@ pub fn part2(input: &str) -> i32 {
     for r in 1..GRID_SIZE_LESS_1 {
         match input[i] {
             b'M' => {
-                grid[r - 1][1].nearby |= X_M_DL_SET;
-                grid[r + 1][1].nearby |= X_M_UL_SET;
+                grid[r - 1][1] |= X_M_DL_SET;
+                grid[r + 1][1] |= X_M_UL_SET;
             }
             b'S' => {
-                grid[r - 1][1].nearby |= X_S_DL_SET;
-                grid[r + 1][1].nearby |= X_S_UL_SET;
+                grid[r - 1][1] |= X_S_DL_SET;
+                grid[r + 1][1] |= X_S_UL_SET;
             }
             _ => {}
         }
@@ -256,9 +228,23 @@ pub fn part2(input: &str) -> i32 {
 
         for c in 1..GRID_SIZE_LESS_1 {
             match input[i] {
-                b'M' => p2set_m(&mut grid, r, c),
-                b'S' => p2set_s(&mut grid, r, c),
-                b'X' => p2set_x(&mut grid, r, c),
+                b'M' => {
+                    grid[r][c] = 0;
+                    // (r +/- 1) and (c +/- 1) are always in bounds
+                    grid[r - 1][c - 1] |= X_M_DR_SET;
+                    grid[r + 1][c - 1] |= X_M_UR_SET;
+                    grid[r - 1][c + 1] |= X_M_DL_SET;
+                    grid[r + 1][c + 1] |= X_M_UL_SET;
+                }
+                b'S' => {
+                    grid[r][c] = 0;
+                    // (r +/- 1) and (c +/- 1) are always in bounds
+                    grid[r - 1][c - 1] |= X_S_DR_SET;
+                    grid[r + 1][c - 1] |= X_S_UR_SET;
+                    grid[r - 1][c + 1] |= X_S_DL_SET;
+                    grid[r + 1][c + 1] |= X_S_UL_SET;
+                }
+                b'X' => grid[r][c] = 0,
                 _ => {}
             }
             i += 1;
@@ -266,12 +252,12 @@ pub fn part2(input: &str) -> i32 {
 
         match input[i] {
             b'M' => {
-                grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
-                grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
+                grid[r - 1][GRID_SIZE_LESS_2] |= X_M_DR_SET;
+                grid[r + 1][GRID_SIZE_LESS_2] |= X_M_UR_SET;
             }
             b'S' => {
-                grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
-                grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
+                grid[r - 1][GRID_SIZE_LESS_2] |= X_S_DR_SET;
+                grid[r + 1][GRID_SIZE_LESS_2] |= X_S_UR_SET;
             }
             _ => {}
         }
@@ -282,10 +268,10 @@ pub fn part2(input: &str) -> i32 {
 
     match input[i] {
         b'M' => {
-            grid[GRID_SIZE_LESS_2][1].nearby |= X_M_DL_SET;
+            grid[GRID_SIZE_LESS_2][1] |= X_M_DL_SET;
         }
         b'S' => {
-            grid[GRID_SIZE_LESS_2][1].nearby |= X_S_DL_SET;
+            grid[GRID_SIZE_LESS_2][1] |= X_S_DL_SET;
         }
         _ => {}
     }
@@ -295,12 +281,12 @@ pub fn part2(input: &str) -> i32 {
         // don't check up, only down
         match input[i] {
             b'M' => {
-                grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_M_DL_SET;
-                grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_M_DR_SET;
+                grid[GRID_SIZE_LESS_2][c + 1] |= X_M_DL_SET;
+                grid[GRID_SIZE_LESS_2][c - 1] |= X_M_DR_SET;
             }
             b'S' => {
-                grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_S_DL_SET;
-                grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_S_DR_SET;
+                grid[GRID_SIZE_LESS_2][c + 1] |= X_S_DL_SET;
+                grid[GRID_SIZE_LESS_2][c - 1] |= X_S_DR_SET;
             }
             _ => {}
         }
@@ -309,10 +295,10 @@ pub fn part2(input: &str) -> i32 {
 
     match input[i] {
         b'M' => {
-            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
+            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2] |= X_M_DR_SET;
         }
         b'S' => {
-            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
+            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2] |= X_S_DR_SET;
         }
         _ => {}
     }
@@ -321,10 +307,10 @@ pub fn part2(input: &str) -> i32 {
     let mut total = 0;
     for r in 1..GRID_SIZE_LESS_1 {
         for c in 1..GRID_SIZE_LESS_1 {
-            if grid[r][c].nearby == XMAS_1
-                || grid[r][c].nearby == XMAS_2
-                || grid[r][c].nearby == XMAS_3
-                || grid[r][c].nearby == XMAS_4
+            if grid[r][c] == XMAS_1
+                || grid[r][c] == XMAS_2
+                || grid[r][c] == XMAS_3
+                || grid[r][c] == XMAS_4
             {
                 total += 1;
             }
