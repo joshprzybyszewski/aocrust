@@ -176,41 +176,37 @@ fn p2set_x(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 
 fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].nearby = 0;
-    if c > 0 {
-        if r > 0 {
-            grid[r - 1][c - 1].nearby |= X_M_DR_SET;
-        }
-        if r < GRID_SIZE_LESS_1 {
-            grid[r + 1][c - 1].nearby |= X_M_UR_SET;
-        }
+    // c is always 1 or more
+    if r > 0 {
+        grid[r - 1][c - 1].nearby |= X_M_DR_SET;
     }
-    if c < GRID_SIZE_LESS_1 {
-        if r > 0 {
-            grid[r - 1][c + 1].nearby |= X_M_DL_SET;
-        }
-        if r < GRID_SIZE_LESS_1 {
-            grid[r + 1][c + 1].nearby |= X_M_UL_SET;
-        }
+    if r < GRID_SIZE_LESS_1 {
+        grid[r + 1][c - 1].nearby |= X_M_UR_SET;
+    }
+    // c+1 will not overflow
+    if r > 0 {
+        grid[r - 1][c + 1].nearby |= X_M_DL_SET;
+    }
+    if r < GRID_SIZE_LESS_1 {
+        grid[r + 1][c + 1].nearby |= X_M_UL_SET;
     }
 }
 
 fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].nearby = 0;
-    if c > 0 {
-        if r > 0 {
-            grid[r - 1][c - 1].nearby |= X_S_DR_SET;
-        }
-        if r < GRID_SIZE_LESS_1 {
-            grid[r + 1][c - 1].nearby |= X_S_UR_SET;
-        }
+    // c is always 1 or more
+    if r > 0 {
+        grid[r - 1][c - 1].nearby |= X_S_DR_SET;
     }
-    if c < GRID_SIZE_LESS_1 {
-        if r > 0 {
-            grid[r - 1][c + 1].nearby |= X_S_DL_SET;
-        }
-        if r < GRID_SIZE_LESS_1 {
-            grid[r + 1][c + 1].nearby |= X_S_UL_SET;
-        }
+    if r < GRID_SIZE_LESS_1 {
+        grid[r + 1][c - 1].nearby |= X_S_UR_SET;
+    }
+    // c+1 will not overflow
+    if r > 0 {
+        grid[r - 1][c + 1].nearby |= X_S_DL_SET;
+    }
+    if r < GRID_SIZE_LESS_1 {
+        grid[r + 1][c + 1].nearby |= X_S_UL_SET;
     }
 }
 
@@ -221,9 +217,70 @@ pub fn part2(input: &str) -> i32 {
         [[CoordP2 { nearby: 0 }; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
+    match input[i] {
+        b'M' => {
+            grid[1][1].nearby |= X_M_UL_SET;
+        }
+        b'A' => {}
+        b'S' => {
+            grid[1][1].nearby |= X_S_UL_SET;
+        }
+        b'X' => {}
+        _ => unreachable!(),
+    }
+    i += 1;
 
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
+    for c in 1..GRID_SIZE_LESS_1 {
+        // don't check up, only down
+        match input[i] {
+            b'M' => {
+                grid[1][c + 1].nearby |= X_M_UL_SET;
+                grid[1][c - 1].nearby |= X_M_UR_SET;
+            }
+            b'A' => {}
+            b'S' => {
+                grid[1][c + 1].nearby |= X_S_UL_SET;
+                grid[1][c - 1].nearby |= X_S_UR_SET;
+            }
+            b'X' => {}
+            _ => unreachable!(),
+        }
+        i += 1;
+    }
+
+    match input[i] {
+        b'M' => {
+            grid[1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
+        }
+        b'A' => {}
+        b'S' => {
+            grid[1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
+        }
+        b'X' => {}
+        _ => unreachable!(),
+    }
+    i += 1;
+
+    //input[i] is now a newline
+    i += 1;
+
+    for r in 1..GRID_SIZE_LESS_1 {
+        match input[i] {
+            b'M' => {
+                grid[r - 1][1].nearby |= X_M_DL_SET;
+                grid[r + 1][1].nearby |= X_M_UL_SET;
+            }
+            b'A' => {}
+            b'S' => {
+                grid[r - 1][1].nearby |= X_S_DL_SET;
+                grid[r + 1][1].nearby |= X_S_UL_SET;
+            }
+            b'X' => {}
+            _ => unreachable!(),
+        }
+        i += 1;
+
+        for c in 1..GRID_SIZE_LESS_1 {
             match input[i] {
                 b'M' => p2set_m(&mut grid, r, c),
                 b'A' => {}
@@ -233,12 +290,72 @@ pub fn part2(input: &str) -> i32 {
             }
             i += 1;
         }
+
+        match input[i] {
+            b'M' => {
+                grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
+                grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
+            }
+            b'A' => {}
+            b'S' => {
+                grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
+                grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
+            }
+            b'X' => {}
+            _ => unreachable!(),
+        }
+        i += 1;
+
         i += 1; // input[i] is a newline
     }
 
+    match input[i] {
+        b'M' => {
+            grid[GRID_SIZE_LESS_2][1].nearby |= X_M_DL_SET;
+        }
+        b'A' => {}
+        b'S' => {
+            grid[GRID_SIZE_LESS_2][1].nearby |= X_S_DL_SET;
+        }
+        b'X' => {}
+        _ => unreachable!(),
+    }
+    i += 1;
+
+    for c in 1..GRID_SIZE_LESS_1 {
+        // don't check up, only down
+        match input[i] {
+            b'M' => {
+                grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_M_DL_SET;
+                grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_M_DR_SET;
+            }
+            b'A' => {}
+            b'S' => {
+                grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_S_DL_SET;
+                grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_S_DR_SET;
+            }
+            b'X' => {}
+            _ => unreachable!(),
+        }
+        i += 1;
+    }
+
+    match input[i] {
+        b'M' => {
+            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
+        }
+        b'A' => {}
+        b'S' => {
+            grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
+        }
+        b'X' => {}
+        _ => unreachable!(),
+    }
+    // i += 1; // don't need to increment cuz we don't use it again.
+
     let mut total = 0;
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
+    for r in 1..GRID_SIZE_LESS_1 {
+        for c in 1..GRID_SIZE_LESS_1 {
             if grid[r][c].nearby == XMAS_1
                 || grid[r][c].nearby == XMAS_2
                 || grid[r][c].nearby == XMAS_3
@@ -248,6 +365,5 @@ pub fn part2(input: &str) -> i32 {
             }
         }
     }
-
     return total;
 }
