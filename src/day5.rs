@@ -18,8 +18,6 @@ fn check_valid(requires: [[bool; GRID_SIZE]; GRID_SIZE], line: &Vec<usize>, b: u
 
 #[aoc(day5, part1)]
 pub fn part1(input: &str) -> usize {
-    // 1176 rules
-
     let input = input.as_bytes();
     let mut i: usize = 0;
 
@@ -43,20 +41,9 @@ pub fn part1(input: &str) -> usize {
     let mut is_valid = true;
     let mut sum = 0;
     loop {
-        if i > 16400 {
-            println!("i = {i}");
-        }
         if is_valid {
             let a: usize = convert_bytes(input[i], input[i + 1]);
-            if i > 16400 {
-                println!("a = {a}");
-            }
-
             is_valid = check_valid(requires, &line, a);
-            // println!("a, is_valid = {a}, {is_valid}");
-            if !is_valid {
-                println!("INVALID: cause {a}");
-            }
 
             line.push(a);
         }
@@ -64,10 +51,7 @@ pub fn part1(input: &str) -> usize {
         i += 2;
         if i >= input.len() - 1 || input[i] == b'\n' {
             if is_valid {
-                println!("line valid. middle element {}", line[line.len() / 2]);
                 sum += line[line.len() / 2]
-            } else {
-                println!(" INVALID. middle element {}", line[line.len() / 2]);
             }
             line.clear();
             is_valid = true;
@@ -77,13 +61,54 @@ pub fn part1(input: &str) -> usize {
         }
         i += 1;
     }
-
-    // 5664 is too low
 }
 
 #[aoc(day5, part2)]
 pub fn part2(input: &str) -> i32 {
-    return 0;
+    let input = input.as_bytes();
+    let mut i: usize = 0;
+
+    let mut requires: [[bool; GRID_SIZE]; GRID_SIZE] = [[false; GRID_SIZE]; GRID_SIZE];
+
+    while i < input.len() {
+        let a: usize = convert_bytes(input[i], input[i + 1]);
+        // input[i+ 2] is b'|'
+        let b: usize = convert_bytes(input[i + 3], input[i + 4]);
+        // input[i+5] is b'\n'
+        requires[a][b] = true;
+
+        i += 6;
+        if input[i] == b'\n' {
+            i += 1;
+            break;
+        }
+    }
+
+    let mut line: Vec<usize> = Vec::with_capacity(23);
+    let mut is_valid = true;
+    let mut sum = 0;
+    loop {
+        let a: usize = convert_bytes(input[i], input[i + 1]);
+
+        if is_valid {
+            is_valid = check_valid(requires, &line, a);
+        }
+
+        line.push(a);
+
+        i += 2;
+        if i >= input.len() - 1 || input[i] == b'\n' {
+            if !is_valid {
+                sum += line[line.len() / 2]
+            }
+            line.clear();
+            is_valid = true;
+            if i >= input.len() - 1 {
+                return sum;
+            }
+        }
+        i += 1;
+    }
 }
 
 #[cfg(test)]
