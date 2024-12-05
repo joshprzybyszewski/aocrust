@@ -16,17 +16,11 @@ const down: usize = 6;
 const dr: usize = 7;
 
 #[derive(Copy, Clone)]
-struct p1coord {
+struct CoordP1 {
     dirs: [u8; 8],
 }
 
-// impl p1coord {
-//     fn Copy(&self, i: usize) {
-//         self.dirs[i] |= X_SET
-//     }
-// }
-
-fn p1setX(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+fn p1set_x(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].dirs[right] |= X_SET;
     grid[r][c].dirs[ur] |= X_SET;
     grid[r][c].dirs[up] |= X_SET;
@@ -37,7 +31,7 @@ fn p1setX(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].dirs[dr] |= X_SET;
 }
 
-fn p1setM(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+fn p1set_m(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 0 {
         grid[r][c - 1].dirs[right] |= M_SET;
         if r > 0 {
@@ -64,7 +58,7 @@ fn p1setM(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     }
 }
 
-fn p1setA(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+fn p1set_a(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 1 {
         grid[r][c - 2].dirs[right] |= A_SET;
         if r > 1 {
@@ -91,7 +85,7 @@ fn p1setA(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     }
 }
 
-fn p1setS(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+fn p1set_s(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 2 {
         grid[r][c - 3].dirs[right] |= S_SET;
         if r > 2 {
@@ -121,27 +115,23 @@ fn p1setS(grid: &mut [[p1coord; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 #[aoc(day4, part1)]
 pub fn part1(input: &str) -> i32 {
     let input = input.as_bytes();
-    let mut grid: [[p1coord; GRID_SIZE]; GRID_SIZE] =
-        [[p1coord { dirs: [0; 8] }; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[CoordP1; GRID_SIZE]; GRID_SIZE] =
+        [[CoordP1 { dirs: [0; 8] }; GRID_SIZE]; GRID_SIZE];
 
-    let mut b: u8 = 0;
     let mut i: usize = 0;
 
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
-            //
-            b = input[i];
-            i += 1;
-
-            match b {
-                b'X' => p1setX(&mut grid, r, c),
-                b'M' => p1setM(&mut grid, r, c),
-                b'A' => p1setA(&mut grid, r, c),
-                b'S' => p1setS(&mut grid, r, c),
+            match input[i] {
+                b'X' => p1set_x(&mut grid, r, c),
+                b'M' => p1set_m(&mut grid, r, c),
+                b'A' => p1set_a(&mut grid, r, c),
+                b'S' => p1set_s(&mut grid, r, c),
                 _ => unreachable!(),
             }
+            i += 1;
         }
-        i += 1;
+        i += 1; // input[i] is a newline
     }
 
     let mut total = 0;
