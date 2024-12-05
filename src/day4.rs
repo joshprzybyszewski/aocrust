@@ -164,11 +164,15 @@ const XMAS_4: u8 = X_S_DL_SET | X_S_UL_SET | X_M_UR_SET | X_M_DR_SET;
 
 #[derive(Copy, Clone)]
 struct CoordP2 {
-    is_a: bool,
     nearby: u8,
 }
 
+fn p2set_x(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    grid[r][c].nearby = 0;
+}
+
 fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    grid[r][c].nearby = 0;
     if c > 0 {
         if r > 0 {
             grid[r - 1][c - 1].nearby |= X_M_DR_SET;
@@ -187,11 +191,8 @@ fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     }
 }
 
-fn p2set_a(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].is_a = true
-}
-
 fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
+    grid[r][c].nearby = 0;
     if c > 0 {
         if r > 0 {
             grid[r - 1][c - 1].nearby |= X_S_DR_SET;
@@ -213,10 +214,8 @@ fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 #[aoc(day4, part2)]
 pub fn part2(input: &str) -> i32 {
     let input = input.as_bytes();
-    let mut grid: [[CoordP2; GRID_SIZE]; GRID_SIZE] = [[CoordP2 {
-        is_a: false,
-        nearby: 0,
-    }; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[CoordP2; GRID_SIZE]; GRID_SIZE] =
+        [[CoordP2 { nearby: 0 }; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
 
@@ -224,9 +223,9 @@ pub fn part2(input: &str) -> i32 {
         for c in 0..GRID_SIZE {
             match input[i] {
                 b'M' => p2set_m(&mut grid, r, c),
-                b'A' => p2set_a(&mut grid, r, c),
+                b'A' => {}
                 b'S' => p2set_s(&mut grid, r, c),
-                b'X' => {}
+                b'X' => p2set_x(&mut grid, r, c),
                 _ => unreachable!(),
             }
             i += 1;
@@ -237,9 +236,6 @@ pub fn part2(input: &str) -> i32 {
     let mut total = 0;
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
-            if !grid[r][c].is_a {
-                continue;
-            }
             if grid[r][c].nearby == XMAS_1
                 || grid[r][c].nearby == XMAS_2
                 || grid[r][c].nearby == XMAS_3
