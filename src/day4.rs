@@ -203,12 +203,10 @@ pub fn part2(input: &str) -> i32 {
         b'M' => {
             grid[1][1].nearby |= X_M_UL_SET;
         }
-        b'A' => {}
         b'S' => {
             grid[1][1].nearby |= X_S_UL_SET;
         }
-        b'X' => {}
-        _ => unreachable!(),
+        _ => {}
     }
     i += 1;
 
@@ -219,13 +217,11 @@ pub fn part2(input: &str) -> i32 {
                 grid[1][c + 1].nearby |= X_M_UL_SET;
                 grid[1][c - 1].nearby |= X_M_UR_SET;
             }
-            b'A' => {}
             b'S' => {
                 grid[1][c + 1].nearby |= X_S_UL_SET;
                 grid[1][c - 1].nearby |= X_S_UR_SET;
             }
-            b'X' => {}
-            _ => unreachable!(),
+            _ => {}
         }
         i += 1;
     }
@@ -234,12 +230,10 @@ pub fn part2(input: &str) -> i32 {
         b'M' => {
             grid[1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
         }
-        b'A' => {}
         b'S' => {
             grid[1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
         }
-        b'X' => {}
-        _ => unreachable!(),
+        _ => {}
     }
     i += 1;
 
@@ -252,23 +246,20 @@ pub fn part2(input: &str) -> i32 {
                 grid[r - 1][1].nearby |= X_M_DL_SET;
                 grid[r + 1][1].nearby |= X_M_UL_SET;
             }
-            b'A' => {}
             b'S' => {
                 grid[r - 1][1].nearby |= X_S_DL_SET;
                 grid[r + 1][1].nearby |= X_S_UL_SET;
             }
-            b'X' => {}
-            _ => unreachable!(),
+            _ => {}
         }
         i += 1;
 
         for c in 1..GRID_SIZE_LESS_1 {
             match input[i] {
                 b'M' => p2set_m(&mut grid, r, c),
-                b'A' => {}
                 b'S' => p2set_s(&mut grid, r, c),
                 b'X' => p2set_x(&mut grid, r, c),
-                _ => unreachable!(),
+                _ => {}
             }
             i += 1;
         }
@@ -278,13 +269,11 @@ pub fn part2(input: &str) -> i32 {
                 grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
                 grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_M_UR_SET;
             }
-            b'A' => {}
             b'S' => {
                 grid[r - 1][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
                 grid[r + 1][GRID_SIZE_LESS_2].nearby |= X_S_UR_SET;
             }
-            b'X' => {}
-            _ => unreachable!(),
+            _ => {}
         }
         i += 1;
 
@@ -295,12 +284,10 @@ pub fn part2(input: &str) -> i32 {
         b'M' => {
             grid[GRID_SIZE_LESS_2][1].nearby |= X_M_DL_SET;
         }
-        b'A' => {}
         b'S' => {
             grid[GRID_SIZE_LESS_2][1].nearby |= X_S_DL_SET;
         }
-        b'X' => {}
-        _ => unreachable!(),
+        _ => {}
     }
     i += 1;
 
@@ -311,13 +298,11 @@ pub fn part2(input: &str) -> i32 {
                 grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_M_DL_SET;
                 grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_M_DR_SET;
             }
-            b'A' => {}
             b'S' => {
                 grid[GRID_SIZE_LESS_2][c + 1].nearby |= X_S_DL_SET;
                 grid[GRID_SIZE_LESS_2][c - 1].nearby |= X_S_DR_SET;
             }
-            b'X' => {}
-            _ => unreachable!(),
+            _ => {}
         }
         i += 1;
     }
@@ -326,12 +311,10 @@ pub fn part2(input: &str) -> i32 {
         b'M' => {
             grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_M_DR_SET;
         }
-        b'A' => {}
         b'S' => {
             grid[GRID_SIZE_LESS_2][GRID_SIZE_LESS_2].nearby |= X_S_DR_SET;
         }
-        b'X' => {}
-        _ => unreachable!(),
+        _ => {}
     }
     // i += 1; // don't need to increment cuz we don't use it again.
 
