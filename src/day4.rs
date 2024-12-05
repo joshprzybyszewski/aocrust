@@ -176,38 +176,20 @@ fn p2set_x(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 
 fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].nearby = 0;
-    // c is always 1 or more
-    if r > 0 {
-        grid[r - 1][c - 1].nearby |= X_M_DR_SET;
-    }
-    if r < GRID_SIZE_LESS_1 {
-        grid[r + 1][c - 1].nearby |= X_M_UR_SET;
-    }
-    // c+1 will not overflow
-    if r > 0 {
-        grid[r - 1][c + 1].nearby |= X_M_DL_SET;
-    }
-    if r < GRID_SIZE_LESS_1 {
-        grid[r + 1][c + 1].nearby |= X_M_UL_SET;
-    }
+    // (r +/- 1) and (c +/- 1) are always in bounds
+    grid[r - 1][c - 1].nearby |= X_M_DR_SET;
+    grid[r + 1][c - 1].nearby |= X_M_UR_SET;
+    grid[r - 1][c + 1].nearby |= X_M_DL_SET;
+    grid[r + 1][c + 1].nearby |= X_M_UL_SET;
 }
 
 fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     grid[r][c].nearby = 0;
-    // c is always 1 or more
-    if r > 0 {
-        grid[r - 1][c - 1].nearby |= X_S_DR_SET;
-    }
-    if r < GRID_SIZE_LESS_1 {
-        grid[r + 1][c - 1].nearby |= X_S_UR_SET;
-    }
-    // c+1 will not overflow
-    if r > 0 {
-        grid[r - 1][c + 1].nearby |= X_S_DL_SET;
-    }
-    if r < GRID_SIZE_LESS_1 {
-        grid[r + 1][c + 1].nearby |= X_S_UL_SET;
-    }
+    // (r +/- 1) and (c +/- 1) are always in bounds
+    grid[r - 1][c - 1].nearby |= X_S_DR_SET;
+    grid[r + 1][c - 1].nearby |= X_S_UR_SET;
+    grid[r - 1][c + 1].nearby |= X_S_DL_SET;
+    grid[r + 1][c + 1].nearby |= X_S_UL_SET;
 }
 
 #[aoc(day4, part2)]
