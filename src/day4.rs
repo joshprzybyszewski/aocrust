@@ -6,14 +6,14 @@ const A_SET: u8 = 1 << 2;
 const S_SET: u8 = 1 << 3;
 const ALL_SET: u8 = X_SET | M_SET | A_SET | S_SET;
 
-const right: usize = 0;
-const ur: usize = 1;
-const up: usize = 2;
-const ul: usize = 3;
-const left: usize = 4;
-const dl: usize = 5;
-const down: usize = 6;
-const dr: usize = 7;
+const RIGHT: usize = 0;
+const UR: usize = 1;
+const UP: usize = 2;
+const UL: usize = 3;
+const LEFT: usize = 4;
+const DL: usize = 5;
+const DOWN: usize = 6;
+const DR: usize = 7;
 
 #[derive(Copy, Clone)]
 struct CoordP1 {
@@ -21,94 +21,94 @@ struct CoordP1 {
 }
 
 fn p1set_x(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].dirs[right] |= X_SET;
-    grid[r][c].dirs[ur] |= X_SET;
-    grid[r][c].dirs[up] |= X_SET;
-    grid[r][c].dirs[ul] |= X_SET;
-    grid[r][c].dirs[left] |= X_SET;
-    grid[r][c].dirs[dl] |= X_SET;
-    grid[r][c].dirs[down] |= X_SET;
-    grid[r][c].dirs[dr] |= X_SET;
+    grid[r][c].dirs[RIGHT] |= X_SET;
+    grid[r][c].dirs[UR] |= X_SET;
+    grid[r][c].dirs[UP] |= X_SET;
+    grid[r][c].dirs[UL] |= X_SET;
+    grid[r][c].dirs[LEFT] |= X_SET;
+    grid[r][c].dirs[DL] |= X_SET;
+    grid[r][c].dirs[DOWN] |= X_SET;
+    grid[r][c].dirs[DR] |= X_SET;
 }
 
 fn p1set_m(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 0 {
-        grid[r][c - 1].dirs[right] |= M_SET;
+        grid[r][c - 1].dirs[RIGHT] |= M_SET;
         if r > 0 {
-            grid[r - 1][c - 1].dirs[dr] |= M_SET;
+            grid[r - 1][c - 1].dirs[DR] |= M_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c - 1].dirs[ur] |= M_SET;
+            grid[r + 1][c - 1].dirs[UR] |= M_SET;
         }
     }
     if c < GRID_SIZE - 1 {
-        grid[r][c + 1].dirs[left] |= M_SET;
+        grid[r][c + 1].dirs[LEFT] |= M_SET;
         if r > 0 {
-            grid[r - 1][c + 1].dirs[dl] |= M_SET;
+            grid[r - 1][c + 1].dirs[DL] |= M_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c + 1].dirs[ul] |= M_SET;
+            grid[r + 1][c + 1].dirs[UL] |= M_SET;
         }
     }
     if r > 0 {
-        grid[r - 1][c].dirs[down] |= M_SET;
+        grid[r - 1][c].dirs[DOWN] |= M_SET;
     }
     if r < GRID_SIZE - 1 {
-        grid[r + 1][c].dirs[up] |= M_SET;
+        grid[r + 1][c].dirs[UP] |= M_SET;
     }
 }
 
 fn p1set_a(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 1 {
-        grid[r][c - 2].dirs[right] |= A_SET;
+        grid[r][c - 2].dirs[RIGHT] |= A_SET;
         if r > 1 {
-            grid[r - 2][c - 2].dirs[dr] |= A_SET;
+            grid[r - 2][c - 2].dirs[DR] |= A_SET;
         }
         if r < GRID_SIZE - 2 {
-            grid[r + 2][c - 2].dirs[ur] |= A_SET;
+            grid[r + 2][c - 2].dirs[UR] |= A_SET;
         }
     }
     if c < GRID_SIZE - 2 {
-        grid[r][c + 2].dirs[left] |= A_SET;
+        grid[r][c + 2].dirs[LEFT] |= A_SET;
         if r > 1 {
-            grid[r - 2][c + 2].dirs[dl] |= A_SET;
+            grid[r - 2][c + 2].dirs[DL] |= A_SET;
         }
         if r < GRID_SIZE - 2 {
-            grid[r + 2][c + 2].dirs[ul] |= A_SET;
+            grid[r + 2][c + 2].dirs[UL] |= A_SET;
         }
     }
     if r > 1 {
-        grid[r - 2][c].dirs[down] |= A_SET;
+        grid[r - 2][c].dirs[DOWN] |= A_SET;
     }
     if r < GRID_SIZE - 2 {
-        grid[r + 2][c].dirs[up] |= A_SET;
+        grid[r + 2][c].dirs[UP] |= A_SET;
     }
 }
 
 fn p1set_s(grid: &mut [[CoordP1; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 2 {
-        grid[r][c - 3].dirs[right] |= S_SET;
+        grid[r][c - 3].dirs[RIGHT] |= S_SET;
         if r > 2 {
-            grid[r - 3][c - 3].dirs[dr] |= S_SET;
+            grid[r - 3][c - 3].dirs[DR] |= S_SET;
         }
         if r < GRID_SIZE - 3 {
-            grid[r + 3][c - 3].dirs[ur] |= S_SET;
+            grid[r + 3][c - 3].dirs[UR] |= S_SET;
         }
     }
     if c < GRID_SIZE - 3 {
-        grid[r][c + 3].dirs[left] |= S_SET;
+        grid[r][c + 3].dirs[LEFT] |= S_SET;
         if r > 2 {
-            grid[r - 3][c + 3].dirs[dl] |= S_SET;
+            grid[r - 3][c + 3].dirs[DL] |= S_SET;
         }
         if r < GRID_SIZE - 3 {
-            grid[r + 3][c + 3].dirs[ul] |= S_SET;
+            grid[r + 3][c + 3].dirs[UL] |= S_SET;
         }
     }
     if r > 2 {
-        grid[r - 3][c].dirs[down] |= S_SET;
+        grid[r - 3][c].dirs[DOWN] |= S_SET;
     }
     if r < GRID_SIZE - 3 {
-        grid[r + 3][c].dirs[up] |= S_SET;
+        grid[r + 3][c].dirs[UP] |= S_SET;
     }
 }
 
@@ -148,64 +148,64 @@ pub fn part1(input: &str) -> i32 {
     return total;
 }
 
-const X_S_ul_SET: u8 = 1 << 0;
-const X_S_ur_SET: u8 = 1 << 1;
-const X_S_dl_SET: u8 = 1 << 2;
-const X_S_dr_SET: u8 = 1 << 3;
-const X_M_ul_SET: u8 = 1 << 4;
-const X_M_ur_SET: u8 = 1 << 5;
-const X_M_dl_SET: u8 = 1 << 6;
-const X_M_dr_SET: u8 = 1 << 7;
+const X_S_UL_SET: u8 = 1 << 0;
+const X_S_UR_SET: u8 = 1 << 1;
+const X_S_DL_SET: u8 = 1 << 2;
+const X_S_DR_SET: u8 = 1 << 3;
+const X_M_UL_SET: u8 = 1 << 4;
+const X_M_UR_SET: u8 = 1 << 5;
+const X_M_DL_SET: u8 = 1 << 6;
+const X_M_DR_SET: u8 = 1 << 7;
 
-const XMAS_1: u8 = X_S_ul_SET | X_S_ur_SET | X_M_dl_SET | X_M_dr_SET;
-const XMAS_2: u8 = X_S_ur_SET | X_S_dr_SET | X_M_dl_SET | X_M_ul_SET;
-const XMAS_3: u8 = X_S_dr_SET | X_S_dl_SET | X_M_ul_SET | X_M_ur_SET;
-const XMAS_4: u8 = X_S_dl_SET | X_S_ul_SET | X_M_ur_SET | X_M_dr_SET;
+const XMAS_1: u8 = X_S_UL_SET | X_S_UR_SET | X_M_DL_SET | X_M_DR_SET;
+const XMAS_2: u8 = X_S_UR_SET | X_S_DR_SET | X_M_DL_SET | X_M_UL_SET;
+const XMAS_3: u8 = X_S_DR_SET | X_S_DL_SET | X_M_UL_SET | X_M_UR_SET;
+const XMAS_4: u8 = X_S_DL_SET | X_S_UL_SET | X_M_UR_SET | X_M_DR_SET;
 
 #[derive(Copy, Clone)]
 struct CoordP2 {
-    isA: bool,
+    is_a: bool,
     nearby: u8,
 }
 
 fn p2set_m(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 0 {
         if r > 0 {
-            grid[r - 1][c - 1].nearby |= X_M_dr_SET;
+            grid[r - 1][c - 1].nearby |= X_M_DR_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c - 1].nearby |= X_M_ur_SET;
+            grid[r + 1][c - 1].nearby |= X_M_UR_SET;
         }
     }
     if c < GRID_SIZE - 1 {
         if r > 0 {
-            grid[r - 1][c + 1].nearby |= X_M_dl_SET;
+            grid[r - 1][c + 1].nearby |= X_M_DL_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c + 1].nearby |= X_M_ul_SET;
+            grid[r + 1][c + 1].nearby |= X_M_UL_SET;
         }
     }
 }
 
 fn p2set_a(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
-    grid[r][c].isA = true
+    grid[r][c].is_a = true
 }
 
 fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
     if c > 0 {
         if r > 0 {
-            grid[r - 1][c - 1].nearby |= X_S_dr_SET;
+            grid[r - 1][c - 1].nearby |= X_S_DR_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c - 1].nearby |= X_S_ur_SET;
+            grid[r + 1][c - 1].nearby |= X_S_UR_SET;
         }
     }
     if c < GRID_SIZE - 1 {
         if r > 0 {
-            grid[r - 1][c + 1].nearby |= X_S_dl_SET;
+            grid[r - 1][c + 1].nearby |= X_S_DL_SET;
         }
         if r < GRID_SIZE - 1 {
-            grid[r + 1][c + 1].nearby |= X_S_ul_SET;
+            grid[r + 1][c + 1].nearby |= X_S_UL_SET;
         }
     }
 }
@@ -214,7 +214,7 @@ fn p2set_s(grid: &mut [[CoordP2; GRID_SIZE]; GRID_SIZE], r: usize, c: usize) {
 pub fn part2(input: &str) -> i32 {
     let input = input.as_bytes();
     let mut grid: [[CoordP2; GRID_SIZE]; GRID_SIZE] = [[CoordP2 {
-        isA: false,
+        is_a: false,
         nearby: 0,
     }; GRID_SIZE]; GRID_SIZE];
 
@@ -237,7 +237,7 @@ pub fn part2(input: &str) -> i32 {
     let mut total = 0;
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
-            if !grid[r][c].isA {
+            if !grid[r][c].is_a {
                 continue;
             }
             if grid[r][c].nearby == XMAS_1
@@ -251,43 +251,4 @@ pub fn part2(input: &str) -> i32 {
     }
 
     return total;
-}
-
-#[cfg(test)]
-mod test {
-
-    use super::*;
-    use std::fs;
-
-    fn get_input() -> String {
-        let input_path = "input/2024/day4.txt";
-        fs::read_to_string(input_path).unwrap()
-    }
-
-    #[test]
-    fn part1_minimal() {
-        assert_eq!(part1("mul(2,3)"), 6);
-        assert_eq!(part1("mul(2,3mul(4,5)"), 20);
-        assert_eq!(part1("mul(2,3)mul(4,5)mul(2,3"), 26);
-        assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
-    }
-
-    #[test]
-    fn part2_minimal() {
-        assert_eq!(part2("mul(2,3)"), 6);
-        assert_eq!(part1("mul(2,3mul(4,5)"), 20);
-        assert_eq!(part2("mul(2,3)mul(4,5)mul(2,3"), 26);
-        assert_eq!(part1("mul(2,3)add(4,5)mul( 2,3)"), 6);
-        assert_eq!(part2("mul(2,3)don't()mul(4,5)do()mul(6,7)do"), 48);
-    }
-
-    #[test]
-    fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 153469856)
-    }
-
-    #[test]
-    fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 77055967)
-    }
 }
