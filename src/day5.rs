@@ -1,3 +1,5 @@
+use core::cmp;
+
 fn convert_bytes(a: u8, b: u8) -> usize {
     // b'0' is value 48 in ascii. = 0b00110000
     // (byte >> 4) - 3 => converts ascii to num?
@@ -14,6 +16,19 @@ fn check_valid(requires: [[bool; GRID_SIZE]; GRID_SIZE], line: &Vec<usize>, b: u
         }
     }
     return true;
+}
+
+fn get_middle(requires: [[bool; GRID_SIZE]; GRID_SIZE], line: &mut Vec<usize>) -> usize {
+    line.sort_by(|a, b| {
+        if requires[*a][*b] {
+            return cmp::Ordering::Less;
+        }
+        if requires[*b][*a] {
+            return cmp::Ordering::Greater;
+        }
+        return cmp::Ordering::Equal;
+    });
+    return line[line.len() / 2];
 }
 
 #[aoc(day5, part1)]
@@ -64,7 +79,7 @@ pub fn part1(input: &str) -> usize {
 }
 
 #[aoc(day5, part2)]
-pub fn part2(input: &str) -> i32 {
+pub fn part2(input: &str) -> usize {
     let input = input.as_bytes();
     let mut i: usize = 0;
 
@@ -86,7 +101,7 @@ pub fn part2(input: &str) -> i32 {
 
     let mut line: Vec<usize> = Vec::with_capacity(23);
     let mut is_valid = true;
-    let mut sum = 0;
+    let mut sum: usize = 0;
     loop {
         let a: usize = convert_bytes(input[i], input[i + 1]);
 
@@ -99,7 +114,7 @@ pub fn part2(input: &str) -> i32 {
         i += 2;
         if i >= input.len() - 1 || input[i] == b'\n' {
             if !is_valid {
-                sum += line[line.len() / 2]
+                sum += get_middle(requires, &mut line);
             }
             line.clear();
             is_valid = true;
