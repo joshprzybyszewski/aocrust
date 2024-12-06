@@ -202,7 +202,6 @@ pub fn part2(input: &str) -> usize {
     let guard = guard;
 
     let _ = march(&mut grid, guard);
-    // printGrid(grid);
 
     let mut total: usize = 0;
     for r in 0..GRID_SIZE {
@@ -214,6 +213,7 @@ pub fn part2(input: &str) -> usize {
                 // the guard's starting pos
                 continue;
             }
+            // Consider running march_2 in concurrently with all the others
             let mut grid = grid;
             grid[r][c] = BLOCK;
             if march_2(&mut grid, guard) {
