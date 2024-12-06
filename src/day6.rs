@@ -1,3 +1,6 @@
+use std::sync::mpsc;
+use std::thread;
+
 const GRID_SIZE: usize = 130;
 // const GRID_SIZE: usize = 10;
 
@@ -118,7 +121,77 @@ pub fn part1(input: &str) -> usize {
     return march(&mut grid, guard);
 }
 
-fn march_2(grid: &mut [[u8; GRID_SIZE]; GRID_SIZE], guard: Guard) -> bool {
+fn march_2(
+    grid: &mut [[u8; GRID_SIZE]; GRID_SIZE],
+    guard: Guard,
+    tx: mpsc::Sender<(usize, usize)>,
+) {
+    let mut guard = guard;
+    grid[guard.r][guard.c] |= VISITED;
+    loop {
+        match guard.dir {
+            UP => {
+                if guard.r == 0 {
+                    return;
+                }
+                if grid[guard.r - 1][guard.c] == BLOCK {
+                    guard.dir <<= 1;
+                } else {
+                    if grid[guard.r][guard.c] & VISITED != VISITED {
+                        tx.send((guard.r, guard.c)).unwrap();
+                    }
+                    grid[guard.r][guard.c] |= VISITED;
+                    guard.r -= 1;
+                }
+            }
+            RIGHT => {
+                if guard.c == GRID_SIZE - 1 {
+                    return;
+                }
+                if grid[guard.r][guard.c + 1] == BLOCK {
+                    guard.dir <<= 1;
+                } else {
+                    if grid[guard.r][guard.c] & VISITED != VISITED {
+                        tx.send((guard.r, guard.c)).unwrap();
+                    }
+                    grid[guard.r][guard.c] |= VISITED;
+                    guard.c += 1;
+                }
+            }
+            DOWN => {
+                if guard.r == GRID_SIZE - 1 {
+                    return;
+                }
+                if grid[guard.r + 1][guard.c] == BLOCK {
+                    guard.dir <<= 1;
+                } else {
+                    if grid[guard.r][guard.c] & VISITED != VISITED {
+                        tx.send((guard.r, guard.c)).unwrap();
+                    }
+                    grid[guard.r][guard.c] |= VISITED;
+                    guard.r += 1;
+                }
+            }
+            LEFT => {
+                if guard.c == 0 {
+                    return;
+                }
+                if grid[guard.r][guard.c - 1] == BLOCK {
+                    guard.dir = UP;
+                } else {
+                    if grid[guard.r][guard.c] & VISITED != VISITED {
+                        tx.send((guard.r, guard.c)).unwrap();
+                    }
+                    grid[guard.r][guard.c] |= VISITED;
+                    guard.c -= 1;
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+fn march_loops(grid: &mut [[u8; GRID_SIZE]; GRID_SIZE], guard: Guard) -> bool {
     let mut guard = guard;
     loop {
         if grid[guard.r][guard.c] & guard.dir == guard.dir {
@@ -201,25 +274,22 @@ pub fn part2(input: &str) -> usize {
     }
     let guard = guard;
 
-    let _ = march(&mut grid, guard);
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        march_2(&mut grid, guard, tx);
+    });
 
-    let mut total: usize = 0;
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
-            if grid[r][c] & VISITED != VISITED {
-                continue;
+    let total: usize = 0;
+
+    for coord in rx {
+        // Consider running march_loops in concurrently with all the others.
+        let mut grid = grid;
+        grid[coord.0][coord.1] = BLOCK;
+        thread::spawn(move || {
+            if march_loops(&mut grid, guard) {
+                // total += 1;
             }
-            if guard.r == r && guard.c == c {
-                // the guard's starting pos
-                continue;
-            }
-            // Consider running march_2 in concurrently with all the others
-            let mut grid = grid;
-            grid[r][c] = BLOCK;
-            if march_2(&mut grid, guard) {
-                total += 1;
-            }
-        }
+        });
     }
     return total;
 }
