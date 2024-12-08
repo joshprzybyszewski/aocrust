@@ -1,5 +1,31 @@
-const PART_1_HEAP_SIZE: usize = 4096;
 const MAX_LINE_LEN: usize = 13;
+
+fn check1(target: u64, line: &[u64; MAX_LINE_LEN]) -> bool {
+    return check1_inner(target, line, line[0], 1);
+}
+
+fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize) -> bool {
+    if cur > target {
+        return false;
+    }
+
+    let next = line[index];
+    if next == 0 {
+        return target == cur;
+    }
+
+    // mul
+    if check1_inner(target, line, cur * next, index + 1) {
+        return true;
+    }
+
+    // add
+    if check1_inner(target, line, cur + next, index + 1) {
+        return true;
+    }
+
+    return false;
+}
 
 #[aoc(day7, part1)]
 pub fn part1(input: &str) -> u64 {
@@ -23,84 +49,33 @@ pub fn part1(input: &str) -> u64 {
         // skip past ": "
         i += 2;
 
-        // ending char is a space or a newline.
-        // b'\n' = 10
-        // b' '  = 32
-        // b'0'  = 48
-        // we only expect digits in this loop
-        elem = 0;
-        while input[i] >= b'0' {
-            elem *= 10;
-            elem += (input[i] - b'0') as u64;
-            i += 1;
-        }
+        let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
+        let mut l_i = 0;
 
-        if input[i] == b'\n' {
-            // handle the case where there's one input param.
-            // the heap below is overkill (and incorrect).
-            if target == elem {
-                sum += target;
-            }
-            // skip past the newline
-            i += 1;
-
-            continue;
-        }
-        // skip past the space
-        i += 1;
-
-        let mut heap: [u64; PART_1_HEAP_SIZE] = [0; PART_1_HEAP_SIZE];
-        // set the first element
-        heap[0] = elem;
-
-        let mut min_h_i: usize = 1;
-        let mut max_h_i: usize = 2;
-        //                   [0]
-        //         [1]                 [2]
-        //    [3]       [4]       [5]       [6]
-        // [ 7] [ 8] [ 9] [10] [11] [12] [13] [14]
-
-        // get the rest of the line, filling the heap.
         loop {
-            // get next elem
+            // ending char is a space or a newline.
+            // b'\n' = 10
+            // b' '  = 32
+            // b'0'  = 48
+            // we only expect digits in this loop
             elem = 0;
-            // TODO find a way to remove the input.len() check here.
             while i < input.len() && input[i] >= b'0' {
                 elem *= 10;
                 elem += (input[i] - b'0') as u64;
                 i += 1;
             }
-
-            // min = 2 ^ e_i - 1
-            // max = 2 ^ (e_i+1) - 2
-            let mut h_i = min_h_i;
-            while h_i < max_h_i {
-                let prev = heap[(h_i - 1) / 2];
-                if prev <= target && prev != 0 {
-                    heap[h_i] = prev * elem;
-                    heap[h_i + 1] = prev + elem;
-                }
-                h_i += 2;
-            }
+            line[l_i] = elem;
+            l_i += 1;
 
             if i >= input.len() || input[i] == b'\n' {
-                // iterate past the newline
+                // skip past the newline
                 i += 1;
+                if check1(target, &line) {
+                    sum += target;
+                }
                 break;
             }
-            // iterate past the space
             i += 1;
-
-            min_h_i = max_h_i + 1;
-            // i'm sure there's some magic to make this faster too.
-            max_h_i = (max_h_i + 2) * 2 - 2;
-        }
-
-        for h_i in min_h_i..=max_h_i {
-            if target == heap[h_i] {
-                sum += target;
-                break;
-            }
         }
     }
 
