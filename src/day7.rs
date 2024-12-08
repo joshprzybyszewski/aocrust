@@ -1,4 +1,4 @@
-const HEAP_SIZE: usize = 4096;
+const PART_1_HEAP_SIZE: usize = 4096;
 
 #[aoc(day7, part1)]
 pub fn part1(input: &str) -> u64 {
@@ -48,7 +48,7 @@ pub fn part1(input: &str) -> u64 {
         // skip past the space
         i += 1;
 
-        let mut heap: [u64; HEAP_SIZE] = [0; HEAP_SIZE];
+        let mut heap: [u64; PART_1_HEAP_SIZE] = [0; PART_1_HEAP_SIZE];
         // set the first element
         heap[0] = elem;
 
