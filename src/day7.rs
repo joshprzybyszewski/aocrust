@@ -1,5 +1,5 @@
 const MAX_LINE_LEN: usize = 13;
-const TENS: [u64; MAX_LINE_LEN] = [
+const POWERS_OF_TEN: [u64; MAX_LINE_LEN] = [
     1, // the zero'th element will never be queried
     10,
     100,
@@ -50,17 +50,17 @@ pub fn part1(input: &str) -> u64 {
     let mut sum: u64 = 0;
 
     while i < input.len() {
-        let mut elem: u64 = 0;
+        let mut target: u64 = 0;
         // yes, I know simd can do this way faster
         while input[i] != b':' {
             // end char is the ":" for the first elem.
             // b':'  = 58
-            elem *= 10;
-            elem += (input[i] - b'0') as u64;
+            target *= 10;
+            target += (input[i] - b'0') as u64;
             i += 1;
         }
 
-        let target: u64 = elem;
+        let target: u64 = target;
 
         // skip past ": "
         i += 2;
@@ -74,24 +74,24 @@ pub fn part1(input: &str) -> u64 {
             // b' '  = 32
             // b'0'  = 48
             // we only expect digits in this loop
-            elem = 0;
             while input[i] >= b'0' {
-                elem *= 10;
-                elem += (input[i] - b'0') as u64;
+                line[l_i] *= 10;
+                line[l_i] += (input[i] - b'0') as u64;
                 i += 1;
             }
-            line[l_i] = elem;
             l_i += 1;
 
             if input[i] == b'\n' {
                 // skip past the newline
                 i += 1;
-                if check1(target, &line) {
-                    sum += target;
-                }
                 break;
             }
             i += 1;
+        }
+
+        // TODO do this asynchronously
+        if check1(target, &line) {
+            sum += target;
         }
     }
 
@@ -118,10 +118,16 @@ fn check2_inner(
         return target == cur;
     }
 
-    // check the cheap cost first.
+    // check in the order that produces that highests cur value.
 
-    // add
-    if check2_inner(target, line, digits, cur + next, index + 1) {
+    // concat
+    if check2_inner(
+        target,
+        line,
+        digits,
+        cur * POWERS_OF_TEN[digits[index]] + next,
+        index + 1,
+    ) {
         return true;
     }
 
@@ -130,14 +136,8 @@ fn check2_inner(
         return true;
     }
 
-    // concat
-    if check2_inner(
-        target,
-        line,
-        digits,
-        cur * TENS[digits[index]] + next,
-        index + 1,
-    ) {
+    // add
+    if check2_inner(target, line, digits, cur + next, index + 1) {
         return true;
     }
 
@@ -151,17 +151,17 @@ pub fn part2(input: &str) -> u64 {
     let mut sum: u64 = 0;
 
     while i < input.len() {
-        let mut elem: u64 = 0;
+        let mut target: u64 = 0;
         // yes, I know simd can do this way faster
         while input[i] != b':' {
             // end char is the ":" for the first elem.
             // b':'  = 58
-            elem *= 10;
-            elem += (input[i] - b'0') as u64;
+            target *= 10;
+            target += (input[i] - b'0') as u64;
             i += 1;
         }
 
-        let target: u64 = elem;
+        let target: u64 = target;
 
         // skip past ": "
         i += 2;
@@ -175,25 +175,24 @@ pub fn part2(input: &str) -> u64 {
         let mut digits: [usize; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
         let mut l_i = 0;
         loop {
-            elem = 0;
             while input[i] >= b'0' {
-                elem *= 10;
-                elem += (input[i] - b'0') as u64;
-                i += 1;
                 digits[l_i] += 1;
+                line[l_i] *= 10;
+                line[l_i] += (input[i] - b'0') as u64;
+                i += 1;
             }
-
-            line[l_i] = elem;
             l_i += 1;
 
             if input[i] == b'\n' {
                 i += 1; // skip the newline.
-                if check2(target, &line, &digits) {
-                    sum += target;
-                }
+
                 break;
             }
             i += 1; // skip the space.
+        }
+
+        if check1(target, &line) || check2(target, &line, &digits) {
+            sum += target;
         }
     }
 
