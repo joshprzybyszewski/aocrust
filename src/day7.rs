@@ -1,4 +1,19 @@
 const MAX_LINE_LEN: usize = 13;
+const TENS: [u64; MAX_LINE_LEN] = [
+    1, // the zero'th element will never be queried
+    10,
+    100,
+    1000,
+    10000,
+    100000,
+    1000000,
+    10000000,
+    100000000,
+    1000000000,
+    10000000000,
+    100000000000,
+    1000000000000,
+];
 
 fn check1(target: u64, line: &[u64; MAX_LINE_LEN]) -> bool {
     return check1_inner(target, line, line[0], 1);
@@ -14,13 +29,14 @@ fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize)
         return target == cur;
     }
 
-    // mul
-    if check1_inner(target, line, cur * next, index + 1) {
+    // check the cheap cost first.
+    // add
+    if check1_inner(target, line, cur + next, index + 1) {
         return true;
     }
 
-    // add
-    if check1_inner(target, line, cur + next, index + 1) {
+    // mul
+    if check1_inner(target, line, cur * next, index + 1) {
         return true;
     }
 
@@ -82,11 +98,17 @@ pub fn part1(input: &str) -> u64 {
     return sum;
 }
 
-fn check2(target: u64, line: &[u64; MAX_LINE_LEN]) -> bool {
-    return check2_inner(target, line, line[0], 1);
+fn check2(target: u64, line: &[u64; MAX_LINE_LEN], digits: &[usize; MAX_LINE_LEN]) -> bool {
+    return check2_inner(target, line, digits, line[0], 1);
 }
 
-fn check2_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize) -> bool {
+fn check2_inner(
+    target: u64,
+    line: &[u64; MAX_LINE_LEN],
+    digits: &[usize; MAX_LINE_LEN],
+    cur: u64,
+    index: usize,
+) -> bool {
     if cur > target {
         return false;
     }
@@ -96,32 +118,30 @@ fn check2_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize)
         return target == cur;
     }
 
-    // concat
-    if check2_inner(target, line, concat(cur, next), index + 1) {
+    // check the cheap cost first.
+
+    // add
+    if check2_inner(target, line, digits, cur + next, index + 1) {
         return true;
     }
 
     // mul
-    if check2_inner(target, line, cur * next, index + 1) {
+    if check2_inner(target, line, digits, cur * next, index + 1) {
         return true;
     }
 
-    // add
-    if check2_inner(target, line, cur + next, index + 1) {
+    // concat
+    if check2_inner(
+        target,
+        line,
+        digits,
+        cur * TENS[digits[index]] + next,
+        index + 1,
+    ) {
         return true;
     }
 
     return false;
-}
-
-fn concat(a: u64, b: u64) -> u64 {
-    let mut tens: u64 = 1;
-    let mut out = a;
-    while tens <= b {
-        out *= 10;
-        tens *= 10;
-    }
-    return out + b;
 }
 
 #[aoc(day7, part2)]
@@ -152,6 +172,7 @@ pub fn part2(input: &str) -> u64 {
         // b'0'  = 48
         // we only expect digits in this loop
         let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
+        let mut digits: [usize; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
         let mut l_i = 0;
         loop {
             elem = 0;
@@ -159,6 +180,7 @@ pub fn part2(input: &str) -> u64 {
                 elem *= 10;
                 elem += (input[i] - b'0') as u64;
                 i += 1;
+                digits[l_i] += 1;
             }
 
             line[l_i] = elem;
@@ -166,7 +188,7 @@ pub fn part2(input: &str) -> u64 {
 
             if input[i] == b'\n' {
                 i += 1; // skip the newline.
-                if check2(target, &line) {
+                if check2(target, &line, &digits) {
                     sum += target;
                 }
                 break;
@@ -193,18 +215,6 @@ mod test {
     fn get_input() -> String {
         let input_path = "input/2024/day7.txt";
         fs::read_to_string(input_path).unwrap()
-    }
-
-    #[test]
-    fn concat_nums() {
-        assert_eq!(concat(12, 345), 12345);
-        assert_eq!(concat(1, 2), 12);
-        assert_eq!(concat(654, 321), 654321);
-        assert_eq!(concat(1, 9), 19);
-        assert_eq!(concat(1, 10), 110);
-        assert_eq!(concat(9, 10), 910);
-        assert_eq!(concat(9, 100), 9100);
-        assert_eq!(concat(9, 99), 999);
     }
 
     #[test]
