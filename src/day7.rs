@@ -59,7 +59,7 @@ pub fn part1(input: &str) -> u64 {
             // b'0'  = 48
             // we only expect digits in this loop
             elem = 0;
-            while i < input.len() && input[i] >= b'0' {
+            while input[i] >= b'0' {
                 elem *= 10;
                 elem += (input[i] - b'0') as u64;
                 i += 1;
@@ -67,7 +67,7 @@ pub fn part1(input: &str) -> u64 {
             line[l_i] = elem;
             l_i += 1;
 
-            if i >= input.len() || input[i] == b'\n' {
+            if input[i] == b'\n' {
                 // skip past the newline
                 i += 1;
                 if check1(target, &line) {
@@ -155,8 +155,7 @@ pub fn part2(input: &str) -> u64 {
         let mut l_i = 0;
         loop {
             elem = 0;
-            // TODO find a way to remove the input.len() check here.
-            while i < input.len() && input[i] >= b'0' {
+            while input[i] >= b'0' {
                 elem *= 10;
                 elem += (input[i] - b'0') as u64;
                 i += 1;
@@ -165,7 +164,7 @@ pub fn part2(input: &str) -> u64 {
             line[l_i] = elem;
             l_i += 1;
 
-            if i >= input.len() || input[i] == b'\n' {
+            if input[i] == b'\n' {
                 i += 1; // skip the newline.
                 if check2(target, &line) {
                     sum += target;
