@@ -1,23 +1,23 @@
 const HEAP_SIZE: usize = 4096;
 
 #[aoc(day7, part1)]
-pub fn part1(input: &str) -> u32 {
+pub fn part1(input: &str) -> u64 {
     let input = input.as_bytes();
     let mut i: usize = 0;
-    let mut sum: u32 = 0;
+    let mut sum: u64 = 0;
 
     while i < input.len() {
-        let mut elem: u32 = 0;
+        let mut elem: u64 = 0;
         // yes, I know simd can do this way faster
         while input[i] != b':' {
             // end char is the ":" for the first elem.
             // b':'  = 58
             elem *= 10;
-            elem += (input[i] - b'0') as u32;
+            elem += (input[i] - b'0') as u64;
             i += 1;
         }
 
-        let target: u32 = elem;
+        let target: u64 = elem;
 
         // skip past ": "
         i += 2;
@@ -30,7 +30,7 @@ pub fn part1(input: &str) -> u32 {
         elem = 0;
         while input[i] >= b'0' {
             elem *= 10;
-            elem += (input[i] - b'0') as u32;
+            elem += (input[i] - b'0') as u64;
             i += 1;
         }
 
@@ -48,7 +48,7 @@ pub fn part1(input: &str) -> u32 {
         // skip past the space
         i += 1;
 
-        let mut heap: [u32; HEAP_SIZE] = [0; HEAP_SIZE];
+        let mut heap: [u64; HEAP_SIZE] = [0; HEAP_SIZE];
         // set the first element
         heap[0] = elem;
 
@@ -63,9 +63,10 @@ pub fn part1(input: &str) -> u32 {
         loop {
             // get next elem
             elem = 0;
-            while input[i] >= b'0' {
+            // TODO find a way to remove the input.len() check here.
+            while i < input.len() && input[i] >= b'0' {
                 elem *= 10;
-                elem += (input[i] - b'0') as u32;
+                elem += (input[i] - b'0') as u64;
                 i += 1;
             }
 
@@ -81,7 +82,7 @@ pub fn part1(input: &str) -> u32 {
                 h_i += 2;
             }
 
-            if input[i] == b'\n' {
+            if i >= input.len() || input[i] == b'\n' {
                 break;
             }
             // iterate past the space
@@ -101,6 +102,9 @@ pub fn part1(input: &str) -> u32 {
             }
         }
     }
+
+    // 2612788124 is too low (u32)
+    // 66343330025640 is too low (u64)
 
     return sum;
 }
