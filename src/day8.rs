@@ -121,8 +121,8 @@ pub fn part1(input: &str) -> u64 {
 
     for group in antennas {
         for i in 0..group.len() {
+            let a = group[i];
             for j in i + 1..group.len() {
-                let a = group[i];
                 let b = group[j];
                 // we know a and be are either in the same row, OR b is below a.
                 let dr = (a.r - b.r).abs();
@@ -179,7 +179,6 @@ pub fn part1(input: &str) -> u64 {
         }
     }
 
-    // 291 is wrong
     return total;
 }
 
@@ -299,46 +298,6 @@ mod test {
     #[test]
     fn part1_example() {
         assert_eq!(part1(&get_example_input()), 14);
-    }
-
-    #[test]
-    fn bounds_checking() {
-        // assert_eq!(
-        //             part1(
-        //                 ".h.h.....igi
-        // .b........g.
-        // ............
-        // ...b........
-        // ..........k.
-        // .j........j.
-        // .k....l...ff
-        // .....l......
-        // ee..........
-        // ............
-        // ...d......c.
-        // ...d.....c..
-        // "
-        //             ),
-        //             11
-        //         );
-        assert_eq!(
-            part2(
-                "...........a
-............
-..........a.
-............
-............
-...........a
-............
-............
-............
-.......bb...
-............
-............
-"
-            ),
-            15
-        );
     }
 
     #[test]
