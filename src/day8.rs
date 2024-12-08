@@ -98,10 +98,10 @@ fn get_antennas(input: &str) -> [Vec<Coord>; ANTENNA_CARDINALITY] {
                 continue;
             }
 
+            // input[i] must be an antenna
             let a = convert_byte(input[i]);
             i += 1;
 
-            // input[i] must be an antenna
             antennas[a as usize].push(Coord {
                 r: r as i32,
                 c: c as i32,
@@ -191,8 +191,14 @@ pub fn part2(input: &str) -> u64 {
 
     for group in antennas {
         for i in 0..group.len() {
+            let a = group[i];
+            if !grid[a.r as usize][a.c as usize] {
+                total += 1;
+                grid[a.r as usize][a.c as usize] = true;
+            }
+
             for j in i + 1..group.len() {
-                let mut a = group[i];
+                let mut a = a;
                 let mut b = group[j];
                 // we know a and be are either in the same row, OR b is below a.
                 let dr = (a.r - b.r).abs();
@@ -260,8 +266,6 @@ pub fn part2(input: &str) -> u64 {
             }
         }
     }
-
-    // 788 is too low
 
     return total;
 }
@@ -349,6 +353,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 898)
     }
 }
