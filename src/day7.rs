@@ -29,13 +29,14 @@ fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize)
         return target == cur;
     }
 
-    // mul
-    if check1_inner(target, line, cur * next, index + 1) {
+    // check the cheap cost first.
+    // add
+    if check1_inner(target, line, cur + next, index + 1) {
         return true;
     }
 
-    // add
-    if check1_inner(target, line, cur + next, index + 1) {
+    // mul
+    if check1_inner(target, line, cur * next, index + 1) {
         return true;
     }
 
@@ -117,14 +118,10 @@ fn check2_inner(
         return target == cur;
     }
 
-    // concat
-    if check2_inner(
-        target,
-        line,
-        digits,
-        cur * TENS[digits[index]] + next,
-        index + 1,
-    ) {
+    // check the cheap cost first.
+
+    // add
+    if check2_inner(target, line, digits, cur + next, index + 1) {
         return true;
     }
 
@@ -133,8 +130,14 @@ fn check2_inner(
         return true;
     }
 
-    // add
-    if check2_inner(target, line, digits, cur + next, index + 1) {
+    // concat
+    if check2_inner(
+        target,
+        line,
+        digits,
+        cur * TENS[digits[index]] + next,
+        index + 1,
+    ) {
         return true;
     }
 
