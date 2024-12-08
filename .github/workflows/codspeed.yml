@@ -25,7 +25,7 @@ jobs:
 
       - name: Download available input files
         env:
-          ADVENT_OF_CODE_SESSION: ${{ secrets.AOC_SESSION }}
+          ADVENT_OF_CODE_SESSION: ${{ secrets.ADVENT_OF_CODE_SESSION }}
         run: |
           mkdir -p input/2024/
           for i in {1..7}; do
