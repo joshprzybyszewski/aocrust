@@ -52,7 +52,7 @@ pub fn part1(input: &str) -> u64 {
         // set the first element
         heap[0] = elem;
 
-        let mut min_h_i: usize = 0;
+        let mut min_h_i: usize = 1;
         let mut max_h_i: usize = 2;
         //                   [0]
         //         [1]                 [2]
@@ -72,7 +72,7 @@ pub fn part1(input: &str) -> u64 {
 
             // min = 2 ^ e_i - 1
             // max = 2 ^ (e_i+1) - 2
-            let mut h_i = min_h_i + 1;
+            let mut h_i = min_h_i;
             while h_i < max_h_i {
                 let prev = heap[(h_i - 1) / 2];
                 if prev == 0 || prev <= target {
@@ -88,7 +88,7 @@ pub fn part1(input: &str) -> u64 {
             // iterate past the space
             i += 1;
 
-            min_h_i = max_h_i;
+            min_h_i = max_h_i + 1;
             // i'm sure there's some magic to make this faster too.
             max_h_i = (max_h_i + 2) * 2 - 2;
         }
