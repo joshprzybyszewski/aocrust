@@ -118,7 +118,7 @@ fn check2_inner(
         return target == cur;
     }
 
-    // check concat first, since that's the one we skipped in p1.
+    // check in the order that produces that highests cur value.
 
     // concat
     if check2_inner(
@@ -131,13 +131,13 @@ fn check2_inner(
         return true;
     }
 
-    // add
-    if check2_inner(target, line, digits, cur + next, index + 1) {
+    // mul
+    if check2_inner(target, line, digits, cur * next, index + 1) {
         return true;
     }
 
-    // mul
-    if check2_inner(target, line, digits, cur * next, index + 1) {
+    // add
+    if check2_inner(target, line, digits, cur + next, index + 1) {
         return true;
     }
 
