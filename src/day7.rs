@@ -75,7 +75,7 @@ pub fn part1(input: &str) -> u64 {
             let mut h_i = min_h_i;
             while h_i < max_h_i {
                 let prev = heap[(h_i - 1) / 2];
-                if prev == 0 || prev <= target {
+                if prev <= target && prev != 0 {
                     heap[h_i] = prev * elem;
                     heap[h_i + 1] = prev + elem;
                 }
@@ -83,6 +83,8 @@ pub fn part1(input: &str) -> u64 {
             }
 
             if i >= input.len() || input[i] == b'\n' {
+                // iterate past the newline
+                i += 1;
                 break;
             }
             // iterate past the space
@@ -92,19 +94,14 @@ pub fn part1(input: &str) -> u64 {
             // i'm sure there's some magic to make this faster too.
             max_h_i = (max_h_i + 2) * 2 - 2;
         }
-        // iterate past the newline
-        i += 1;
 
-        for h_i in min_h_i..max_h_i {
+        for h_i in min_h_i..=max_h_i {
             if target == heap[h_i] {
                 sum += target;
                 break;
             }
         }
     }
-
-    // 2612788124 is too low (u32)
-    // 66343330025640 is too low (u64)
 
     return sum;
 }
@@ -142,7 +139,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0)
+        assert_eq!(part1(&get_input()), 66343330034722)
     }
 
     #[test]
