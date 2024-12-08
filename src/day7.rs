@@ -50,8 +50,8 @@ fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize)
 }
 
 #[aoc(day7, part1)]
-pub fn part1(input: &str) -> std::io::Result<u64> {
-    let rt = Runtime::new()?;
+pub fn part1(input: &str) -> u64 {
+    let rt = Runtime::new().unwrap();
     let mut total = 0;
     rt.block_on(async {
         let input = input.as_bytes();
@@ -107,7 +107,7 @@ pub fn part1(input: &str) -> std::io::Result<u64> {
         }
     });
 
-    return Ok(total);
+    return total;
 }
 
 async fn check2(target: u64, line: [u64; MAX_LINE_LEN], digits: [usize; MAX_LINE_LEN]) -> u64 {
@@ -163,8 +163,8 @@ fn check2_inner(
 }
 
 #[aoc(day7, part2)]
-pub fn part2(input: &str) -> std::io::Result<u64> {
-    let rt = Runtime::new()?;
+pub fn part2(input: &str) -> u64 {
+    let rt = Runtime::new().unwrap();
     let mut total = 0;
     rt.block_on(async {
         let input = input.as_bytes();
@@ -222,7 +222,7 @@ pub fn part2(input: &str) -> std::io::Result<u64> {
         }
     });
 
-    return Ok(total);
+    return total;
 }
 
 #[cfg(test)]
@@ -243,21 +243,21 @@ mod test {
 
     #[test]
     fn part1_example() {
-        assert_eq!(part1(&get_example_input()).unwrap(), 3749);
+        assert_eq!(part1(&get_example_input()), 3749);
     }
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input()).unwrap(), 11387);
+        assert_eq!(part2(&get_example_input()), 11387);
     }
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()).unwrap(), 66343330034722)
+        assert_eq!(part1(&get_input()), 66343330034722)
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()).unwrap(), 637696070419031)
+        assert_eq!(part2(&get_input()), 637696070419031)
     }
 }
