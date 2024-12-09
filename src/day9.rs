@@ -5,9 +5,7 @@ fn convert_byte(a: u8) -> u64 {
 
 #[inline(always)]
 fn left_chunk_sum(index: u64, size: u64, offset: u64) -> u64 {
-    // 8 * (8 + 9 + 10)
-    // 8 * 27
-    // 27 = (offset = 8) (size = 3)
+    // TODO remove loop
     let mut n: u64 = 0;
     for i in 0..size {
         n += offset + i;
@@ -19,16 +17,15 @@ fn left_chunk_sum(index: u64, size: u64, offset: u64) -> u64 {
 fn right_chunk_sum(empty: u64, index: u64, size: u64, offset: u64) -> (u64, u64, u64, u64) {
     if size <= empty {
         let mut n: u64 = 0;
+        // TODO remove loop
         for i in 0..size {
             n += offset + i;
         }
         return (index * n, empty - size, size, 0);
     }
 
-    // 8 * (8 + 9 + 10)
-    // 8 * 27
-    // 27 = (offset = 8) (size = 3)
     let mut n: u64 = 0;
+    // TODO remove loop
     for i in 0..empty {
         n += offset + i;
     }
@@ -63,7 +60,6 @@ pub fn part1(input: &str) -> u64 {
         i += 1;
 
         let left_total = left_chunk_sum(l, left_chunk, passed);
-        println!("left chunk {l} size: {left_total}");
         total += left_total;
 
         l += 1;
@@ -84,7 +80,6 @@ pub fn part1(input: &str) -> u64 {
         let mut right_passed;
         (right_total, empty, right_passed, right_chunk) =
             right_chunk_sum(empty, r, right_chunk, passed);
-        println!(" right chunk {r} size: {right_total}");
         total += right_total;
         passed += right_passed;
 
@@ -96,16 +91,13 @@ pub fn part1(input: &str) -> u64 {
 
             (right_total, empty, right_passed, right_chunk) =
                 right_chunk_sum(empty, r, right_chunk, passed);
-            println!(" right chunk {r} size: {right_total}");
             total += right_total;
             passed += right_passed;
         }
     }
 
     (right_total, _, _, _) = right_chunk_sum(9, r, right_chunk, passed);
-    println!(" right chunk {r} size: {right_total}");
     total += right_total;
-    // passed += right_passed;
 
     return total;
 }
@@ -173,7 +165,7 @@ mod test {
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input()), 0);
+        assert_eq!(part2(&get_example_input()), 2858);
     }
 
     #[test]
