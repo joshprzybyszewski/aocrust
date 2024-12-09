@@ -4,15 +4,35 @@ fn convert_byte(a: u8) -> u64 {
 }
 
 #[inline(always)]
-fn chunk_sum(index: u64, size: u64, offset: u64) -> u64 {
+fn left_chunk_sum(index: u64, size: u64, offset: u64) -> u64 {
     // 8 * (8 + 9 + 10)
     // 8 * 27
     // 27 = (offset = 8) (size = 3)
     let mut n: u64 = 0;
-    for i in 0..offset {
+    for i in 0..size {
         n += offset + i;
     }
     return index * n;
+}
+
+#[inline(always)]
+fn right_chunk_sum(empty: u64, index: u64, size: u64, offset: u64) -> (u64, u64, u64, u64) {
+    if size <= empty {
+        let mut n: u64 = 0;
+        for i in 0..size {
+            n += offset + i;
+        }
+        return (index * n, empty - size, size, 0);
+    }
+
+    // 8 * (8 + 9 + 10)
+    // 8 * 27
+    // 27 = (offset = 8) (size = 3)
+    let mut n: u64 = 0;
+    for i in 0..empty {
+        n += offset + i;
+    }
+    return (index * n, 0, empty, size - empty);
 }
 
 #[aoc(day9, part1)]
@@ -23,24 +43,28 @@ pub fn part1(input: &str) -> u64 {
     let mut passed: u64 = 0;
     let mut l: u64 = 0;
     let mut i: usize = 0;
-    let mut j: usize = input.len() - 1; // the last char is a newline.
+    let mut j: usize = input.len() - 1;
     if input[j] == b'\n' {
+        // the last char is a newline.
         j -= 1;
     }
-    if j % 2 != 1 {
-        // it must be an even number
+    if j % 2 != 0 {
+        // it must be an odd number
         unreachable!();
     }
     let mut r: u64 = (j as u64 / 2) + 1; // should start at 10,001
 
     let mut total: u64 = 0;
     let mut right_chunk: u64 = 0;
+    let mut right_total;
 
-    while i < j {
+    while i <= j {
         let left_chunk = convert_byte(input[i]);
         i += 1;
 
-        total += chunk_sum(l, left_chunk, passed);
+        let left_total = left_chunk_sum(l, left_chunk, passed);
+        println!("left chunk {l} size: {left_total}");
+        total += left_total;
 
         l += 1;
         passed += left_chunk;
@@ -50,38 +74,38 @@ pub fn part1(input: &str) -> u64 {
 
         let mut empty = convert_byte(input[i]);
         i += 1;
-
-        // fill the empty block with entries from the end
-        if right_chunk > 0 {
-            let n = if right_chunk < empty {
-                right_chunk
-            } else {
-                empty
-            };
-
-            total += chunk_sum(r, n, passed);
-            passed += n;
-            empty -= n;
+        if right_chunk == 0 {
+            // get a block from the end
+            right_chunk = convert_byte(input[j]);
+            j -= 2; // skip the space to the next chunk
+            r -= 1;
         }
 
-        while empty > 0 && j > i {
+        let mut right_passed;
+        (right_total, empty, right_passed, right_chunk) =
+            right_chunk_sum(empty, r, right_chunk, passed);
+        println!(" right chunk {r} size: {right_total}");
+        total += right_total;
+        passed += right_passed;
+
+        while empty > 0 && right_chunk == 0 && j >= i {
             // get a block from the end
-            j -= 1; // skip past the empty space
             right_chunk = convert_byte(input[j]);
-            j -= 1;
+            j -= 2;
             r -= 1;
 
-            let n = if right_chunk < empty {
-                right_chunk
-            } else {
-                empty
-            };
-
-            total += chunk_sum(r, n, passed);
-            passed += n;
-            empty -= n;
+            (right_total, empty, right_passed, right_chunk) =
+                right_chunk_sum(empty, r, right_chunk, passed);
+            println!(" right chunk {r} size: {right_total}");
+            total += right_total;
+            passed += right_passed;
         }
     }
+
+    (right_total, _, _, _) = right_chunk_sum(9, r, right_chunk, passed);
+    println!(" right chunk {r} size: {right_total}");
+    total += right_total;
+    // passed += right_passed;
 
     return total;
 }
@@ -110,15 +134,36 @@ mod test {
     #[test]
     fn easy() {
         //                0 1 2 3 4
-        assert_eq!(part1("1910101010\n"), 0 + 4 * 1 + 3 * 2 + 2 * 3 + 1 * 4);
+        assert_eq!(part1("191010101\n"), 0 + 4 * 1 + 3 * 2 + 2 * 3 + 1 * 4);
+    }
+
+    #[test]
+    fn medium() {
+        // 00..11..22..3333333
+        // 0033113322333......
+        //                0 1 2 3
+        assert_eq!(
+            part1("2222227\n"),
+            0 + 3 * 2
+                + 3 * 3
+                + 1 * 4
+                + 1 * 5
+                + 3 * 6
+                + 3 * 7
+                + 2 * 8
+                + 2 * 9
+                + 3 * 10
+                + 3 * 11
+                + 3 * 12
+        );
     }
 
     #[test]
     fn very_easy() {
         //                0 1
-        assert_eq!(part1("1910\n"), 0 + 1 * 1);
+        assert_eq!(part1("191\n"), 0 + 1 * 1);
         //                0 1 2
-        assert_eq!(part1("191020\n"), 0 + 2 * 1 + 2 * 2 + 1 * 3);
+        assert_eq!(part1("19102\n"), 0 + 2 * 1 + 2 * 2 + 1 * 3);
     }
 
     #[test]
@@ -133,7 +178,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0)
+        assert_eq!(part1(&get_input()), 6332189866718)
     }
 
     #[test]
