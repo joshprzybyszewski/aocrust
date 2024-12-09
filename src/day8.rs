@@ -164,7 +164,7 @@ pub fn part1(input: &str) -> u64 {
                     if a.r - dr >= 0 && a.c + dc < GRID_SIZE_I32 {
                         if !grid[(a.r - dr) as usize][(a.c + dc) as usize] {
                             total += 1;
-                            grid[(a.r - dr) as usize][(a.c + dc) as usize] = true
+                            grid[(a.r - dr) as usize][(a.c + dc) as usize] = true;
                         }
                     }
                     // an2 is below and left of b
@@ -248,7 +248,7 @@ pub fn part2(input: &str) -> u64 {
                         a.c += dc;
                         if !grid[a.r as usize][a.c as usize] {
                             total += 1;
-                            grid[a.r as usize][a.c as usize] = true
+                            grid[a.r as usize][a.c as usize] = true;
                         }
                     }
                     // an2 is below and left of b
