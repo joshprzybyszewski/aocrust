@@ -143,16 +143,10 @@ pub fn part2(input: &str) -> u64 {
 
     let mut total = 0;
     for i in (1..=c_i).rev() {
-        // if chunks[i].offset == 0 {
-        //     unreachable!();
-        // }
         for j in 0..=i {
             if spaces[j].size < chunks[i].size {
                 continue;
             }
-            // if spaces[j].offset >= chunks[i].offset || spaces[j].offset == 0 {
-            //     unreachable!();
-            // }
             chunks[i].offset = spaces[j].offset;
             spaces[j].size -= chunks[i].size;
             spaces[j].offset += chunks[i].size;
@@ -161,9 +155,6 @@ pub fn part2(input: &str) -> u64 {
 
         total += contiguous_chunk_sum(i as u64, chunks[i].size, chunks[i].offset);
     }
-
-    // 8507923463167 is too high.
-    // 6350606246106 is too low.
 
     return total;
 }
