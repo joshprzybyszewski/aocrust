@@ -153,19 +153,16 @@ fn reset_best_spaces(
     prev_s_i: usize,
     prev_space_size: u64,
 ) {
-    let mut min_size: usize = (spaces[prev_s_i].size + 1) as usize;
-    for size in (min_size..best_spaces.len()).rev() {
-        if best_spaces[size] != prev_s_i {
-            min_size = size;
-            break;
+    for s_i in 0..best_spaces.len() {
+        if best_spaces[s_i] == prev_s_i {
+            best_spaces[s_i] = 10_001;
         }
-        best_spaces[size] = 10_001;
     }
 
     let mut max_size = 0;
-    for s_i in best_spaces[min_size] + 1..c_i {
+    for s_i in 0..c_i {
         if best_spaces[spaces[s_i].size as usize] < s_i {
-            // already set to before me..
+            // already set.
             continue;
         }
         if spaces[s_i].size > max_size {
@@ -177,7 +174,8 @@ fn reset_best_spaces(
             }
             best_spaces[size] = s_i;
         }
-        if max_size >= prev_space_size {
+        if max_size >= 9 {
+            // completely set all sizes
             return;
         }
     }
@@ -217,14 +215,14 @@ pub fn part2(input: &str) -> u64 {
                 unreachable!();
             }
 
-            // let prev_space_size = spaces[s_i].size;
+            let prev_space_size = spaces[s_i].size;
             chunks[i].offset = spaces[s_i].offset;
 
             spaces[s_i].size -= chunks[i].size;
             spaces[s_i].offset += chunks[i].size;
 
-            best_spaces = set_best_spaces(c_i, &spaces);
-            // reset_best_spaces(c_i, &spaces, &mut best_spaces, s_i, prev_space_size);
+            // best_spaces = set_best_spaces(c_i, &spaces);
+            reset_best_spaces(c_i, &spaces, &mut best_spaces, s_i, prev_space_size);
         }
 
         total += contiguous_chunk_sum(i as u64, chunks[i].size, chunks[i].offset);
