@@ -143,13 +143,13 @@ pub fn part2(input: &str) -> u64 {
 
     let mut total = 0;
     for i in (1..=c_i).rev() {
-        for j in 0..=i {
-            if spaces[j].size < chunks[i].size {
+        for s_i in 0..=i {
+            if spaces[s_i].size < chunks[i].size {
                 continue;
             }
-            chunks[i].offset = spaces[j].offset;
-            spaces[j].size -= chunks[i].size;
-            spaces[j].offset += chunks[i].size;
+            chunks[i].offset = spaces[s_i].offset;
+            spaces[s_i].size -= chunks[i].size;
+            spaces[s_i].offset += chunks[i].size;
             break;
         }
 
