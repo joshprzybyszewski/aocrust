@@ -3,33 +3,42 @@ fn convert_byte(a: u8) -> u64 {
     return (a - b'0') as u64;
 }
 
+const MAGIC_NUM: [u64; 10] = [
+    0,
+    0,
+    1,
+    1 + 2,
+    1 + 2 + 3,
+    1 + 2 + 3 + 4,
+    1 + 2 + 3 + 4 + 5,
+    1 + 2 + 3 + 4 + 5 + 6,
+    1 + 2 + 3 + 4 + 5 + 6 + 7,
+    1 + 2 + 3 + 4 + 5 + 6 + 7 + 8,
+];
+
 #[inline(always)]
 fn contiguous_chunk_sum(index: u64, size: u64, offset: u64) -> u64 {
-    // TODO remove loop
-    let mut n: u64 = 0;
-    for i in 0..size {
-        n += offset + i;
-    }
+    let n = size * offset + MAGIC_NUM[size as usize];
     return index * n;
 }
 
 #[inline(always)]
 fn right_chunk_sum(empty: u64, index: u64, size: u64, offset: u64) -> (u64, u64, u64, u64) {
     if size <= empty {
-        let mut n: u64 = 0;
-        // TODO remove loop
-        for i in 0..size {
-            n += offset + i;
-        }
-        return (index * n, empty - size, size, 0);
+        return (
+            contiguous_chunk_sum(index, size, offset),
+            empty - size,
+            size,
+            0,
+        );
     }
 
-    let mut n: u64 = 0;
-    // TODO remove loop
-    for i in 0..empty {
-        n += offset + i;
-    }
-    return (index * n, 0, empty, size - empty);
+    return (
+        contiguous_chunk_sum(index, empty, offset),
+        0,
+        empty,
+        size - empty,
+    );
 }
 
 #[aoc(day9, part1)]
@@ -114,8 +123,8 @@ pub fn part2(input: &str) -> u64 {
     let input = input.as_bytes();
     let max_i = input.len() - 2;
 
-    let mut chunks: [Chunk; 9_999] = [Chunk { size: 0, offset: 0 }; 9_999];
-    let mut spaces: [Chunk; 9_998] = [Chunk { size: 0, offset: 0 }; 9_998];
+    let mut chunks: [Chunk; 10_000] = [Chunk { size: 0, offset: 0 }; 10_000];
+    let mut spaces: [Chunk; 10_000] = [Chunk { size: 0, offset: 0 }; 10_000];
     let mut i: usize = 0;
     let mut c_i: usize = 0;
     chunks[c_i].size = convert_byte(input[i]);
@@ -256,6 +265,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 6353648390778)
     }
 }
