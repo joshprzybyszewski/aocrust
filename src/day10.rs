@@ -1,5 +1,3 @@
-// How many nines we expect in the input. mine has 257
-const MAX_NINES: usize = 512;
 // I think that the max number it can reach is _technically_ something like 10^4,
 // but because of the coordinate plane it's probably closer to 100. We can bump
 // that if we need to
@@ -53,21 +51,14 @@ fn build_input(
     [[u8; GRID_SIZE]; GRID_SIZE],
     Vec<Coord>, // zeros
     Vec<Coord>, // pending
-    [[CanReach; GRID_SIZE]; GRID_SIZE],
 ) {
     let input = input.as_bytes();
-    // let mut nines: [Coord; MAX_NINES] = [Coord { row: 0, col: 0 }; MAX_NINES];
     let mut grid: [[u8; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
-    let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] = [[CanReach {
-        reaches: [0; MAX_REACHABLE],
-        index: 0,
-    }; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
-    let mut nines_id: usize = 1;
 
     let mut zeros: Vec<Coord> = Vec::with_capacity(512);
-    let mut pending: Vec<Coord> = Vec::with_capacity(GRID_SIZE * GRID_SIZE);
+    let mut nines: Vec<Coord> = Vec::with_capacity(GRID_SIZE * GRID_SIZE);
 
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
@@ -75,21 +66,16 @@ fn build_input(
             i += 1;
 
             if grid[r][c] == 9 {
-                let coord = Coord { row: r, col: c };
-                pending.push(coord);
-                // nines[nines_id] = coord;
-                can_reach[r][c].add_nine(nines_id);
-                nines_id += 1;
+                nines.push(Coord { row: r, col: c });
             }
             if grid[r][c] == 0 {
-                let coord = Coord { row: r, col: c };
-                zeros.push(coord);
+                zeros.push(Coord { row: r, col: c });
             }
         }
         i += 1; // input[i] is a newline
     }
 
-    return (grid, zeros, pending, can_reach);
+    return (grid, zeros, nines);
 }
 
 #[inline(always)]
@@ -109,12 +95,18 @@ fn check_other(
 
 #[aoc(day10, part1)]
 pub fn part1(input: &str) -> u64 {
-    let (grid, zeros, mut pending, mut can_reach) = build_input(input);
+    let (grid, zeros, mut pending) = build_input(input);
+
+    let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] = [[CanReach {
+        reaches: [0; MAX_REACHABLE],
+        index: 0,
+    }; GRID_SIZE]; GRID_SIZE];
+    for nine_id in 0..pending.len() {
+        can_reach[pending[nine_id].row][pending[nine_id].col].add_nine(nine_id);
+    }
 
     while !pending.is_empty() {
         let coord = pending.pop().unwrap();
-
-        // TODO look up, right, down and left.
 
         // Look up
         if coord.row > 0 {
@@ -186,7 +178,7 @@ mod test {
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input()), 0);
+        assert_eq!(part2(&get_example_input()), 81);
     }
 
     #[test]
