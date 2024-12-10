@@ -118,6 +118,71 @@ struct Chunk {
     offset: u64,
 }
 
+#[inline(always)]
+fn set_best_spaces(c_i: usize, spaces: &[Chunk; 10_000]) -> [usize; 10] {
+    let mut best_spaces: [usize; 10] = [10_000; 10];
+    let mut max_size = 0;
+    for s_i in 0..c_i {
+        if best_spaces[spaces[s_i].size as usize] < s_i {
+            // already set.
+            continue;
+        }
+        if spaces[s_i].size > max_size {
+            max_size = spaces[s_i].size
+        }
+        for size in (0..=spaces[s_i].size as usize).rev() {
+            if best_spaces[size] < s_i {
+                break;
+            }
+            best_spaces[size] = s_i;
+        }
+        if max_size >= 9 {
+            // completely set all sizes
+            return best_spaces;
+        }
+    }
+
+    return best_spaces;
+}
+
+#[inline(always)]
+fn reset_best_spaces(
+    c_i: usize,
+    spaces: &[Chunk; 10_000],
+    best_spaces: &mut [usize; 10],
+    prev_s_i: usize,
+    prev_space_size: u64,
+) {
+    let mut min_size: usize = (spaces[prev_s_i].size + 1) as usize;
+    for size in (min_size..best_spaces.len()).rev() {
+        if best_spaces[size] != prev_s_i {
+            min_size = size;
+            break;
+        }
+        best_spaces[size] = 10_001;
+    }
+
+    let mut max_size = 0;
+    for s_i in best_spaces[min_size] + 1..c_i {
+        if best_spaces[spaces[s_i].size as usize] < s_i {
+            // already set to before me..
+            continue;
+        }
+        if spaces[s_i].size > max_size {
+            max_size = spaces[s_i].size
+        }
+        for size in (0..=spaces[s_i].size as usize).rev() {
+            if best_spaces[size] < s_i {
+                break;
+            }
+            best_spaces[size] = s_i;
+        }
+        if max_size >= prev_space_size {
+            return;
+        }
+    }
+}
+
 #[aoc(day9, part2)]
 pub fn part2(input: &str) -> u64 {
     let input = input.as_bytes();
@@ -129,6 +194,7 @@ pub fn part2(input: &str) -> u64 {
     let mut c_i: usize = 0;
     chunks[c_i].size = convert_byte(input[i]);
     i += 1;
+
     while i < max_i {
         spaces[c_i].offset = chunks[c_i].offset + chunks[c_i].size;
         spaces[c_i].size = convert_byte(input[i]);
@@ -141,16 +207,24 @@ pub fn part2(input: &str) -> u64 {
     }
     let c_i = c_i;
 
+    let mut best_spaces = set_best_spaces(c_i, &spaces);
+
     let mut total = 0;
     for i in (1..=c_i).rev() {
-        for s_i in 0..=i {
+        let s_i = best_spaces[chunks[i].size as usize];
+        if s_i < c_i && spaces[s_i].offset < chunks[i].offset {
             if spaces[s_i].size < chunks[i].size {
-                continue;
+                unreachable!();
             }
+
+            // let prev_space_size = spaces[s_i].size;
             chunks[i].offset = spaces[s_i].offset;
+
             spaces[s_i].size -= chunks[i].size;
             spaces[s_i].offset += chunks[i].size;
-            break;
+
+            best_spaces = set_best_spaces(c_i, &spaces);
+            // reset_best_spaces(c_i, &spaces, &mut best_spaces, s_i, prev_space_size);
         }
 
         total += contiguous_chunk_sum(i as u64, chunks[i].size, chunks[i].offset);
