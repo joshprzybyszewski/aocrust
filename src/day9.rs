@@ -153,14 +153,18 @@ fn reset_best_spaces(
     prev_s_i: usize,
     prev_space_size: u64,
 ) {
-    for s_i in 0..best_spaces.len() {
-        if best_spaces[s_i] == prev_s_i {
-            best_spaces[s_i] = 10_001;
+    let mut min_invalidated: usize = spaces.len();
+    for size in (spaces[prev_s_i].size + 1) as usize..=prev_space_size as usize {
+        if best_spaces[size] == prev_s_i {
+            if best_spaces[size] < min_invalidated {
+                min_invalidated = best_spaces[size]
+            }
+            best_spaces[size] = spaces.len();
         }
     }
 
     let mut max_size = 0;
-    for s_i in 0..c_i {
+    for s_i in min_invalidated..c_i {
         if best_spaces[spaces[s_i].size as usize] < s_i {
             // already set.
             continue;
@@ -221,7 +225,6 @@ pub fn part2(input: &str) -> u64 {
             spaces[s_i].size -= chunks[i].size;
             spaces[s_i].offset += chunks[i].size;
 
-            // best_spaces = set_best_spaces(c_i, &spaces);
             reset_best_spaces(c_i, &spaces, &mut best_spaces, s_i, prev_space_size);
         }
 
