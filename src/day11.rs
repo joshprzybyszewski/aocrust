@@ -1,5 +1,29 @@
 use std::collections::HashMap;
 
+// u64 only supports 20 digit numbers.
+const TEN_POWERS: [u64; 20] = [
+    1,
+    10,
+    100,
+    1000,
+    10000,
+    100000,
+    1000000,
+    10000000,
+    100000000,
+    1000000000,
+    10000000000,
+    100000000000,
+    1000000000000,
+    10000000000000,
+    100000000000000,
+    1000000000000000,
+    10000000000000000,
+    100000000000000000,
+    1000000000000000000,
+    10000000000000000000,
+];
+
 const MAX_ITERATION: usize = 76;
 
 fn get_stones(input: &str) -> Vec<u64> {
@@ -62,18 +86,37 @@ impl StoneChanger {
         if val == 0 {
             return self.iterate(1, num_blinks - 1);
         }
-        let s: String = val.to_string();
-        if s.len() % 2 == 0 {
-            // TODO replace pow.
-            let tens = 10u64.pow(s.len() as u32 / 2);
-            let left = val / tens;
-            let right = val % tens;
-            let left_answer = self.iterate(left, num_blinks - 1);
-            let right_answer = self.iterate(right, num_blinks - 1);
-            return left_answer + right_answer;
+
+        let mut ten_i = 0;
+        loop {
+            if val < TEN_POWERS[ten_i + 1] && val >= TEN_POWERS[ten_i] {
+                // between
+                // [   1 ->   10 )
+                // [ 100 -> 1000 )
+                // ...
+                return self.get(val * 2024, num_blinks - 1);
+            }
+            ten_i += 1;
+            if val < TEN_POWERS[ten_i + 1] && val >= TEN_POWERS[ten_i] {
+                // between:
+                // [   10 ->   100 )
+                // [ 1000 -> 10000 )
+                // ...
+                break;
+            }
+            ten_i += 1;
+
+            if ten_i >= TEN_POWERS.len() {
+                unreachable!();
+            }
         }
 
-        return self.get(val * 2024, num_blinks - 1);
+        let div = TEN_POWERS[(ten_i + 1) / 2];
+        let left = val / div;
+        let right = val % div;
+        let left_answer = self.iterate(left, num_blinks - 1);
+        let right_answer = self.iterate(right, num_blinks - 1);
+        return left_answer + right_answer;
     }
 }
 
