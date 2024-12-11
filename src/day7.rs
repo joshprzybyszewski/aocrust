@@ -1,3 +1,6 @@
+// See https://docs.rs/tokio/latest/tokio/index.html#feature-flags
+use tokio::runtime::Runtime;
+
 const MAX_LINE_LEN: usize = 13;
 const POWERS_OF_TEN: [u64; MAX_LINE_LEN] = [
     1, // the zero'th element will never be queried
@@ -15,8 +18,11 @@ const POWERS_OF_TEN: [u64; MAX_LINE_LEN] = [
     1000000000000,
 ];
 
-fn check1(target: u64, line: &[u64; MAX_LINE_LEN]) -> bool {
-    return check1_inner(target, line, line[0], 1);
+async fn check1(target: u64, line: [u64; MAX_LINE_LEN]) -> u64 {
+    if check1_inner(target, &line, line[0], 1) {
+        return target;
+    }
+    return 0;
 }
 
 fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize) -> bool {
@@ -45,61 +51,73 @@ fn check1_inner(target: u64, line: &[u64; MAX_LINE_LEN], cur: u64, index: usize)
 
 #[aoc(day7, part1)]
 pub fn part1(input: &str) -> u64 {
-    let input = input.as_bytes();
-    let mut i: usize = 0;
-    let mut sum: u64 = 0;
+    let rt = Runtime::new().unwrap();
+    let mut total = 0;
+    rt.block_on(async {
+        let input = input.as_bytes();
+        let mut i: usize = 0;
+        let mut tasks = tokio::task::JoinSet::new();
 
-    while i < input.len() {
-        let mut target: u64 = 0;
-        // yes, I know simd can do this way faster
-        while input[i] != b':' {
-            // end char is the ":" for the first elem.
-            // b':'  = 58
-            target *= 10;
-            target += (input[i] - b'0') as u64;
-            i += 1;
-        }
-
-        let target: u64 = target;
-
-        // skip past ": "
-        i += 2;
-
-        let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
-        let mut l_i = 0;
-
-        loop {
-            // ending char is a space or a newline.
-            // b'\n' = 10
-            // b' '  = 32
-            // b'0'  = 48
-            // we only expect digits in this loop
-            while input[i] >= b'0' {
-                line[l_i] *= 10;
-                line[l_i] += (input[i] - b'0') as u64;
+        while i < input.len() {
+            let mut target: u64 = 0;
+            // yes, I know simd can do this way faster
+            while input[i] != b':' {
+                // end char is the ":" for the first elem.
+                // b':'  = 58
+                target *= 10;
+                target += (input[i] - b'0') as u64;
                 i += 1;
             }
-            l_i += 1;
 
-            if input[i] == b'\n' {
-                // skip past the newline
+            let target: u64 = target;
+
+            // skip past ": "
+            i += 2;
+
+            let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
+            let mut l_i = 0;
+
+            loop {
+                // ending char is a space or a newline.
+                // b'\n' = 10
+                // b' '  = 32
+                // b'0'  = 48
+                // we only expect digits in this loop
+                while input[i] >= b'0' {
+                    line[l_i] *= 10;
+                    line[l_i] += (input[i] - b'0') as u64;
+                    i += 1;
+                }
+                l_i += 1;
+
+                if input[i] == b'\n' {
+                    // skip past the newline
+                    i += 1;
+                    break;
+                }
                 i += 1;
-                break;
             }
-            i += 1;
+
+            let line: [u64; MAX_LINE_LEN] = line;
+            tasks.spawn(check1(target, line));
         }
 
-        // TODO do this asynchronously
-        if check1(target, &line) {
-            sum += target;
+        while let Some(res) = tasks.join_next().await {
+            total += res.unwrap();
         }
-    }
+    });
 
-    return sum;
+    return total;
 }
 
-fn check2(target: u64, line: &[u64; MAX_LINE_LEN], digits: &[usize; MAX_LINE_LEN]) -> bool {
-    return check2_inner(target, line, digits, line[0], 1);
+async fn check2(target: u64, line: [u64; MAX_LINE_LEN], digits: [usize; MAX_LINE_LEN]) -> u64 {
+    if check1_inner(target, &line, line[0], 1) {
+        return target;
+    }
+    if check2_inner(target, &line, &digits, line[0], 1) {
+        return target;
+    }
+    return 0;
 }
 
 fn check2_inner(
@@ -146,58 +164,65 @@ fn check2_inner(
 
 #[aoc(day7, part2)]
 pub fn part2(input: &str) -> u64 {
-    let input = input.as_bytes();
-    let mut i: usize = 0;
-    let mut sum: u64 = 0;
+    let rt = Runtime::new().unwrap();
+    let mut total = 0;
+    rt.block_on(async {
+        let input = input.as_bytes();
+        let mut i: usize = 0;
+        let mut tasks = tokio::task::JoinSet::new();
 
-    while i < input.len() {
-        let mut target: u64 = 0;
-        // yes, I know simd can do this way faster
-        while input[i] != b':' {
-            // end char is the ":" for the first elem.
-            // b':'  = 58
-            target *= 10;
-            target += (input[i] - b'0') as u64;
-            i += 1;
-        }
-
-        let target: u64 = target;
-
-        // skip past ": "
-        i += 2;
-
-        // ending char is a space or a newline.
-        // b'\n' = 10
-        // b' '  = 32
-        // b'0'  = 48
-        // we only expect digits in this loop
-        let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
-        let mut digits: [usize; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
-        let mut l_i = 0;
-        loop {
-            while input[i] >= b'0' {
-                digits[l_i] += 1;
-                line[l_i] *= 10;
-                line[l_i] += (input[i] - b'0') as u64;
+        while i < input.len() {
+            let mut target: u64 = 0;
+            // yes, I know simd can do this way faster
+            while input[i] != b':' {
+                // end char is the ":" for the first elem.
+                // b':'  = 58
+                target *= 10;
+                target += (input[i] - b'0') as u64;
                 i += 1;
             }
-            l_i += 1;
 
-            if input[i] == b'\n' {
-                i += 1; // skip the newline.
+            let target: u64 = target;
 
-                break;
+            // skip past ": "
+            i += 2;
+
+            // ending char is a space or a newline.
+            // b'\n' = 10
+            // b' '  = 32
+            // b'0'  = 48
+            // we only expect digits in this loop
+            let mut line: [u64; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
+            let mut digits: [usize; MAX_LINE_LEN] = [0; MAX_LINE_LEN];
+            let mut l_i = 0;
+            loop {
+                while input[i] >= b'0' {
+                    digits[l_i] += 1;
+                    line[l_i] *= 10;
+                    line[l_i] += (input[i] - b'0') as u64;
+                    i += 1;
+                }
+                l_i += 1;
+
+                if input[i] == b'\n' {
+                    i += 1; // skip the newline.
+
+                    break;
+                }
+                i += 1; // skip the space.
             }
-            i += 1; // skip the space.
+
+            let line: [u64; MAX_LINE_LEN] = line;
+            let digits: [usize; MAX_LINE_LEN] = digits;
+            tasks.spawn(check2(target, line, digits));
         }
 
-        if check1(target, &line) || check2(target, &line, &digits) {
-            sum += target;
+        while let Some(res) = tasks.join_next().await {
+            total += res.unwrap();
         }
-    }
+    });
 
-    // 625_178_056_831_523 is too low = 625178056831523
-    return sum;
+    return total;
 }
 
 #[cfg(test)]
