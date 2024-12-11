@@ -154,6 +154,7 @@ pub fn part1(input: &str) -> u64 {
     let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] =
         [[CanReach { reaches: [0; 8] }; GRID_SIZE]; GRID_SIZE];
 
+    let mut seen: [u64; GRID_SIZE] = [0; GRID_SIZE];
     let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
     for nine_id in 0..nines.len() {
         let nine = nines[nine_id];
@@ -163,6 +164,10 @@ pub fn part1(input: &str) -> u64 {
 
     while !queue.is_empty() {
         let coord = queue.pop_front().unwrap();
+        if seen[coord.row] & 1 << coord.col != 0 {
+            continue;
+        }
+        seen[coord.row] |= 1 << coord.col;
 
         // Look up
         if coord.row > 0 {
