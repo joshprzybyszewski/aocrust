@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 // I think that the max number it can reach is _technically_ something like 10^4,
 // but because of the coordinate plane it's probably closer to 100. We can bump
 // that if we need to
@@ -79,7 +81,7 @@ fn build_input(
 }
 
 #[inline(always)]
-fn check_other(
+fn check_other_1(
     grid: [[u8; GRID_SIZE]; GRID_SIZE],
     coord: Coord,
     other: Coord,
@@ -114,7 +116,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row - 1,
                 col: coord.col,
             };
-            check_other(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
@@ -122,7 +124,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row,
                 col: coord.col + 1,
             };
-            check_other(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
@@ -130,7 +132,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row + 1,
                 col: coord.col,
             };
-            check_other(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
         }
         // look left
         if coord.col > 0 {
@@ -138,7 +140,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row,
                 col: coord.col - 1,
             };
-            check_other(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
         }
     }
 
@@ -150,9 +152,80 @@ pub fn part1(input: &str) -> u64 {
     return sum;
 }
 
+#[inline(always)]
+fn check_other_2(
+    grid: [[u8; GRID_SIZE]; GRID_SIZE],
+    coord: Coord,
+    other: Coord,
+    paths_to_nines: &mut [[u64; GRID_SIZE]; GRID_SIZE],
+    pending: &mut VecDeque<Coord>,
+) {
+    if grid[other.row][other.col] + 1 != grid[coord.row][coord.col] {
+        return;
+    }
+    paths_to_nines[other.row][other.col] += paths_to_nines[coord.row][coord.col];
+    pending.push_back(other);
+}
+
 #[aoc(day10, part2)]
 pub fn part2(input: &str) -> u64 {
-    return 0;
+    let (grid, zeros, nines) = build_input(input);
+
+    let mut seen: [[bool; GRID_SIZE]; GRID_SIZE] = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut paths_to_nines: [[u64; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
+    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
+    for nine in nines {
+        queue.push_front(nine);
+        paths_to_nines[nine.row][nine.col] = 1;
+    }
+
+    while !queue.is_empty() {
+        let coord = queue.pop_front().unwrap();
+        if seen[coord.row][coord.col] {
+            continue;
+        }
+        seen[coord.row][coord.col] = true;
+
+        // Look up
+        if coord.row > 0 {
+            let other = Coord {
+                row: coord.row - 1,
+                col: coord.col,
+            };
+            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+        }
+        // look right
+        if coord.col < GRID_SIZE - 1 {
+            let other = Coord {
+                row: coord.row,
+                col: coord.col + 1,
+            };
+            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+        }
+        // Look down
+        if coord.row < GRID_SIZE - 1 {
+            let other = Coord {
+                row: coord.row + 1,
+                col: coord.col,
+            };
+            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+        }
+        // look left
+        if coord.col > 0 {
+            let other = Coord {
+                row: coord.row,
+                col: coord.col - 1,
+            };
+            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+        }
+    }
+
+    let mut sum: u64 = 0;
+    for coord in zeros {
+        sum += paths_to_nines[coord.row][coord.col];
+    }
+
+    return sum;
 }
 
 #[cfg(test)]
@@ -188,6 +261,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 1816)
     }
 }
