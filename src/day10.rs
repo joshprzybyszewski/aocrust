@@ -1,10 +1,5 @@
 use std::collections::VecDeque;
 
-// I think that the max number it can reach is _technically_ something like 10^4,
-// but because of the coordinate plane it's probably closer to 100. We can bump
-// that if we need to
-const MAX_REACHABLE: usize = 100;
-
 const GRID_SIZE: usize = 57;
 // const GRID_SIZE: usize = 8;
 const DIGIT_SPACE_IN_GRID: usize = GRID_SIZE * GRID_SIZE / 10 + 8;
@@ -56,30 +51,44 @@ fn convert_byte(a: u8) -> u8 {
 
 #[derive(Copy, Clone)]
 struct CanReach {
-    reaches: [usize; MAX_REACHABLE],
-    index: usize,
+    // handles at most 8 * 64 = 512 squares that are the number 9 in a puzzle input.
+    reaches: [u64; 8],
 }
 
 impl CanReach {
     #[inline(always)]
     fn add_nine(&mut self, nine_id: usize) {
-        for i in 0..self.index {
-            if self.reaches[i] == nine_id {
-                return;
-            }
-        }
-        self.reaches[self.index] = nine_id;
-        self.index += 1;
+        let i = nine_id / 64;
+        let b: u64 = 1 << (nine_id % 64);
+        self.reaches[i] |= b;
     }
 
     #[inline(always)]
     fn add_all(&mut self, other: CanReach) -> bool {
-        // TODO find a way to make this faster, probably.
-        let prev = self.index;
-        for i in 0..other.index {
-            self.add_nine(other.reaches[i]);
+        let mut changed = false;
+        for i in 0..self.reaches.len() {
+            if self.reaches[i] & other.reaches[i] != other.reaches[i] {
+                // something new is added
+                changed = true;
+                self.reaches[i] |= other.reaches[i];
+            }
         }
-        return prev != self.index;
+        return changed;
+    }
+
+    #[inline(always)]
+    fn num_reaches(&mut self) -> u64 {
+        let mut total = 0;
+        let mut b: u64 = 1;
+        for _ in 0..64 {
+            for i in 0..self.reaches.len() {
+                if self.reaches[i] & b == b {
+                    total += 1;
+                }
+            }
+            b <<= 1;
+        }
+        return total;
     }
 }
 
@@ -138,10 +147,8 @@ fn check_other_1(
 pub fn part1(input: &str) -> u64 {
     let (grid, zeros, nines) = build_input(input);
 
-    let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] = [[CanReach {
-        reaches: [0; MAX_REACHABLE],
-        index: 0,
-    }; GRID_SIZE]; GRID_SIZE];
+    let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] =
+        [[CanReach { reaches: [0; 8] }; GRID_SIZE]; GRID_SIZE];
 
     let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
     for nine_id in 0..nines.len() {
@@ -173,7 +180,7 @@ pub fn part1(input: &str) -> u64 {
 
     let mut sum: u64 = 0;
     for coord in zeros {
-        sum += can_reach[coord.row][coord.col].index as u64;
+        sum += can_reach[coord.row][coord.col].num_reaches();
     }
 
     return sum;
