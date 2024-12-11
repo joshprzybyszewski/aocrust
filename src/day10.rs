@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-const GRID_SIZE: usize = 57;
+const MAX_GRID_SIZE: usize = 64;
 // const GRID_SIZE: usize = 8;
-const DIGIT_SPACE_IN_GRID: usize = GRID_SIZE * GRID_SIZE / 10 + 8;
+// const DIGIT_SPACE_IN_GRID: usize = MAX_GRID_SIZE * MAX_GRID_SIZE / 10 + 8;
 
 #[derive(Copy, Clone)]
 struct Coord {
@@ -94,20 +94,40 @@ impl CanReach {
 fn build_input(
     input: &str,
 ) -> (
-    [[u8; GRID_SIZE]; GRID_SIZE],
+    [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE],
+    usize,
     Vec<Coord>, // zeros
     Vec<Coord>, // nines
 ) {
     let input = input.as_bytes();
-    let mut grid: [[u8; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE] = [[0; MAX_GRID_SIZE]; MAX_GRID_SIZE];
 
     let mut i: usize = 0;
 
-    let mut zeros: Vec<Coord> = Vec::with_capacity(DIGIT_SPACE_IN_GRID);
-    let mut nines: Vec<Coord> = Vec::with_capacity(DIGIT_SPACE_IN_GRID);
+    let mut zeros: Vec<Coord> = Vec::with_capacity(512);
+    let mut nines: Vec<Coord> = Vec::with_capacity(512);
+    let mut grid_size: usize = 64;
 
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
+    for c in 0..MAX_GRID_SIZE {
+        // for c in 0..GRID_SIZE {
+        if input[i] == b'\n' {
+            grid_size = c;
+            break;
+        }
+        grid[0][c] = convert_byte(input[i]);
+        i += 1;
+
+        if grid[0][c] == 9 {
+            nines.push(Coord { row: 0, col: c });
+        }
+        if grid[0][c] == 0 {
+            zeros.push(Coord { row: 0, col: c });
+        }
+    }
+    i += 1; // input[i] is a newline
+
+    for r in 1..grid_size {
+        for c in 0..grid_size {
             grid[r][c] = convert_byte(input[i]);
             i += 1;
 
@@ -121,18 +141,18 @@ fn build_input(
         i += 1; // input[i] is a newline
     }
 
-    return (grid, zeros, nines);
+    return (grid, grid_size, zeros, nines);
 }
 
 #[aoc(day10, part1)]
 pub fn part1(input: &str) -> u64 {
-    let (grid, zeros, nines) = build_input(input);
+    let (grid, grid_size, zeros, nines) = build_input(input);
 
-    let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] =
-        [[CanReach { reaches: [0; 8] }; GRID_SIZE]; GRID_SIZE];
+    let mut can_reach: [[CanReach; MAX_GRID_SIZE]; MAX_GRID_SIZE] =
+        [[CanReach { reaches: [0; 8] }; MAX_GRID_SIZE]; MAX_GRID_SIZE];
 
-    let mut seen: [u64; GRID_SIZE] = [0; GRID_SIZE];
-    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
+    let mut seen: [u64; MAX_GRID_SIZE] = [0; MAX_GRID_SIZE];
+    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(grid_size * grid_size);
     for nine_id in 0..nines.len() {
         let nine = nines[nine_id];
         queue.push_front(nine);
@@ -155,7 +175,7 @@ pub fn part1(input: &str) -> u64 {
             }
         }
         // look right
-        if coord.col < GRID_SIZE - 1 {
+        if coord.col < grid_size - 1 {
             let other = coord.right();
             if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
                 can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
@@ -163,7 +183,7 @@ pub fn part1(input: &str) -> u64 {
             }
         }
         // Look down
-        if coord.row < GRID_SIZE - 1 {
+        if coord.row < grid_size - 1 {
             let other = coord.down();
             if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
                 can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
@@ -190,11 +210,12 @@ pub fn part1(input: &str) -> u64 {
 
 #[aoc(day10, part2)]
 pub fn part2(input: &str) -> u64 {
-    let (grid, zeros, nines) = build_input(input);
+    let (grid, grid_size, zeros, nines) = build_input(input);
 
-    let mut seen: [u64; GRID_SIZE] = [0; GRID_SIZE];
-    let mut paths_to_nines: [[u64; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
-    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
+    let mut seen: [u64; MAX_GRID_SIZE] = [0; MAX_GRID_SIZE];
+    let mut paths_to_nines: [[u64; MAX_GRID_SIZE]; MAX_GRID_SIZE] =
+        [[0; MAX_GRID_SIZE]; MAX_GRID_SIZE];
+    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(grid_size * grid_size);
     for nine in nines {
         queue.push_front(nine);
         paths_to_nines[nine.row][nine.col] = 1;
@@ -216,7 +237,7 @@ pub fn part2(input: &str) -> u64 {
             }
         }
         // look right
-        if coord.col < GRID_SIZE - 1 {
+        if coord.col < grid_size - 1 {
             let other = coord.right();
             if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
                 paths_to_nines[other.row][other.col] += paths_to_nines[coord.row][coord.col];
@@ -224,7 +245,7 @@ pub fn part2(input: &str) -> u64 {
             }
         }
         // Look down
-        if coord.row < GRID_SIZE - 1 {
+        if coord.row < grid_size - 1 {
             let other = coord.down();
             if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
                 paths_to_nines[other.row][other.col] += paths_to_nines[coord.row][coord.col];
