@@ -87,9 +87,9 @@ impl StoneChanger {
             return self.iterate(1, num_blinks - 1);
         }
 
-        let mut ten_i = 0;
+        let mut ten_i = 1;
         loop {
-            if val < TEN_POWERS[ten_i + 1] && val >= TEN_POWERS[ten_i] {
+            if val < TEN_POWERS[ten_i] {
                 // between
                 // [   1 ->   10 )
                 // [ 100 -> 1000 )
@@ -97,7 +97,7 @@ impl StoneChanger {
                 return self.get(val * 2024, num_blinks - 1);
             }
             ten_i += 1;
-            if val < TEN_POWERS[ten_i + 1] && val >= TEN_POWERS[ten_i] {
+            if val < TEN_POWERS[ten_i] {
                 // between:
                 // [   10 ->   100 )
                 // [ 1000 -> 10000 )
@@ -111,7 +111,7 @@ impl StoneChanger {
             }
         }
 
-        let div = TEN_POWERS[(ten_i + 1) / 2];
+        let div = TEN_POWERS[ten_i / 2];
         let left = val / div;
         let right = val % div;
         let left_answer = self.iterate(left, num_blinks - 1);
