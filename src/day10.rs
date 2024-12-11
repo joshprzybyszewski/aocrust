@@ -68,16 +68,10 @@ impl CanReach {
     }
 
     #[inline(always)]
-    fn add_all(&mut self, other: CanReach) -> bool {
-        let mut changed = false;
+    fn add_all(&mut self, other: CanReach) {
         for i in 0..self.reaches.len() {
-            if self.reaches[i] & other.reaches[i] != other.reaches[i] {
-                // something new is added
-                changed = true;
-                self.reaches[i] |= other.reaches[i];
-            }
+            self.reaches[i] |= other.reaches[i];
         }
-        return changed;
     }
 
     #[inline(always)]
@@ -155,36 +149,32 @@ pub fn part1(input: &str) -> u64 {
         // Look up
         if coord.row > 0 {
             let other = coord.up();
-            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
-                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
-            {
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
+                can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
                 queue.push_back(other);
             }
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
             let other = coord.right();
-            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
-                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
-            {
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
+                can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
                 queue.push_back(other);
             }
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
             let other = coord.down();
-            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
-                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
-            {
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
+                can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
                 queue.push_back(other);
             }
         }
         // look left
         if coord.col > 0 {
             let other = coord.left();
-            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
-                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
-            {
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
+                can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
                 queue.push_back(other);
             }
         }
