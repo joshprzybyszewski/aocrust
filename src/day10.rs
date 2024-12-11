@@ -171,7 +171,7 @@ fn check_other_2(
 pub fn part2(input: &str) -> u64 {
     let (grid, zeros, nines) = build_input(input);
 
-    let mut seen: [[bool; GRID_SIZE]; GRID_SIZE] = [[false; GRID_SIZE]; GRID_SIZE];
+    let mut seen: [u64; GRID_SIZE] = [0; GRID_SIZE];
     let mut paths_to_nines: [[u64; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
     let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
     for nine in nines {
@@ -181,10 +181,10 @@ pub fn part2(input: &str) -> u64 {
 
     while !queue.is_empty() {
         let coord = queue.pop_front().unwrap();
-        if seen[coord.row][coord.col] {
+        if seen[coord.row] & 1 << coord.col != 0 {
             continue;
         }
-        seen[coord.row][coord.col] = true;
+        seen[coord.row] |= 1 << coord.col;
 
         // Look up
         if coord.row > 0 {
