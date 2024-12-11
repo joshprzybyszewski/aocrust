@@ -7,6 +7,7 @@ const MAX_REACHABLE: usize = 100;
 
 const GRID_SIZE: usize = 57;
 // const GRID_SIZE: usize = 8;
+const DIGIT_SPACE_IN_GRID: usize = GRID_SIZE * GRID_SIZE / 10 + 8;
 
 #[derive(Copy, Clone)]
 struct Coord {
@@ -95,8 +96,8 @@ fn build_input(
 
     let mut i: usize = 0;
 
-    let mut zeros: Vec<Coord> = Vec::with_capacity(330);
-    let mut nines: Vec<Coord> = Vec::with_capacity(330);
+    let mut zeros: Vec<Coord> = Vec::with_capacity(DIGIT_SPACE_IN_GRID);
+    let mut nines: Vec<Coord> = Vec::with_capacity(DIGIT_SPACE_IN_GRID);
 
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
