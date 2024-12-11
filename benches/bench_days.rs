@@ -14,7 +14,7 @@ macro_rules! get_day_input {
 macro_rules! benches_day {
     ($day_num:literal) => {
         paste! {
-            use aocrust::[<day $day_num>]; // Replace `aoc24` with your crate name
+            use aocrust::[<day $day_num>];
 
             pub fn [<bench_day $day_num>](c: &mut Criterion) {
                 let mut group = c.benchmark_group(concat!("day", $day_num));
