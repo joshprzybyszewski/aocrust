@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-const MAX_ITERATION: usize = 75;
+const MAX_ITERATION: usize = 76;
 
 fn get_stones(input: &str) -> Vec<u64> {
     let mut stones: Vec<u64> = Vec::with_capacity(16);
@@ -22,45 +22,58 @@ fn get_stones(input: &str) -> Vec<u64> {
     return stones;
 }
 
-#[derive(Copy, Clone)]
-struct Input {
-    val: u64,
-    num_blinks: u32,
-}
-
 struct StoneChanger {
-    cache: HashMap<Input, usize>,
+    cache: HashMap<u64, [usize; MAX_ITERATION]>,
 }
 
 impl StoneChanger {
-    fn iterate(&self, input: Input) -> usize {
-        if input.num_blinks == 0 {
+    fn iterate(&mut self, val: u64, num_blinks: usize) -> usize {
+        if !self.cache.contains_key(&val) {
+            let mut progress: [usize; MAX_ITERATION] = [0; MAX_ITERATION];
+            self.populate(val, &mut progress, num_blinks);
+            self.cache.insert(val, progress);
+            return progress[num_blinks];
+        }
+        let progress: &[usize; MAX_ITERATION] = self.cache.get(&val).unwrap();
+        if progress[num_blinks] == 0 {
+            // it wasn't populated far enough out.
+            let mut progress: [usize; MAX_ITERATION] = [0; MAX_ITERATION];
+            self.populate(val, &mut progress, num_blinks);
+            self.cache.insert(val, progress);
+            return progress[num_blinks];
+        }
+        return progress[num_blinks];
+    }
+
+    fn populate(&mut self, initial: u64, progress: &mut [usize; MAX_ITERATION], needs: usize) {
+        progress[0] = 1;
+        for i in 1..=needs {
+            if progress[i] != 0 {
+                continue;
+            }
+            progress[i] = self.get(initial, i);
+        }
+    }
+
+    fn get(&mut self, val: u64, num_blinks: usize) -> usize {
+        if num_blinks == 0 {
             return 1;
         }
-        if input.val == 0 {
-            return self.iterate(Input {
-                val: 1,
-                num_blinks: input.num_blinks - 1,
-            });
+        if val == 0 {
+            return self.iterate(1, num_blinks - 1);
         }
-        let s: String = input.val.to_string();
+        let s: String = val.to_string();
         if s.len() % 2 == 0 {
+            // TODO replace pow.
             let tens = 10u64.pow(s.len() as u32 / 2);
-            let left = input.val / tens;
-            let right = input.val % tens;
-            return self.iterate(Input {
-                val: left,
-                num_blinks: input.num_blinks - 1,
-            }) + self.iterate(Input {
-                val: right,
-                num_blinks: input.num_blinks - 1,
-            });
+            let left = val / tens;
+            let right = val % tens;
+            let left_answer = self.iterate(left, num_blinks - 1);
+            let right_answer = self.iterate(right, num_blinks - 1);
+            return left_answer + right_answer;
         }
 
-        return self.iterate(Input {
-            val: input.val * 2024,
-            num_blinks: input.num_blinks - 1,
-        });
+        return self.get(val * 2024, num_blinks - 1);
     }
 }
 
@@ -69,19 +82,16 @@ pub fn part1(input: &str) -> usize {
     return get_stones_after_blinks(input, 25);
 }
 
-fn get_stones_after_blinks(input: &str, num_blinks: u32) -> usize {
+fn get_stones_after_blinks(input: &str, num_blinks: usize) -> usize {
     let mut stones = get_stones(input);
     stones.sort();
 
-    let changer: StoneChanger = StoneChanger {
+    let mut changer: StoneChanger = StoneChanger {
         cache: HashMap::with_capacity(256),
     };
     let mut sum = 0;
     for stone in stones {
-        sum += changer.iterate(Input {
-            val: stone,
-            num_blinks: num_blinks,
-        });
+        sum += changer.iterate(stone, num_blinks);
     }
     return sum;
 }
@@ -110,17 +120,12 @@ mod test {
     }
 
     #[test]
-    fn part2_example() {
-        assert_eq!(part2(""), 0);
-    }
-
-    #[test]
     fn part1_real_input() {
         assert_eq!(part1(&get_input()), 183435)
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 218279375708592)
     }
 }
