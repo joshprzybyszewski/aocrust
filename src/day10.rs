@@ -138,13 +138,11 @@ fn check_other_1(
     can_reach: &mut [[CanReach; GRID_SIZE]; GRID_SIZE],
     pending: &mut VecDeque<Coord>,
 ) {
-    if grid[other.row][other.col] + 1 != grid[coord.row][coord.col] {
-        return;
+    if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
+        && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
+    {
+        pending.push_back(other);
     }
-    if !can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]) {
-        return;
-    }
-    pending.push_back(other);
 }
 
 #[aoc(day10, part1)]
@@ -171,19 +169,23 @@ pub fn part1(input: &str) -> u64 {
 
         // Look up
         if coord.row > 0 {
-            check_other_1(&grid, coord, coord.up(), &mut can_reach, &mut queue);
+            let other = coord.up();
+            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
-            check_other_1(&grid, coord, coord.right(), &mut can_reach, &mut queue);
+            let other = coord.right();
+            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
-            check_other_1(&grid, coord, coord.down(), &mut can_reach, &mut queue);
+            let other = coord.down();
+            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
         }
         // look left
         if coord.col > 0 {
-            check_other_1(&grid, coord, coord.left(), &mut can_reach, &mut queue);
+            let other = coord.left();
+            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
         }
     }
 
