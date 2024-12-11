@@ -72,11 +72,13 @@ impl CanReach {
     }
 
     #[inline(always)]
-    fn add_all(&mut self, other: CanReach) {
+    fn add_all(&mut self, other: CanReach) -> bool {
         // TODO find a way to make this faster, probably.
+        let prev = self.index;
         for i in 0..other.index {
             self.add_nine(other.reaches[i]);
         }
+        return prev != self.index;
     }
 }
 
@@ -125,7 +127,9 @@ fn check_other_1(
     if grid[other.row][other.col] + 1 != grid[coord.row][coord.col] {
         return;
     }
-    can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
+    if !can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]) {
+        return;
+    }
     pending.push_back(other);
 }
 
