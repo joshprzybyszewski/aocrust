@@ -130,21 +130,6 @@ fn build_input(
     return (grid, zeros, nines);
 }
 
-#[inline(always)]
-fn check_other_1(
-    grid: &[[u8; GRID_SIZE]; GRID_SIZE],
-    coord: Coord,
-    other: Coord,
-    can_reach: &mut [[CanReach; GRID_SIZE]; GRID_SIZE],
-    pending: &mut VecDeque<Coord>,
-) {
-    if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
-        && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
-    {
-        pending.push_back(other);
-    }
-}
-
 #[aoc(day10, part1)]
 pub fn part1(input: &str) -> u64 {
     let (grid, zeros, nines) = build_input(input);
@@ -170,22 +155,38 @@ pub fn part1(input: &str) -> u64 {
         // Look up
         if coord.row > 0 {
             let other = coord.up();
-            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
+                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
+            {
+                queue.push_back(other);
+            }
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
             let other = coord.right();
-            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
+                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
+            {
+                queue.push_back(other);
+            }
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
             let other = coord.down();
-            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
+                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
+            {
+                queue.push_back(other);
+            }
         }
         // look left
         if coord.col > 0 {
             let other = coord.left();
-            check_other_1(&grid, coord, other, &mut can_reach, &mut queue);
+            if grid[other.row][other.col] + 1 == grid[coord.row][coord.col]
+                && can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col])
+            {
+                queue.push_back(other);
+            }
         }
     }
 
