@@ -14,6 +14,40 @@ struct Coord {
     col: usize,
 }
 
+impl Coord {
+    #[inline(always)]
+    fn up(&self) -> Coord {
+        return Coord {
+            row: self.row - 1,
+            col: self.col,
+        };
+    }
+
+    #[inline(always)]
+    fn right(&self) -> Coord {
+        return Coord {
+            row: self.row,
+            col: self.col + 1,
+        };
+    }
+
+    #[inline(always)]
+    fn down(&self) -> Coord {
+        return Coord {
+            row: self.row + 1,
+            col: self.col,
+        };
+    }
+
+    #[inline(always)]
+    fn left(&self) -> Coord {
+        return Coord {
+            row: self.row,
+            col: self.col - 1,
+        };
+    }
+}
+
 #[inline(always)]
 fn convert_byte(a: u8) -> u8 {
     return (a - b'0') as u8;
@@ -116,35 +150,19 @@ pub fn part1(input: &str) -> u64 {
 
         // Look up
         if coord.row > 0 {
-            let other = Coord {
-                row: coord.row - 1,
-                col: coord.col,
-            };
-            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
+            check_other_1(grid, coord, coord.up(), &mut can_reach, &mut queue);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
-            let other = Coord {
-                row: coord.row,
-                col: coord.col + 1,
-            };
-            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
+            check_other_1(grid, coord, coord.right(), &mut can_reach, &mut queue);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
-            let other = Coord {
-                row: coord.row + 1,
-                col: coord.col,
-            };
-            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
+            check_other_1(grid, coord, coord.down(), &mut can_reach, &mut queue);
         }
         // look left
         if coord.col > 0 {
-            let other = Coord {
-                row: coord.row,
-                col: coord.col - 1,
-            };
-            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
+            check_other_1(grid, coord, coord.left(), &mut can_reach, &mut queue);
         }
     }
 
@@ -192,35 +210,19 @@ pub fn part2(input: &str) -> u64 {
 
         // Look up
         if coord.row > 0 {
-            let other = Coord {
-                row: coord.row - 1,
-                col: coord.col,
-            };
-            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+            check_other_2(grid, coord, coord.up(), &mut paths_to_nines, &mut queue);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
-            let other = Coord {
-                row: coord.row,
-                col: coord.col + 1,
-            };
-            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+            check_other_2(grid, coord, coord.right(), &mut paths_to_nines, &mut queue);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
-            let other = Coord {
-                row: coord.row + 1,
-                col: coord.col,
-            };
-            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+            check_other_2(grid, coord, coord.down(), &mut paths_to_nines, &mut queue);
         }
         // look left
         if coord.col > 0 {
-            let other = Coord {
-                row: coord.row,
-                col: coord.col - 1,
-            };
-            check_other_2(grid, coord, other, &mut paths_to_nines, &mut queue);
+            check_other_2(grid, coord, coord.left(), &mut paths_to_nines, &mut queue);
         }
     }
 
