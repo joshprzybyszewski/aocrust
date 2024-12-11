@@ -196,11 +196,10 @@ fn check_other_2(
     paths_to_nines: &mut [[u64; GRID_SIZE]; GRID_SIZE],
     pending: &mut VecDeque<Coord>,
 ) {
-    if grid[other.row][other.col] + 1 != grid[coord.row][coord.col] {
-        return;
+    if grid[other.row][other.col] + 1 == grid[coord.row][coord.col] {
+        paths_to_nines[other.row][other.col] += paths_to_nines[coord.row][coord.col];
+        pending.push_back(other);
     }
-    paths_to_nines[other.row][other.col] += paths_to_nines[coord.row][coord.col];
-    pending.push_back(other);
 }
 
 #[aoc(day10, part2)]
@@ -224,19 +223,23 @@ pub fn part2(input: &str) -> u64 {
 
         // Look up
         if coord.row > 0 {
-            check_other_2(&grid, coord, coord.up(), &mut paths_to_nines, &mut queue);
+            let other = coord.up();
+            check_other_2(&grid, coord, other, &mut paths_to_nines, &mut queue);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
-            check_other_2(&grid, coord, coord.right(), &mut paths_to_nines, &mut queue);
+            let other = coord.right();
+            check_other_2(&grid, coord, other, &mut paths_to_nines, &mut queue);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
-            check_other_2(&grid, coord, coord.down(), &mut paths_to_nines, &mut queue);
+            let other = coord.down();
+            check_other_2(&grid, coord, other, &mut paths_to_nines, &mut queue);
         }
         // look left
         if coord.col > 0 {
-            check_other_2(&grid, coord, coord.left(), &mut paths_to_nines, &mut queue);
+            let other = coord.left();
+            check_other_2(&grid, coord, other, &mut paths_to_nines, &mut queue);
         }
     }
 
