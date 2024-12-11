@@ -58,7 +58,11 @@ struct CanReach {
 impl CanReach {
     #[inline(always)]
     fn add_nine(&mut self, nine_id: usize) {
+        // same as nine_id / 64
+        // let i = nine_id >> 6;
         let i = nine_id / 64;
+        // same as 1 << (nine_id % 64)
+        // let b: u64 = 1 << (nine_id & 0x3F);
         let b: u64 = 1 << (nine_id % 64);
         self.reaches[i] |= b;
     }
