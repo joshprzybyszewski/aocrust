@@ -52,15 +52,15 @@ fn build_input(
 ) -> (
     [[u8; GRID_SIZE]; GRID_SIZE],
     Vec<Coord>, // zeros
-    Vec<Coord>, // pending
+    Vec<Coord>, // nines
 ) {
     let input = input.as_bytes();
     let mut grid: [[u8; GRID_SIZE]; GRID_SIZE] = [[0; GRID_SIZE]; GRID_SIZE];
 
     let mut i: usize = 0;
 
-    let mut zeros: Vec<Coord> = Vec::with_capacity(512);
-    let mut nines: Vec<Coord> = Vec::with_capacity(GRID_SIZE * GRID_SIZE);
+    let mut zeros: Vec<Coord> = Vec::with_capacity(330);
+    let mut nines: Vec<Coord> = Vec::with_capacity(330);
 
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
@@ -86,29 +86,33 @@ fn check_other_1(
     coord: Coord,
     other: Coord,
     can_reach: &mut [[CanReach; GRID_SIZE]; GRID_SIZE],
-    pending: &mut Vec<Coord>,
+    pending: &mut VecDeque<Coord>,
 ) {
     if grid[other.row][other.col] + 1 != grid[coord.row][coord.col] {
         return;
     }
     can_reach[other.row][other.col].add_all(can_reach[coord.row][coord.col]);
-    pending.push(other);
+    pending.push_back(other);
 }
 
 #[aoc(day10, part1)]
 pub fn part1(input: &str) -> u64 {
-    let (grid, zeros, mut pending) = build_input(input);
+    let (grid, zeros, nines) = build_input(input);
 
     let mut can_reach: [[CanReach; GRID_SIZE]; GRID_SIZE] = [[CanReach {
         reaches: [0; MAX_REACHABLE],
         index: 0,
     }; GRID_SIZE]; GRID_SIZE];
-    for nine_id in 0..pending.len() {
-        can_reach[pending[nine_id].row][pending[nine_id].col].add_nine(nine_id);
+
+    let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE * GRID_SIZE);
+    for nine_id in 0..nines.len() {
+        let nine = nines[nine_id];
+        queue.push_front(nine);
+        can_reach[nine.row][nine.col].add_nine(nine_id);
     }
 
-    while !pending.is_empty() {
-        let coord = pending.pop().unwrap();
+    while !queue.is_empty() {
+        let coord = queue.pop_front().unwrap();
 
         // Look up
         if coord.row > 0 {
@@ -116,7 +120,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row - 1,
                 col: coord.col,
             };
-            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
         }
         // look right
         if coord.col < GRID_SIZE - 1 {
@@ -124,7 +128,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row,
                 col: coord.col + 1,
             };
-            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
         }
         // Look down
         if coord.row < GRID_SIZE - 1 {
@@ -132,7 +136,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row + 1,
                 col: coord.col,
             };
-            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
         }
         // look left
         if coord.col > 0 {
@@ -140,7 +144,7 @@ pub fn part1(input: &str) -> u64 {
                 row: coord.row,
                 col: coord.col - 1,
             };
-            check_other_1(grid, coord, other, &mut can_reach, &mut pending);
+            check_other_1(grid, coord, other, &mut can_reach, &mut queue);
         }
     }
 
