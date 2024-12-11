@@ -40,4 +40,5 @@ macro_rules! benches {
     };
 }
 
+// Be sure to remember to change codspeed.yml too
 benches!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10); // Add more days here
