@@ -83,6 +83,13 @@ impl StoneChanger {
         if num_blinks == 0 {
             return 1;
         }
+        if self.cache.contains_key(&val) {
+            let progress: &[usize; MAX_ITERATION] = self.cache.get(&val).unwrap();
+            if progress[num_blinks] != 0 {
+                return progress[num_blinks];
+            }
+        }
+
         if val == 0 {
             return self.iterate(1, num_blinks - 1);
         }
@@ -106,9 +113,9 @@ impl StoneChanger {
             }
             ten_i += 1;
 
-            if ten_i >= TEN_POWERS.len() {
-                unreachable!();
-            }
+            // if ten_i >= TEN_POWERS.len() {
+            //     unreachable!();
+            // }
         }
 
         let div = TEN_POWERS[ten_i / 2];
