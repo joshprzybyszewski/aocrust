@@ -24,6 +24,8 @@ const TEN_POWERS: [u64; 20] = [
     10000000000000000000,
 ];
 
+const MAX_FUTURE_CACHE: usize = 1500;
+const MAX_FUTURE_CACHE_U64: u64 = MAX_FUTURE_CACHE as u64;
 const MAX_ITERATION: usize = 76;
 
 fn get_stones(input: &str) -> Vec<u64> {
@@ -46,52 +48,89 @@ fn get_stones(input: &str) -> Vec<u64> {
     return stones;
 }
 
+#[derive(Copy, Clone)]
+struct NextSplit {
+    num_blinks: usize,
+    left: u64,
+    right: u64,
+}
+
+impl NextSplit {
+    fn new(num_blinks: usize, left: u64, right: u64) -> Self {
+        NextSplit {
+            num_blinks: num_blinks,
+            left: left,
+            right: right,
+        }
+    }
+
+    fn one_farther(&self) -> NextSplit {
+        NextSplit {
+            num_blinks: self.num_blinks + 1,
+            left: self.left,
+            right: self.right,
+        }
+    }
+}
+
 struct StoneChanger {
-    cache: HashMap<u64, [usize; MAX_ITERATION]>,
+    cache: HashMap<u64, NextSplit>,
+
+    future: [[usize; MAX_ITERATION]; MAX_FUTURE_CACHE],
 }
 
 impl StoneChanger {
-    fn iterate(&mut self, val: u64, num_blinks: usize) -> usize {
-        if !self.cache.contains_key(&val) {
-            let mut progress: [usize; MAX_ITERATION] = [0; MAX_ITERATION];
-            self.populate(val, &mut progress, num_blinks);
-            self.cache.insert(val, progress);
-            return progress[num_blinks];
+    fn new() -> Self {
+        StoneChanger {
+            cache: HashMap::with_capacity(256),
+            future: [[0; MAX_ITERATION]; MAX_FUTURE_CACHE],
         }
-        let progress: &[usize; MAX_ITERATION] = self.cache.get(&val).unwrap();
-        if progress[num_blinks] == 0 {
-            // it wasn't populated far enough out.
-            let mut progress: [usize; MAX_ITERATION] = [0; MAX_ITERATION];
-            self.populate(val, &mut progress, num_blinks);
-            self.cache.insert(val, progress);
-            return progress[num_blinks];
-        }
-        return progress[num_blinks];
     }
 
-    fn populate(&mut self, initial: u64, progress: &mut [usize; MAX_ITERATION], needs: usize) {
-        progress[0] = 1;
-        for i in 1..=needs {
-            if progress[i] != 0 {
-                continue;
+    fn get_stones_after_blinks(&mut self, val: u64, num_blinks: usize) -> usize {
+        return self.iterate(val, num_blinks);
+    }
+
+    fn iterate(&mut self, val: u64, remaining: usize) -> usize {
+        if val < MAX_FUTURE_CACHE_U64 && self.future[val as usize][remaining] != 0 {
+            return self.future[val as usize][remaining];
+        }
+
+        if remaining == 0 {
+            if val < MAX_FUTURE_CACHE_U64 {
+                self.future[val as usize][remaining] = 1;
             }
-            progress[i] = self.get(initial, i);
-        }
-    }
-
-    fn get(&mut self, val: u64, num_blinks: usize) -> usize {
-        if num_blinks == 0 {
             return 1;
         }
-        if self.cache.contains_key(&val) {
-            let progress: &[usize; MAX_ITERATION] = self.cache.get(&val).unwrap();
-            if progress[num_blinks] != 0 {
-                return progress[num_blinks];
+
+        let split = self.get_next_split(val);
+        if val < MAX_FUTURE_CACHE_U64 {
+            for i in 0..split.num_blinks {
+                self.future[val as usize][i] = 1;
             }
+        }
+        if split.num_blinks > remaining {
+            return 1;
+        }
+
+        let steps = remaining - split.num_blinks;
+        let answer = self.iterate(split.left, steps) + self.iterate(split.right, steps);
+        if val < MAX_FUTURE_CACHE_U64 {
+            self.future[val as usize][remaining] = answer;
+        }
+        return answer;
+    }
+
+    fn get_next_split(&mut self, val: u64) -> NextSplit {
+        if self.cache.contains_key(&val) {
+            return *self.cache.get(&val).unwrap();
         }
 
         if val == 0 {
-            return self.iterate(1, num_blinks - 1);
+            let next = self.get_next_split(1);
+            let mine = next.one_farther();
+            self.cache.insert(val, mine);
+            return mine;
         }
 
         let mut ten_i = 1;
@@ -101,7 +140,10 @@ impl StoneChanger {
                 // [   1 ->   10 )
                 // [ 100 -> 1000 )
                 // ...
-                return self.get(val * 2024, num_blinks - 1);
+                let next = self.get_next_split(val * 2024);
+                let mine = next.one_farther();
+                self.cache.insert(val, mine);
+                return mine;
             }
             ten_i += 1;
             if val < TEN_POWERS[ten_i] {
@@ -113,17 +155,18 @@ impl StoneChanger {
             }
             ten_i += 1;
 
-            // if ten_i >= TEN_POWERS.len() {
-            //     unreachable!();
-            // }
+            if ten_i >= TEN_POWERS.len() {
+                unreachable!();
+            }
         }
 
         let div = TEN_POWERS[ten_i / 2];
         let left = val / div;
         let right = val % div;
-        let left_answer = self.iterate(left, num_blinks - 1);
-        let right_answer = self.iterate(right, num_blinks - 1);
-        return left_answer + right_answer;
+
+        let mine = NextSplit::new(1, left, right);
+        self.cache.insert(val, mine);
+        return mine;
     }
 }
 
@@ -136,12 +179,10 @@ fn get_stones_after_blinks(input: &str, num_blinks: usize) -> usize {
     let mut stones = get_stones(input);
     stones.sort();
 
-    let mut changer: StoneChanger = StoneChanger {
-        cache: HashMap::with_capacity(256),
-    };
+    let mut changer: StoneChanger = StoneChanger::new();
     let mut sum = 0;
     for stone in stones {
-        sum += changer.iterate(stone, num_blinks);
+        sum += changer.get_stones_after_blinks(stone, num_blinks);
     }
     return sum;
 }
