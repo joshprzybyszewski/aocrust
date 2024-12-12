@@ -16,24 +16,20 @@ const GRID_SIZE: usize = 140;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
+    top_left: Coord,
     area: u64,
     perimeter: u64,
 }
 impl Region {
-    fn new() -> Self {
+    fn new(top_left: Coord) -> Self {
         return Region {
+            top_left: top_left,
             area: 0,
             perimeter: 0,
         };
     }
 
-    fn cost(&self) -> u64 {
-        if self.area == 0 {
-            unreachable!();
-        }
-        if self.perimeter == 0 {
-            unreachable!();
-        }
+    fn cost_p1(&self) -> u64 {
         return self.area * self.perimeter;
     }
 }
@@ -80,7 +76,7 @@ impl Coord {
 
 struct Garden {
     grid: [[u8; GRID_SIZE + 2]; GRID_SIZE + 2],
-    seen: [[bool; GRID_SIZE + 2]; GRID_SIZE + 2],
+    seen: [[usize; GRID_SIZE + 2]; GRID_SIZE + 2],
 
     regions: Vec<Region>,
 }
@@ -112,7 +108,7 @@ impl Garden {
 
         return Garden {
             grid: grid,
-            seen: [[false; GRID_SIZE + 2]; GRID_SIZE + 2],
+            seen: [[0; GRID_SIZE + 2]; GRID_SIZE + 2],
             regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 10),
         };
     }
@@ -128,15 +124,46 @@ impl Garden {
         return None;
     }
 
-    fn is_seen(&self, coord: Coord) -> bool {
+    fn get_region_id(&self, coord: Coord) -> usize {
         return self.seen[coord.row][coord.col];
     }
-    fn see(&mut self, coord: Coord) {
-        self.seen[coord.row][coord.col] = true;
+
+    fn is_seen(&self, coord: Coord) -> bool {
+        return self.seen[coord.row][coord.col] != 0;
     }
 
-    fn cost(&self) -> u64 {
-        return self.regions.iter().map(|region| region.cost()).sum();
+    fn see(&mut self, coord: Coord, region_id: usize) {
+        self.seen[coord.row][coord.col] = region_id;
+    }
+
+    fn cost_p1(&self) -> u64 {
+        return self.regions.iter().map(|region| region.cost_p1()).sum();
+    }
+
+    fn cost_p2(&self) -> u64 {
+        return (0..self.regions.len())
+            .map(|region_id| self.cost_p2_region(region_id))
+            .sum();
+    }
+
+    fn cost_p2_region(&self, region_id: usize) -> u64 {
+        let region = self.regions[region_id];
+        let mut num_sides: u64 = 0;
+        let start = region.top_left;
+        let mut current = start;
+
+        // I know the fence is above me.
+        while self.get_region_id(current.right()) == region_id {
+            current = current.right();
+            if self.get_region_id(current.up()) == region_id {
+                // ope, the fence moves up!
+                break;
+            }
+        }
+        num_sides += 1;
+        // TODO continue checking for sides of the fence..
+
+        return num_sides * region.area;
     }
 
     fn fill_all_regions(&mut self) {
@@ -156,9 +183,11 @@ impl Garden {
         }
         // println!("processing {:?}", start.unwrap());
         let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE);
-        queue.push_front(start.unwrap());
+        let top_left = start.unwrap();
+        queue.push_front(top_left);
 
-        let mut region: Region = Region::new();
+        let mut region: Region = Region::new(top_left);
+        let region_id: usize = self.regions.len();
 
         loop {
             let coord = queue.pop_front();
@@ -175,7 +204,7 @@ impl Garden {
             if self.is_seen(coord) {
                 continue;
             }
-            self.see(coord);
+            self.see(coord, region_id);
             region.area += 1;
 
             // Look up
@@ -216,6 +245,7 @@ impl Garden {
                 "Bad region: {:?} at {:?} with {}",
                 region, coord, self.grid[coord.row][coord.col]
             );
+            unreachable!();
         }
 
         // println!(" has region {:?}", region);
@@ -228,12 +258,15 @@ pub fn part1(input: &str) -> u64 {
     let mut g = Garden::new(input);
     g.fill_all_regions();
 
-    return g.cost();
+    return g.cost_p1();
 }
 
 #[aoc(day12, part2)]
 pub fn part2(input: &str) -> u64 {
-    return 0;
+    let mut g = Garden::new(input);
+    g.fill_all_regions();
+
+    return g.cost_p2();
 }
 
 #[cfg(test)]
