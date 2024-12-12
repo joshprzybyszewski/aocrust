@@ -28,6 +28,12 @@ impl Region {
     }
 
     fn cost(&self) -> u64 {
+        if self.area == 0 {
+            unreachable!();
+        }
+        if self.perimeter == 0 {
+            unreachable!();
+        }
         return self.area * self.perimeter;
     }
 }
@@ -74,7 +80,7 @@ impl Coord {
 
 struct Garden {
     grid: [[u8; GRID_SIZE + 2]; GRID_SIZE + 2],
-    seen: [u64; GRID_SIZE + 2],
+    seen: [[bool; GRID_SIZE + 2]; GRID_SIZE + 2],
 
     regions: Vec<Region>,
 }
@@ -98,12 +104,15 @@ impl Garden {
                 grid[r][c] = convert_byte(input[i]);
                 i += 1;
             }
+            if i < input.len() && input[i] != b'\n' {
+                unreachable!();
+            }
             i += 1; // input[i] is a newline
         }
 
         return Garden {
             grid: grid,
-            seen: [0; GRID_SIZE + 2],
+            seen: [[false; GRID_SIZE + 2]; GRID_SIZE + 2],
             regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 10),
         };
     }
@@ -120,10 +129,10 @@ impl Garden {
     }
 
     fn is_seen(&self, coord: Coord) -> bool {
-        return self.seen[coord.row] & 1 << coord.col != 0;
+        return self.seen[coord.row][coord.col];
     }
     fn see(&mut self, coord: Coord) {
-        self.seen[coord.row] |= 1 << coord.col;
+        self.seen[coord.row][coord.col] = true;
     }
 
     fn cost(&self) -> u64 {
@@ -201,6 +210,13 @@ impl Garden {
                 region.perimeter += 1;
             }
         }
+        if region.area == 0 || region.perimeter == 0 {
+            let coord = start.unwrap();
+            println!(
+                "Bad region: {:?} at {:?} with {}",
+                region, coord, self.grid[coord.row][coord.col]
+            );
+        }
 
         // println!(" has region {:?}", region);
         return Some(region);
@@ -212,8 +228,6 @@ pub fn part1(input: &str) -> u64 {
     let mut g = Garden::new(input);
     g.fill_all_regions();
 
-    // 7940 is too low.
-    // 596941 is too low.
     return g.cost();
 }
 
@@ -281,7 +295,7 @@ MMMISSJEEE"
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0)
+        assert_eq!(part1(&get_input()), 1546338)
     }
 
     #[test]
