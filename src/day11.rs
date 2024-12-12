@@ -155,9 +155,9 @@ impl StoneChanger {
             }
             ten_i += 1;
 
-            if ten_i >= TEN_POWERS.len() {
-                unreachable!();
-            }
+            // if ten_i >= TEN_POWERS.len() {
+            //     unreachable!();
+            // }
         }
 
         let div = TEN_POWERS[ten_i / 2];
