@@ -12,9 +12,9 @@ fn convert_byte(val: u8) -> u8 {
 }
 
 const GRID_SIZE: usize = 140;
-const MAX_GRID_SIZE: usize = GRID_SIZE + 2;
+// const GRID_SIZE: usize = 10;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Region {
     area: u64,
     perimeter: u64,
@@ -73,8 +73,8 @@ impl Coord {
 }
 
 struct Garden {
-    grid: [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE],
-    seen: [u64; MAX_GRID_SIZE],
+    grid: [[u8; GRID_SIZE + 2]; GRID_SIZE + 2],
+    seen: [u64; GRID_SIZE + 2],
 
     regions: Vec<Region>,
 }
@@ -82,7 +82,7 @@ struct Garden {
 impl Garden {
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
-        let mut grid: [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE] = [[0; MAX_GRID_SIZE]; MAX_GRID_SIZE];
+        let mut grid: [[u8; GRID_SIZE + 2]; GRID_SIZE + 2] = [[0; GRID_SIZE + 2]; GRID_SIZE + 2];
         let mut i: usize = 0;
         for c in 1..GRID_SIZE + 1 {
             grid[1][c] = convert_byte(input[i]);
@@ -95,7 +95,6 @@ impl Garden {
 
         for r in 2..=GRID_SIZE {
             for c in 1..=GRID_SIZE {
-                println!("grid[{r}][{c}] = input[{i}] = {}", input[i]);
                 grid[r][c] = convert_byte(input[i]);
                 i += 1;
             }
@@ -104,7 +103,7 @@ impl Garden {
 
         return Garden {
             grid: grid,
-            seen: [0; MAX_GRID_SIZE],
+            seen: [0; GRID_SIZE + 2],
             regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 10),
         };
     }
@@ -146,7 +145,7 @@ impl Garden {
         if start.is_none() {
             return None;
         }
-        println!("processing {:?}", start.unwrap());
+        // println!("processing {:?}", start.unwrap());
         let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE);
         queue.push_front(start.unwrap());
 
@@ -159,15 +158,12 @@ impl Garden {
             }
 
             let coord = coord.unwrap();
-            // println!(" checking {:?}", coord);
             if coord.row == 0 || coord.col == 0 || coord.row > GRID_SIZE || coord.col > GRID_SIZE {
                 // out of bounds
-                // println!("  OOB");
                 continue;
             }
 
             if self.is_seen(coord) {
-                // println!("  seen");
                 continue;
             }
             self.see(coord);
@@ -176,9 +172,7 @@ impl Garden {
             // Look up
             let other = coord.up();
             if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
-                if !self.is_seen(coord) {
-                    queue.push_back(other);
-                }
+                queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -186,9 +180,7 @@ impl Garden {
             // look right
             let other = coord.right();
             if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
-                if !self.is_seen(coord) {
-                    queue.push_back(other);
-                }
+                queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -196,9 +188,7 @@ impl Garden {
             // Look down
             let other = coord.down();
             if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
-                if !self.is_seen(coord) {
-                    queue.push_back(other);
-                }
+                queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -206,14 +196,13 @@ impl Garden {
             // look left
             let other = coord.left();
             if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
-                if !self.is_seen(coord) {
-                    queue.push_back(other);
-                }
+                queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
         }
 
+        // println!(" has region {:?}", region);
         return Some(region);
     }
 }
@@ -224,6 +213,7 @@ pub fn part1(input: &str) -> u64 {
     g.fill_all_regions();
 
     // 7940 is too low.
+    // 596941 is too low.
     return g.cost();
 }
 
@@ -253,6 +243,39 @@ BBCC
 EEEC"
             ),
             140
+        );
+    }
+
+    #[test]
+    fn part1_example_5() {
+        assert_eq!(
+            part1(
+                "OOOOO
+OXOXO
+OOOOO
+OXOXO
+OOOOO"
+            ),
+            772
+        );
+    }
+
+    #[test]
+    fn part1_example_10() {
+        assert_eq!(
+            part1(
+                "RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE"
+            ),
+            1930
         );
     }
 
