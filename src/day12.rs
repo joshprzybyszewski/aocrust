@@ -3,6 +3,8 @@ const GRID_SIZE: usize = 140;
 // checkerboard. oof
 const MAX_REGIONS: usize = GRID_SIZE * GRID_SIZE;
 const UNSEEN: usize = MAX_REGIONS + 2;
+const OOB: usize = UNSEEN + 1;
+const OOB_SQUARE: u8 = b'A' - 1;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
@@ -146,9 +148,22 @@ impl Garden {
             i += 1; // input[i] is a newline
         }
 
+        let mut seen = [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2];
+        // The borders represent out of bounds
+        for x in 0..seen.len() {
+            seen[x][0] = OOB;
+            seen[x][seen.len() - 1] = OOB;
+            seen[0][x] = OOB;
+            seen[seen.len() - 1][x] = OOB;
+            grid[x][0] = OOB_SQUARE;
+            grid[x][grid.len() - 1] = OOB_SQUARE;
+            grid[0][x] = OOB_SQUARE;
+            grid[grid.len() - 1][x] = OOB_SQUARE;
+        }
+
         return Garden {
             grid: grid,
-            seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
+            seen: seen,
             regions: Vec::with_capacity(MAX_REGIONS),
             // queue: VecDeque::with_capacity(GRID_SIZE * GRID_SIZE),
         };
@@ -278,10 +293,6 @@ impl Garden {
 
     fn fill_region_dfs(&mut self, region: &mut Region, region_id: &usize, coord: Coord) {
         if self.is_seen(coord) {
-            return;
-        }
-        if coord.row == 0 || coord.col == 0 || coord.row > GRID_SIZE || coord.col > GRID_SIZE {
-            // out of bounds
             return;
         }
         self.see(coord, *region_id);
