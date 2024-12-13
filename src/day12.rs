@@ -121,6 +121,7 @@ struct Garden {
     seen: [[usize; GRID_SIZE + 2]; GRID_SIZE + 2],
 
     regions: Vec<Region>,
+    queue: VecDeque<Coord>,
 }
 
 // impl Index<Coord> for Garden {
@@ -159,6 +160,7 @@ impl Garden {
             grid: grid,
             seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
             regions: Vec::with_capacity(MAX_REGIONS),
+            queue: VecDeque::with_capacity(GRID_SIZE * GRID_SIZE),
         };
     }
 
@@ -275,15 +277,14 @@ impl Garden {
             return None;
         }
 
-        let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE);
         let top_left = start.unwrap();
-        queue.push_front(top_left);
+        self.queue.push_front(top_left);
 
         let mut region: Region = Region::new(top_left);
         let region_id: usize = self.regions.len();
 
         loop {
-            let coord = queue.pop_front();
+            let coord = self.queue.pop_front();
             if coord.is_none() {
                 break;
             }
@@ -305,7 +306,7 @@ impl Garden {
             // Look up
             let other = coord.up();
             if self.get_square(other) == mine {
-                queue.push_back(other);
+                self.queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -313,7 +314,7 @@ impl Garden {
             // look right
             let other = coord.right();
             if self.get_square(other) == mine {
-                queue.push_back(other);
+                self.queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -321,7 +322,7 @@ impl Garden {
             // Look down
             let other = coord.down();
             if self.get_square(other) == mine {
-                queue.push_back(other);
+                self.queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
@@ -329,7 +330,7 @@ impl Garden {
             // look left
             let other = coord.left();
             if self.get_square(other) == mine {
-                queue.push_back(other);
+                self.queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
