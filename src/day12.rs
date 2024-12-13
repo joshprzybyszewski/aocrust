@@ -2,6 +2,9 @@ use std::collections::VecDeque;
 
 #[inline(always)]
 fn convert_byte(val: u8) -> u8 {
+    // if val < b'A' {
+    //     unreachable!();
+    // }
     return val - b'A';
     // if val < b'A' {
     //     return val - b'0';
@@ -14,7 +17,7 @@ fn convert_byte(val: u8) -> u8 {
 
 const GRID_SIZE: usize = 140;
 // const GRID_SIZE: usize = 4;
-const UNSEEN: usize = GRID_SIZE * GRID_SIZE + 1;
+const UNSEEN: usize = (GRID_SIZE * GRID_SIZE) + 2;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
@@ -36,6 +39,12 @@ impl Region {
     }
 
     fn cost_p1(&self) -> u64 {
+        // if self.area == 0 {
+        //     unreachable!();
+        // }
+        // if self.perimeter == 0 {
+        //     unreachable!();
+        // }
         return self.area * self.perimeter;
     }
 
