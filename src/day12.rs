@@ -2,35 +2,42 @@ use std::collections::VecDeque;
 
 #[inline(always)]
 fn convert_byte(val: u8) -> u8 {
-    if val < b'A' {
-        return val - b'0';
-    }
-    if val < b'a' {
-        return val - b'A' + 10;
-    }
-    return val - b'a' + 36;
+    return val - b'A';
+    // if val < b'A' {
+    //     return val - b'0';
+    // }
+    // if val < b'a' {
+    //     return val - b'A' + 10;
+    // }
+    // return val - b'a' + 36;
 }
 
 const GRID_SIZE: usize = 140;
-// const GRID_SIZE: usize = 10;
+// const GRID_SIZE: usize = 4;
+const UNSEEN: usize = GRID_SIZE * GRID_SIZE + 1;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
-    top_left: Coord,
     area: u64,
     perimeter: u64,
+    num_corners: u64,
 }
+
 impl Region {
-    fn new(top_left: Coord) -> Self {
+    fn new() -> Self {
         return Region {
-            top_left: top_left,
             area: 0,
             perimeter: 0,
+            num_corners: 0,
         };
     }
 
     fn cost_p1(&self) -> u64 {
         return self.area * self.perimeter;
+    }
+
+    fn cost_p2(&self) -> u64 {
+        return self.area * self.num_corners;
     }
 }
 
@@ -41,11 +48,31 @@ struct Coord {
 }
 
 impl Coord {
+    fn new(r: usize, c: usize) -> Self {
+        return Coord { row: r, col: c };
+    }
+
     #[inline(always)]
     fn up(&self) -> Coord {
         return Coord {
             row: self.row - 1,
             col: self.col,
+        };
+    }
+
+    #[inline(always)]
+    fn up_right(&self) -> Coord {
+        return Coord {
+            row: self.row - 1,
+            col: self.col + 1,
+        };
+    }
+
+    #[inline(always)]
+    fn up_left(&self) -> Coord {
+        return Coord {
+            row: self.row - 1,
+            col: self.col - 1,
         };
     }
 
@@ -66,6 +93,22 @@ impl Coord {
     }
 
     #[inline(always)]
+    fn down_right(&self) -> Coord {
+        return Coord {
+            row: self.row + 1,
+            col: self.col + 1,
+        };
+    }
+
+    #[inline(always)]
+    fn down_left(&self) -> Coord {
+        return Coord {
+            row: self.row + 1,
+            col: self.col - 1,
+        };
+    }
+
+    #[inline(always)]
     fn left(&self) -> Coord {
         return Coord {
             row: self.row,
@@ -80,6 +123,13 @@ struct Garden {
 
     regions: Vec<Region>,
 }
+
+// impl Index<Coord> for Garden {
+//     type Output = u8;
+//     fn index<'a>(&'a self, coord: Coord) -> &'a u8 {
+//         return &self.grid[coord.row][coord.col];
+//     }
+// }
 
 impl Garden {
     fn new(input: &str) -> Self {
@@ -108,7 +158,7 @@ impl Garden {
 
         return Garden {
             grid: grid,
-            seen: [[0; GRID_SIZE + 2]; GRID_SIZE + 2],
+            seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
             regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 10),
         };
     }
@@ -124,12 +174,61 @@ impl Garden {
         return None;
     }
 
+    fn get_square(&self, coord: Coord) -> u8 {
+        return self.grid[coord.row][coord.col];
+    }
+
     fn get_region_id(&self, coord: Coord) -> usize {
         return self.seen[coord.row][coord.col];
     }
 
+    fn num_corners(&self, coord: Coord) -> u64 {
+        let region_id = self.get_region_id(coord);
+        let region_id_right = self.get_region_id(coord.right());
+        let region_id_left = self.get_region_id(coord.left());
+
+        let mut corners = 0;
+        if region_id == self.get_region_id(coord.up()) {
+            if region_id == region_id_right && region_id != self.get_region_id(coord.up_right()) {
+                // up and right, not diagonally though.
+                corners += 1;
+            }
+            if region_id == region_id_left && region_id != self.get_region_id(coord.up_left()) {
+                // up and left, not diagonally though.
+                corners += 1;
+            }
+        } else {
+            // not up
+            if region_id != region_id_right {
+                corners += 1;
+            }
+            if region_id != region_id_left {
+                corners += 1;
+            }
+        }
+
+        if region_id == self.get_region_id(coord.down()) {
+            if region_id == region_id_right && region_id != self.get_region_id(coord.down_right()) {
+                corners += 1;
+            }
+            if region_id == region_id_left && region_id != self.get_region_id(coord.down_left()) {
+                corners += 1;
+            }
+        } else {
+            // not down
+            if region_id != region_id_right {
+                corners += 1;
+            }
+            if region_id != region_id_left {
+                corners += 1;
+            }
+        }
+
+        return corners;
+    }
+
     fn is_seen(&self, coord: Coord) -> bool {
-        return self.seen[coord.row][coord.col] != 0;
+        return self.seen[coord.row][coord.col] != UNSEEN;
     }
 
     fn see(&mut self, coord: Coord, region_id: usize) {
@@ -140,30 +239,15 @@ impl Garden {
         return self.regions.iter().map(|region| region.cost_p1()).sum();
     }
 
-    fn cost_p2(&self) -> u64 {
-        return (0..self.regions.len())
-            .map(|region_id| self.cost_p2_region(region_id))
-            .sum();
-    }
-
-    fn cost_p2_region(&self, region_id: usize) -> u64 {
-        let region = self.regions[region_id];
-        let mut num_sides: u64 = 0;
-        let start = region.top_left;
-        let mut current = start;
-
-        // I know the fence is above me.
-        while self.get_region_id(current.right()) == region_id {
-            current = current.right();
-            if self.get_region_id(current.up()) == region_id {
-                // ope, the fence moves up!
-                break;
+    fn cost_p2(&mut self) -> u64 {
+        for r in 1..=GRID_SIZE {
+            for c in 1..=GRID_SIZE {
+                let coord = Coord::new(r, c);
+                let region_id = self.get_region_id(coord);
+                self.regions[region_id].num_corners += self.num_corners(coord);
             }
         }
-        num_sides += 1;
-        // TODO continue checking for sides of the fence..
-
-        return num_sides * region.area;
+        return self.regions.iter().map(|region| region.cost_p2()).sum();
     }
 
     fn fill_all_regions(&mut self) {
@@ -181,12 +265,12 @@ impl Garden {
         if start.is_none() {
             return None;
         }
-        // println!("processing {:?}", start.unwrap());
+
         let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE);
         let top_left = start.unwrap();
         queue.push_front(top_left);
 
-        let mut region: Region = Region::new(top_left);
+        let mut region: Region = Region::new();
         let region_id: usize = self.regions.len();
 
         loop {
@@ -209,7 +293,7 @@ impl Garden {
 
             // Look up
             let other = coord.up();
-            if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
+            if self.get_square(other) == self.get_square(coord) {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -217,7 +301,7 @@ impl Garden {
 
             // look right
             let other = coord.right();
-            if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
+            if self.get_square(other) == self.get_square(coord) {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -225,7 +309,7 @@ impl Garden {
 
             // Look down
             let other = coord.down();
-            if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
+            if self.get_square(other) == self.get_square(coord) {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -233,22 +317,22 @@ impl Garden {
 
             // look left
             let other = coord.left();
-            if self.grid[other.row][other.col] == self.grid[coord.row][coord.col] {
+            if self.get_square(other) == self.get_square(coord) {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
             }
         }
-        if region.area == 0 || region.perimeter == 0 {
-            let coord = start.unwrap();
-            println!(
-                "Bad region: {:?} at {:?} with {}",
-                region, coord, self.grid[coord.row][coord.col]
-            );
-            unreachable!();
-        }
 
-        // println!(" has region {:?}", region);
+        // if region.area == 0 || region.perimeter == 0 {
+        //     let coord = start.unwrap();
+        //     println!(
+        //         "Bad region: {:?} at {:?} with {}",
+        //         region, coord, self.grid[coord.row][coord.col]
+        //     );
+        //     unreachable!();
+        // }
+
         return Some(region);
     }
 }
@@ -332,7 +416,20 @@ MMMISSJEEE"
     }
 
     #[test]
+    fn part2_four() {
+        assert_eq!(
+            part2(
+                "AAAA
+BBCD
+BBCC
+EEEC"
+            ),
+            80
+        );
+    }
+
+    #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 978590)
     }
 }
