@@ -18,14 +18,17 @@ const UNSEEN: usize = GRID_SIZE * GRID_SIZE + 1;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
+    top_left: Coord,
+
     area: u64,
     perimeter: u64,
     num_corners: u64,
 }
 
 impl Region {
-    fn new() -> Self {
+    fn new(top_left: Coord) -> Self {
         return Region {
+            top_left,
             area: 0,
             perimeter: 0,
             num_corners: 0,
@@ -140,9 +143,9 @@ impl Garden {
             grid[1][c] = convert_byte(input[i]);
             i += 1;
         }
-        if input[i] != b'\n' {
-            unreachable!();
-        }
+        // if input[i] != b'\n' {
+        //     unreachable!();
+        // }
         i += 1; // input[i] is a newline
 
         for r in 2..=GRID_SIZE {
@@ -150,27 +153,37 @@ impl Garden {
                 grid[r][c] = convert_byte(input[i]);
                 i += 1;
             }
-            if i < input.len() && input[i] != b'\n' {
-                unreachable!();
-            }
+            // if i < input.len() && input[i] != b'\n' {
+            //     unreachable!();
+            // }
             i += 1; // input[i] is a newline
         }
 
         return Garden {
             grid: grid,
             seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
-            regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 10),
+            regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 26),
         };
     }
 
     fn next_unseen(&self) -> Option<Coord> {
-        for r in 1..=GRID_SIZE {
-            for c in 1..=GRID_SIZE {
-                if !self.is_seen(Coord { row: r, col: c }) {
-                    return Some(Coord { row: r, col: c });
-                }
-            }
+        if self.regions.is_empty() {
+            return Some(Coord::new(1, 1));
         }
+
+        let mut coord = self.regions[self.regions.len() - 1].top_left;
+        coord.col += 1;
+        while coord.row <= GRID_SIZE {
+            while coord.col <= GRID_SIZE {
+                if !self.is_seen(coord) {
+                    return Some(coord);
+                }
+                coord.col += 1;
+            }
+            coord.row += 1;
+            coord.col = 1;
+        }
+
         return None;
     }
 
@@ -270,7 +283,7 @@ impl Garden {
         let top_left = start.unwrap();
         queue.push_front(top_left);
 
-        let mut region: Region = Region::new();
+        let mut region: Region = Region::new(top_left);
         let region_id: usize = self.regions.len();
 
         loop {
