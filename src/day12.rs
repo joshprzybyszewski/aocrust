@@ -1,23 +1,10 @@
 use std::collections::VecDeque;
 
-#[inline(always)]
-fn convert_byte(val: u8) -> u8 {
-    // if val < b'A' {
-    //     unreachable!();
-    // }
-    return val - b'A';
-    // if val < b'A' {
-    //     return val - b'0';
-    // }
-    // if val < b'a' {
-    //     return val - b'A' + 10;
-    // }
-    // return val - b'a' + 36;
-}
-
 const GRID_SIZE: usize = 140;
 // const GRID_SIZE: usize = 4;
-const UNSEEN: usize = (GRID_SIZE * GRID_SIZE) + 2;
+// checkerboard. oof
+const MAX_REGIONS: usize = GRID_SIZE * GRID_SIZE;
+const UNSEEN: usize = MAX_REGIONS + 2;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
@@ -149,7 +136,7 @@ impl Garden {
         let mut grid: [[u8; GRID_SIZE + 2]; GRID_SIZE + 2] = [[0; GRID_SIZE + 2]; GRID_SIZE + 2];
         let mut i: usize = 0;
         for c in 1..GRID_SIZE + 1 {
-            grid[1][c] = convert_byte(input[i]);
+            grid[1][c] = input[i];
             i += 1;
         }
         // if input[i] != b'\n' {
@@ -159,7 +146,7 @@ impl Garden {
 
         for r in 2..=GRID_SIZE {
             for c in 1..=GRID_SIZE {
-                grid[r][c] = convert_byte(input[i]);
+                grid[r][c] = input[i];
                 i += 1;
             }
             // if i < input.len() && input[i] != b'\n' {
@@ -171,7 +158,7 @@ impl Garden {
         return Garden {
             grid: grid,
             seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
-            regions: Vec::with_capacity(GRID_SIZE * GRID_SIZE / 26),
+            regions: Vec::with_capacity(MAX_REGIONS),
         };
     }
 
@@ -313,9 +300,11 @@ impl Garden {
             self.see(coord, region_id);
             region.area += 1;
 
+            let mine = self.get_square(coord);
+
             // Look up
             let other = coord.up();
-            if self.get_square(other) == self.get_square(coord) {
+            if self.get_square(other) == mine {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -323,7 +312,7 @@ impl Garden {
 
             // look right
             let other = coord.right();
-            if self.get_square(other) == self.get_square(coord) {
+            if self.get_square(other) == mine {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -331,7 +320,7 @@ impl Garden {
 
             // Look down
             let other = coord.down();
-            if self.get_square(other) == self.get_square(coord) {
+            if self.get_square(other) == mine {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
@@ -339,7 +328,7 @@ impl Garden {
 
             // look left
             let other = coord.left();
-            if self.get_square(other) == self.get_square(coord) {
+            if self.get_square(other) == mine {
                 queue.push_back(other);
             } else {
                 region.perimeter += 1;
