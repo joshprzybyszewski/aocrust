@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 const GRID_SIZE: usize = 140;
 // const GRID_SIZE: usize = 4;
 // checkerboard. oof
@@ -121,15 +119,7 @@ struct Garden {
     seen: [[usize; GRID_SIZE + 2]; GRID_SIZE + 2],
 
     regions: Vec<Region>,
-    queue: VecDeque<Coord>,
 }
-
-// impl Index<Coord> for Garden {
-//     type Output = u8;
-//     fn index<'a>(&'a self, coord: Coord) -> &'a u8 {
-//         return &self.grid[coord.row][coord.col];
-//     }
-// }
 
 impl Garden {
     fn new(input: &str) -> Self {
@@ -160,7 +150,7 @@ impl Garden {
             grid: grid,
             seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
             regions: Vec::with_capacity(MAX_REGIONS),
-            queue: VecDeque::with_capacity(GRID_SIZE * GRID_SIZE),
+            // queue: VecDeque::with_capacity(GRID_SIZE * GRID_SIZE),
         };
     }
 
@@ -278,74 +268,58 @@ impl Garden {
         }
 
         let top_left = start.unwrap();
-        self.queue.push_front(top_left);
-
         let mut region: Region = Region::new(top_left);
         let region_id: usize = self.regions.len();
 
-        loop {
-            let coord = self.queue.pop_front();
-            if coord.is_none() {
-                break;
-            }
-
-            let coord = coord.unwrap();
-            if coord.row == 0 || coord.col == 0 || coord.row > GRID_SIZE || coord.col > GRID_SIZE {
-                // out of bounds
-                continue;
-            }
-
-            if self.is_seen(coord) {
-                continue;
-            }
-            self.see(coord, region_id);
-            region.area += 1;
-
-            let mine = self.get_square(coord);
-
-            // Look up
-            let other = coord.up();
-            if self.get_square(other) == mine {
-                self.queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // look right
-            let other = coord.right();
-            if self.get_square(other) == mine {
-                self.queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // Look down
-            let other = coord.down();
-            if self.get_square(other) == mine {
-                self.queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // look left
-            let other = coord.left();
-            if self.get_square(other) == mine {
-                self.queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-        }
-
-        // if region.area == 0 || region.perimeter == 0 {
-        //     let coord = start.unwrap();
-        //     println!(
-        //         "Bad region: {:?} at {:?} with {}",
-        //         region, coord, self.grid[coord.row][coord.col]
-        //     );
-        //     unreachable!();
-        // }
+        self.fill_region_dfs(&mut region, &region_id, top_left);
 
         return Some(region);
+    }
+
+    fn fill_region_dfs(&mut self, region: &mut Region, region_id: &usize, coord: Coord) {
+        if self.is_seen(coord) {
+            return;
+        }
+        if coord.row == 0 || coord.col == 0 || coord.row > GRID_SIZE || coord.col > GRID_SIZE {
+            // out of bounds
+            return;
+        }
+        self.see(coord, *region_id);
+        region.area += 1;
+
+        let mine = self.get_square(coord);
+
+        // Look up
+        let other = coord.up();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // look right
+        let other = coord.right();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // Look down
+        let other = coord.down();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // look left
+        let other = coord.left();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
     }
 }
 
