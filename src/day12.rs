@@ -303,6 +303,14 @@ impl Garden {
 
         let mine = self.get_square(coord);
 
+        // look left
+        let other = coord.left();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
         // Look up
         let other = coord.up();
         if self.get_square(other) == mine {
@@ -321,14 +329,6 @@ impl Garden {
 
         // Look down
         let other = coord.down();
-        if self.get_square(other) == mine {
-            self.fill_region_dfs(region, region_id, other);
-        } else {
-            region.perimeter += 1;
-        }
-
-        // look left
-        let other = coord.left();
         if self.get_square(other) == mine {
             self.fill_region_dfs(region, region_id, other);
         } else {
