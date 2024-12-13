@@ -256,12 +256,15 @@ impl Garden {
     }
 
     fn cost_p2(&mut self) -> u64 {
-        for r in 1..=GRID_SIZE {
-            for c in 1..=GRID_SIZE {
-                let coord = Coord::new(r, c);
+        let mut coord = Coord::new(1, 1);
+        while coord.row <= GRID_SIZE {
+            while coord.col <= GRID_SIZE {
                 let region_id = self.get_region_id(coord);
                 self.regions[region_id].num_corners += self.num_corners(coord);
+                coord.col += 1;
             }
+            coord.col = 1;
+            coord.row += 1;
         }
         return self.regions.iter().map(|region| region.cost_p2()).sum();
     }
