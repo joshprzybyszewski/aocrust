@@ -1,13 +1,5 @@
 use std::cmp::Ordering;
 
-const UPPER_RIGHT: usize = 0;
-const UPPER_LEFT: usize = 1;
-const LOWER_LEFT: usize = 2;
-const LOWER_RIGHT: usize = 3;
-const X_AXIS: usize = 4;
-const Y_AXIS: usize = 5;
-const CENTER: usize = 6;
-
 #[derive(Copy, Clone, Debug)]
 struct Robot {
     x: i32,
@@ -113,37 +105,6 @@ impl Robot {
         return robot;
     }
 
-    fn quadrant<const STEPS: i32, const WIDTH: i32, const HEIGHT: i32>(&self) -> usize {
-        let mut x = (self.x + (self.v_x * STEPS)) % WIDTH;
-        let mut y = (self.y + (self.v_y * STEPS)) % HEIGHT;
-        if x < 0 {
-            x += WIDTH;
-        }
-        if y < 0 {
-            y += HEIGHT;
-        }
-        if x == WIDTH / 2 {
-            if y == HEIGHT / 2 {
-                return CENTER;
-            }
-            return X_AXIS;
-        }
-        if y == HEIGHT / 2 {
-            return Y_AXIS;
-        }
-        let is_left = x < WIDTH / 2;
-        if y < HEIGHT / 2 {
-            if is_left {
-                return UPPER_LEFT;
-            }
-            return UPPER_RIGHT;
-        }
-        if is_left {
-            return LOWER_LEFT;
-        }
-        return LOWER_RIGHT;
-    }
-
     fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
         // if cur_time == self.time {
         //     unreachable!();
@@ -177,18 +138,103 @@ fn get_robots(input: &str) -> Vec<Robot> {
 
 #[aoc(day14, part1)]
 pub fn part1(input: &str) -> u32 {
-    let robots = get_robots(input);
-    let quadrants = robots
-        .iter()
-        .map(|robot| robot.quadrant::<100, 101, 103>())
-        .fold([0u32; 7], |mut acc, q| {
-            acc[q] += 1;
-            return acc;
-        });
-    return quadrants[UPPER_RIGHT]
-        * quadrants[UPPER_LEFT]
-        * quadrants[LOWER_LEFT]
-        * quadrants[LOWER_RIGHT];
+    let input = input.as_bytes();
+
+    let mut i = 0;
+    let mut ur = 0u32;
+    let mut ul = 0u32;
+    let mut ll = 0u32;
+    let mut lr = 0u32;
+
+    while i < input.len() {
+        let mut x = 0i32;
+        let mut y = 0i32;
+        let mut v_x = 0i32;
+        let mut v_y = 0i32;
+
+        i += 2;
+        x += (input[i] - b'0') as i32;
+        i += 1;
+        while input[i] != b',' {
+            x *= 10;
+            x += (input[i] - b'0') as i32;
+            i += 1;
+        }
+
+        i += 1;
+
+        y += (input[i] - b'0') as i32;
+        i += 1;
+        while input[i] != b' ' {
+            y *= 10;
+            y += (input[i] - b'0') as i32;
+            i += 1;
+        }
+
+        i += 3;
+        let is_neg = input[i] == b'-';
+        if is_neg {
+            i += 1;
+        }
+        v_x += (input[i] - b'0') as i32;
+        i += 1;
+        while input[i] != b',' {
+            v_x *= 10;
+            v_x += (input[i] - b'0') as i32;
+            i += 1;
+        }
+        if is_neg {
+            v_x *= -1;
+        }
+
+        i += 1;
+
+        let is_neg = input[i] == b'-';
+        if is_neg {
+            i += 1;
+        }
+
+        v_y += (input[i] - b'0') as i32;
+        i += 1;
+        while i < input.len() && input[i] != b'\n' {
+            v_y *= 10;
+            v_y += (input[i] - b'0') as i32;
+            i += 1;
+        }
+        if is_neg {
+            v_y *= -1;
+        }
+
+        i += 1;
+
+        // 100 steps, 101 is the width, 103 is the height.
+        x = (x + (v_x * 100)) % 101;
+        y = (y + (v_y * 100)) % 103;
+        if x < 0 {
+            x += 101;
+        }
+        if y < 0 {
+            y += 103;
+        }
+        if y == 51 || x == 50 {
+            continue;
+        }
+        if y < 51 {
+            if x < 50 {
+                ul += 1;
+            } else {
+                ur += 1;
+            }
+        } else {
+            if x < 50 {
+                ll += 1;
+            } else {
+                lr += 1;
+            }
+        }
+    }
+
+    return ur * ul * ll * lr;
 }
 
 #[aoc(day14, part2)]
