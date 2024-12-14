@@ -1,5 +1,3 @@
-use rayon::prelude::*;
-
 const UNIT_CONVERSION_ERROR: i64 = 10_000_000_000_000;
 
 #[derive(Copy, Clone, Debug)]
@@ -235,13 +233,13 @@ fn get_machines(input: &str) -> Vec<Machine> {
 #[aoc(day13, part1)]
 pub fn part1(input: &str) -> i64 {
     let machines = get_machines(input);
-    return machines.par_iter().map(|machine| machine.cost_p1()).sum();
+    return machines.iter().map(|machine| machine.cost_p1()).sum();
 }
 
 #[aoc(day13, part2)]
 pub fn part2(input: &str) -> i64 {
     let machines = get_machines(input);
-    return machines.par_iter().map(|machine| machine.cost_p2()).sum();
+    return machines.iter().map(|machine| machine.cost_p2()).sum();
 }
 
 #[cfg(test)]
