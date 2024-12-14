@@ -25,10 +25,10 @@ impl Robot {
         };
 
         // Parse start x
-        if input[*i] != b'p' || input[*i + 1] != b'=' {
-            println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
-            unreachable!();
-        }
+        // if input[*i] != b'p' || input[*i + 1] != b'=' {
+        //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
+        //     unreachable!();
+        // }
 
         *i += 2;
         robot.x += (input[*i] - b'0') as i64;
@@ -40,9 +40,9 @@ impl Robot {
         }
 
         // Parse start y.
-        if input[*i] != b',' {
-            unreachable!();
-        }
+        // if input[*i] != b',' {
+        //     unreachable!();
+        // }
         *i += 1;
 
         robot.y += (input[*i] - b'0') as i64;
@@ -55,9 +55,9 @@ impl Robot {
 
         // Parse velocity
         // Parse v_x
-        if input[*i] != b' ' || input[*i + 1] != b'v' || input[*i + 2] != b'=' {
-            unreachable!();
-        }
+        // if input[*i] != b' ' || input[*i + 1] != b'v' || input[*i + 2] != b'=' {
+        //     unreachable!();
+        // }
 
         *i += 3;
         let is_neg = input[*i] == b'-';
@@ -76,9 +76,9 @@ impl Robot {
         }
 
         // Parse v_y
-        if input[*i] != b',' {
-            unreachable!();
-        }
+        // if input[*i] != b',' {
+        //     unreachable!();
+        // }
         *i += 1;
 
         let is_neg = input[*i] == b'-';
@@ -97,9 +97,9 @@ impl Robot {
             robot.v_y *= -1;
         }
 
-        if *i < input.len() && (input[*i] != b'\n') {
-            unreachable!();
-        }
+        // if *i < input.len() && (input[*i] != b'\n') {
+        //     unreachable!();
+        // }
         *i += 1;
 
         return robot;
@@ -162,17 +162,6 @@ fn get_robots(input: &str) -> Vec<Robot> {
     return robots;
 }
 
-fn print_robots<const WIDTH: usize, const HEIGHT: usize>(robots: &Vec<Robot>) -> bool {
-    let mut exists = [0u128; HEIGHT];
-    for robot in robots.iter() {
-        if exists[robot.y as usize] & 1 << robot.x != 0 {
-            return false;
-        }
-        exists[robot.y as usize] |= 1 << robot.x
-    }
-    return true;
-}
-
 #[aoc(day14, part1)]
 pub fn part1(input: &str) -> u64 {
     let robots = get_robots(input);
@@ -191,15 +180,38 @@ pub fn part1(input: &str) -> u64 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> u64 {
-    let mut robots = get_robots(input);
+    let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
+    let mut good: bool;
+    let mut robots = get_robots(input);
     loop {
-        if print_robots::<101, 103>(&robots) {
-            return num_steps;
-        }
-        num_steps += 1;
         for i in 0..robots.len() {
             robots[i].step_through_time::<101, 103>();
+        }
+        num_steps += 1;
+
+        for i in 0..exists.len() {
+            exists[i] = 0;
+        }
+        good = true;
+        for robot in robots.iter() {
+            let index: usize;
+            let b: u64;
+            if robot.y < 64 {
+                index = robot.x as usize;
+                b = 1 << robot.y;
+            } else {
+                index = 101 + robot.x as usize;
+                b = 1 << (robot.y - 64);
+            }
+            if exists[index] & b != 0 {
+                good = false;
+                break;
+            }
+            exists[index] |= b;
+        }
+        if good {
+            return num_steps;
         }
     }
 }
