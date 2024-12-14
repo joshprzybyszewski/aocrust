@@ -25,22 +25,22 @@ impl Machine {
 
         // Parse Button A
         // Parse a_x.
-        if input[*i] != b'B'
-            || input[*i + 1] != b'u'
-            || input[*i + 2] != b't'
-            || input[*i + 3] != b't'
-            || input[*i + 4] != b'o'
-            || input[*i + 5] != b'n'
-            || input[*i + 6] != b' '
-            || input[*i + 7] != b'A'
-            || input[*i + 8] != b':'
-            || input[*i + 9] != b' '
-            || input[*i + 10] != b'X'
-            || input[*i + 11] != b'+'
-        {
-            println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
-            unreachable!();
-        }
+        // if input[*i] != b'B'
+        //     || input[*i + 1] != b'u'
+        //     || input[*i + 2] != b't'
+        //     || input[*i + 3] != b't'
+        //     || input[*i + 4] != b'o'
+        //     || input[*i + 5] != b'n'
+        //     || input[*i + 6] != b' '
+        //     || input[*i + 7] != b'A'
+        //     || input[*i + 8] != b':'
+        //     || input[*i + 9] != b' '
+        //     || input[*i + 10] != b'X'
+        //     || input[*i + 11] != b'+'
+        // {
+        //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
+        //     unreachable!();
+        // }
 
         *i += 12;
         machine.a_x += (input[*i] - b'0') as i64;
@@ -52,13 +52,13 @@ impl Machine {
         }
 
         // Parse a_y.
-        if input[*i] != b','
-            || input[*i + 1] != b' '
-            || input[*i + 2] != b'Y'
-            || input[*i + 3] != b'+'
-        {
-            unreachable!();
-        }
+        // if input[*i] != b','
+        //     || input[*i + 1] != b' '
+        //     || input[*i + 2] != b'Y'
+        //     || input[*i + 3] != b'+'
+        // {
+        //     unreachable!();
+        // }
         *i += 4;
 
         machine.a_y += (input[*i] - b'0') as i64;
@@ -71,22 +71,22 @@ impl Machine {
 
         // Parse Button B
         // Parse b_x
-        if input[*i] != b'\n'
-            || input[*i + 1] != b'B'
-            || input[*i + 2] != b'u'
-            || input[*i + 3] != b't'
-            || input[*i + 4] != b't'
-            || input[*i + 5] != b'o'
-            || input[*i + 6] != b'n'
-            || input[*i + 7] != b' '
-            || input[*i + 8] != b'B'
-            || input[*i + 9] != b':'
-            || input[*i + 10] != b' '
-            || input[*i + 11] != b'X'
-            || input[*i + 12] != b'+'
-        {
-            unreachable!();
-        }
+        // if input[*i] != b'\n'
+        //     || input[*i + 1] != b'B'
+        //     || input[*i + 2] != b'u'
+        //     || input[*i + 3] != b't'
+        //     || input[*i + 4] != b't'
+        //     || input[*i + 5] != b'o'
+        //     || input[*i + 6] != b'n'
+        //     || input[*i + 7] != b' '
+        //     || input[*i + 8] != b'B'
+        //     || input[*i + 9] != b':'
+        //     || input[*i + 10] != b' '
+        //     || input[*i + 11] != b'X'
+        //     || input[*i + 12] != b'+'
+        // {
+        //     unreachable!();
+        // }
 
         *i += 13;
         machine.b_x += (input[*i] - b'0') as i64;
@@ -98,13 +98,13 @@ impl Machine {
         }
 
         // Parse b_y
-        if input[*i] != b','
-            || input[*i + 1] != b' '
-            || input[*i + 2] != b'Y'
-            || input[*i + 3] != b'+'
-        {
-            unreachable!();
-        }
+        // if input[*i] != b','
+        //     || input[*i + 1] != b' '
+        //     || input[*i + 2] != b'Y'
+        //     || input[*i + 3] != b'+'
+        // {
+        //     unreachable!();
+        // }
         *i += 4;
 
         machine.b_y += (input[*i] - b'0') as i64;
@@ -117,19 +117,19 @@ impl Machine {
 
         // Parse the Prize
         // Parse p_x
-        if input[*i] != b'\n'
-            || input[*i + 1] != b'P'
-            || input[*i + 2] != b'r'
-            || input[*i + 3] != b'i'
-            || input[*i + 4] != b'z'
-            || input[*i + 5] != b'e'
-            || input[*i + 6] != b':'
-            || input[*i + 7] != b' '
-            || input[*i + 8] != b'X'
-            || input[*i + 9] != b'='
-        {
-            unreachable!();
-        }
+        // if input[*i] != b'\n'
+        //     || input[*i + 1] != b'P'
+        //     || input[*i + 2] != b'r'
+        //     || input[*i + 3] != b'i'
+        //     || input[*i + 4] != b'z'
+        //     || input[*i + 5] != b'e'
+        //     || input[*i + 6] != b':'
+        //     || input[*i + 7] != b' '
+        //     || input[*i + 8] != b'X'
+        //     || input[*i + 9] != b'='
+        // {
+        //     unreachable!();
+        // }
 
         *i += 10;
         machine.p_x += (input[*i] - b'0') as i64;
@@ -141,13 +141,13 @@ impl Machine {
         }
 
         // Parse p_y
-        if input[*i] != b','
-            || input[*i + 1] != b' '
-            || input[*i + 2] != b'Y'
-            || input[*i + 3] != b'='
-        {
-            unreachable!();
-        }
+        // if input[*i] != b','
+        //     || input[*i + 1] != b' '
+        //     || input[*i + 2] != b'Y'
+        //     || input[*i + 3] != b'='
+        // {
+        //     unreachable!();
+        // }
         *i += 4;
 
         machine.p_y += (input[*i] - b'0') as i64;
@@ -158,9 +158,9 @@ impl Machine {
             *i += 1;
         }
 
-        if *i < input.len() - 1 && (input[*i] != b'\n' || input[*i + 1] != b'\n') {
-            unreachable!();
-        }
+        // if *i < input.len() - 1 && (input[*i] != b'\n' || input[*i + 1] != b'\n') {
+        //     unreachable!();
+        // }
         *i += 2;
 
         return machine;
