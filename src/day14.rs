@@ -13,6 +13,8 @@ struct Robot {
 
     v_x: i32,
     v_y: i32,
+
+    time: i32,
 }
 
 impl Robot {
@@ -22,6 +24,7 @@ impl Robot {
             y: 0,
             v_x: 0,
             v_y: 0,
+            time: 0,
         };
 
         // Parse start x
@@ -136,15 +139,20 @@ impl Robot {
         return LOWER_RIGHT;
     }
 
-    fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self) {
-        self.x = (self.x + self.v_x).rem_euclid(WIDTH);
-        self.y = (self.y + self.v_y).rem_euclid(HEIGHT);
+    fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
+        if cur_time == self.time {
+            unreachable!();
+        }
+        let steps = cur_time - self.time;
+        self.x = (self.x + (self.v_x * steps)) % WIDTH;
+        self.y = (self.y + (self.v_y * steps)) % HEIGHT;
         if self.x < 0 {
             self.x += WIDTH;
         }
         if self.y < 0 {
             self.y += HEIGHT;
         }
+        self.time = cur_time;
     }
 }
 
@@ -179,24 +187,48 @@ pub fn part1(input: &str) -> u32 {
 }
 
 #[aoc(day14, part2)]
-pub fn part2(input: &str) -> u64 {
+pub fn part2(input: &str) -> i32 {
     let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
-    let mut good: bool;
+    let mut good: bool = true;
     let mut robots = get_robots(input);
-    loop {
-        for i in 0..robots.len() {
-            robots[i].step_through_time::<101, 103>();
-        }
-        num_steps += 1;
 
+    // check zero steps
+    for i in 0..robots.len() {
+        let robot = robots[i];
+        let index: usize;
+        let b: u64;
+        if robot.y < 64 {
+            index = robot.x as usize;
+            b = 1 << robot.y;
+        } else {
+            index = 101 + robot.x as usize;
+            b = 1 << (robot.y - 64);
+        }
+        if exists[index] & b != 0 {
+            good = false;
+            break;
+        }
+        exists[index] |= b;
+    }
+
+    if good {
+        // print_robots(&exists);
+        return num_steps;
+    }
+
+    loop {
+        num_steps += 1;
         for i in 0..exists.len() {
             exists[i] = 0;
         }
+
         // it seems like the tree is a picture in the space and none of the robots are on the
         // same square. Hopefully, that's actually true, because that works for my input.
         good = true;
-        for robot in robots.iter() {
+        for i in 0..robots.len() {
+            robots[i].step_through_time::<101, 103>(num_steps);
+            let robot = robots[i];
             let index: usize;
             let b: u64;
             if robot.y < 64 {
@@ -212,33 +244,38 @@ pub fn part2(input: &str) -> u64 {
             }
             exists[index] |= b;
         }
+
         if good {
-            // for r in 0..63 {
-            //     print!("|");
-            //     for c in 0..101 {
-            //         if exists[c] & 1 << r == 0 {
-            //             print!(" ");
-            //         } else {
-            //             print!("X");
-            //         }
-            //     }
-            //     println!("|");
-            // }
-            // for r in 64..103 {
-            //     print!("|");
-            //     for c in 0..101 {
-            //         if exists[101 + c] & 1 << (r - 64) == 0 {
-            //             print!(" ");
-            //         } else {
-            //             print!("X");
-            //         }
-            //     }
-            //     println!("|");
-            // }
+            // print_robots(&exists);
             return num_steps;
         }
     }
 }
+
+// fn print_robots(exists: &[u64; 202]) {
+//     for r in 0..63 {
+//         print!("|");
+//         for c in 0..101 {
+//             if exists[c] & 1 << r == 0 {
+//                 print!(" ");
+//             } else {
+//                 print!("X");
+//             }
+//         }
+//         println!("|");
+//     }
+//     for r in 64..103 {
+//         print!("|");
+//         for c in 0..101 {
+//             if exists[101 + c] & 1 << (r - 64) == 0 {
+//                 print!(" ");
+//             } else {
+//                 print!("X");
+//             }
+//         }
+//         println!("|");
+//     }
+// }
 
 #[cfg(test)]
 mod test {
