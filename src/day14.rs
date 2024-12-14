@@ -180,7 +180,7 @@ pub fn part1(input: &str) -> u64 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> u64 {
-    let mut exists = [0u128; 101]; // index is x, since that is 101, not 103.
+    let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
     let mut good: bool;
     let mut robots = get_robots(input);
@@ -195,12 +195,20 @@ pub fn part2(input: &str) -> u64 {
         }
         good = true;
         for robot in robots.iter() {
-            let b = 1 << robot.y;
-            if exists[robot.x as usize] & b != 0 {
+            let index: usize;
+            let b: u64;
+            if robot.y >= 64 {
+                index = 101 + robot.x as usize;
+                b = 1 << (robot.y - 64);
+            } else {
+                index = robot.x as usize;
+                b = 1 << robot.y;
+            }
+            if exists[index] & b != 0 {
                 good = false;
                 break;
             }
-            exists[robot.x as usize] |= b;
+            exists[index] |= b;
         }
         if good {
             return num_steps;
