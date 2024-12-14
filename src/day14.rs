@@ -193,6 +193,8 @@ pub fn part2(input: &str) -> u64 {
         for i in 0..exists.len() {
             exists[i] = 0;
         }
+        // it seems like the tree is a picture in the space and none of the robots are on the
+        // same square. Hopefully, that's actually true, because that works for my input.
         good = true;
         for robot in robots.iter() {
             let index: usize;
@@ -211,6 +213,28 @@ pub fn part2(input: &str) -> u64 {
             exists[index] |= b;
         }
         if good {
+            // for r in 0..63 {
+            //     print!("|");
+            //     for c in 0..101 {
+            //         if exists[c] & 1 << r == 0 {
+            //             print!(" ");
+            //         } else {
+            //             print!("X");
+            //         }
+            //     }
+            //     println!("|");
+            // }
+            // for r in 64..103 {
+            //     print!("|");
+            //     for c in 0..101 {
+            //         if exists[101 + c] & 1 << (r - 64) == 0 {
+            //             print!(" ");
+            //         } else {
+            //             print!("X");
+            //         }
+            //     }
+            //     println!("|");
+            // }
             return num_steps;
         }
     }
@@ -227,13 +251,20 @@ mod test {
         fs::read_to_string(input_path).unwrap()
     }
 
+    // fn get_input_2() -> String {
+    //     let input_path = "input/2024/day14_2.txt";
+    //     fs::read_to_string(input_path).unwrap()
+    // }
+
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 224438715)
+        assert_eq!(part1(&get_input()), 224438715);
+        // assert_eq!(part1(&get_input_2()), 231221760);
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 7603)
+        assert_eq!(part2(&get_input()), 7603);
+        // assert_eq!(part2(&get_input_2()), 6771);
     }
 }
