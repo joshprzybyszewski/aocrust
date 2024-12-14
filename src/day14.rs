@@ -137,8 +137,8 @@ impl Robot {
     }
 
     fn step_through_time<const WIDTH: i64, const HEIGHT: i64>(&mut self) {
-        self.x = (self.x + self.v_x) % WIDTH;
-        self.y = (self.y + self.v_y) % HEIGHT;
+        self.x = (self.x + self.v_x).rem_euclid(WIDTH);
+        self.y = (self.y + self.v_y).rem_euclid(HEIGHT);
         if self.x < 0 {
             self.x += WIDTH;
         }
