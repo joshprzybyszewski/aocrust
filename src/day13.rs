@@ -10,22 +10,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
 
     // Parse Button A
     // Parse a_x.
-    // if input[*i] != b'B'
-    //     || input[*i + 1] != b'u'
-    //     || input[*i + 2] != b't'
-    //     || input[*i + 3] != b't'
-    //     || input[*i + 4] != b'o'
-    //     || input[*i + 5] != b'n'
-    //     || input[*i + 6] != b' '
-    //     || input[*i + 7] != b'A'
-    //     || input[*i + 8] != b':'
-    //     || input[*i + 9] != b' '
-    //     || input[*i + 10] != b'X'
-    //     || input[*i + 11] != b'+'
-    // {
-    //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
-    //     unreachable!();
-    // }
+    // input[*i..=*i+11] == "Button A: X+"
 
     *i += 12;
     a_x += (input[*i] - b'0') as i64;
@@ -37,13 +22,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
     }
 
     // Parse a_y.
-    // if input[*i] != b','
-    //     || input[*i + 1] != b' '
-    //     || input[*i + 2] != b'Y'
-    //     || input[*i + 3] != b'+'
-    // {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+3] == ", Y+"
     *i += 4;
 
     a_y += (input[*i] - b'0') as i64;
@@ -56,22 +35,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
 
     // Parse Button B
     // Parse b_x
-    // if input[*i] != b'\n'
-    //     || input[*i + 1] != b'B'
-    //     || input[*i + 2] != b'u'
-    //     || input[*i + 3] != b't'
-    //     || input[*i + 4] != b't'
-    //     || input[*i + 5] != b'o'
-    //     || input[*i + 6] != b'n'
-    //     || input[*i + 7] != b' '
-    //     || input[*i + 8] != b'B'
-    //     || input[*i + 9] != b':'
-    //     || input[*i + 10] != b' '
-    //     || input[*i + 11] != b'X'
-    //     || input[*i + 12] != b'+'
-    // {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+12] == "\nButton B: X+"
 
     *i += 13;
     b_x += (input[*i] - b'0') as i64;
@@ -83,13 +47,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
     }
 
     // Parse b_y
-    // if input[*i] != b','
-    //     || input[*i + 1] != b' '
-    //     || input[*i + 2] != b'Y'
-    //     || input[*i + 3] != b'+'
-    // {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+3] == ", Y+"
     *i += 4;
 
     b_y += (input[*i] - b'0') as i64;
@@ -102,19 +60,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
 
     // Parse the Prize
     // Parse p_x
-    // if input[*i] != b'\n'
-    //     || input[*i + 1] != b'P'
-    //     || input[*i + 2] != b'r'
-    //     || input[*i + 3] != b'i'
-    //     || input[*i + 4] != b'z'
-    //     || input[*i + 5] != b'e'
-    //     || input[*i + 6] != b':'
-    //     || input[*i + 7] != b' '
-    //     || input[*i + 8] != b'X'
-    //     || input[*i + 9] != b'='
-    // {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+9] == "\nPrize: X="
 
     *i += 10;
     p_x += (input[*i] - b'0') as i64;
@@ -126,13 +72,7 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
     }
 
     // Parse p_y
-    // if input[*i] != b','
-    //     || input[*i + 1] != b' '
-    //     || input[*i + 2] != b'Y'
-    //     || input[*i + 3] != b'='
-    // {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+3] == ", Y="
     *i += 4;
 
     p_y += (input[*i] - b'0') as i64;
@@ -143,18 +83,13 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
         *i += 1;
     }
 
-    // if *i < input.len() - 1 && (input[*i] != b'\n' || input[*i + 1] != b'\n') {
-    //     unreachable!();
-    // }
+    // input[*i..=*i+1] == "\n\n" (or the input ends.)
     *i += 2;
 
     if !CHECK_LIMIT {
         p_x += UNIT_CONVERSION_ERROR;
         p_y += UNIT_CONVERSION_ERROR;
     }
-
-    // A costs 3 tokens.
-    // B costs 1 token.
 
     // num_a * a_x + num_b * b_x                     = p_x
     // num_a * a_y + num_b * b_y                     = p_y
@@ -185,6 +120,9 @@ fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
         // triple check.
         return 0;
     }
+
+    // A costs 3 tokens.
+    // B costs 1 token.
 
     return num_a * 3 + num_b;
 }
