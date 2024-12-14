@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 const UPPER_RIGHT: usize = 0;
 const UPPER_LEFT: usize = 1;
 const LOWER_LEFT: usize = 2;
@@ -14,6 +16,8 @@ struct Robot {
     v_x: i32,
     v_y: i32,
 
+    speed: i32,
+
     time: i32,
 }
 
@@ -25,6 +29,7 @@ impl Robot {
             v_x: 0,
             v_y: 0,
             time: 0,
+            speed: 0,
         };
 
         // Parse start x
@@ -196,6 +201,7 @@ pub fn part2(input: &str) -> i32 {
     // check zero steps
     for i in 0..robots.len() {
         let robot = robots[i];
+        robots[i].speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
         let index: usize;
         let b: u64;
         if robot.y < 64 {
@@ -216,6 +222,16 @@ pub fn part2(input: &str) -> i32 {
         // print_robots(&exists);
         return num_steps;
     }
+
+    robots.sort_by(|a: &Robot, b: &Robot| {
+        if a.speed < b.speed {
+            return Ordering::Less;
+        }
+        if a.speed == b.speed {
+            return Ordering::Equal;
+        }
+        return Ordering::Greater;
+    });
 
     loop {
         num_steps += 1;
