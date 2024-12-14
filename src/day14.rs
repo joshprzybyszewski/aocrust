@@ -68,22 +68,18 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
     *i += 1;
 }
 
-impl Robot {
-    fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
-        // if cur_time == self.time {
-        //     unreachable!();
-        // }
-        let steps = cur_time - self.time;
-        self.x = (self.x + (self.v_x * steps)).rem_euclid(WIDTH);
-        self.y = (self.y + (self.v_y * steps)).rem_euclid(HEIGHT);
-        if self.x < 0 {
-            self.x += WIDTH;
-        }
-        if self.y < 0 {
-            self.y += HEIGHT;
-        }
-        self.time = cur_time;
+#[inline(always)]
+fn step_through_time(robot: &mut Robot, cur_time: i32) {
+    let steps = cur_time - robot.time;
+    robot.x = (robot.x + (robot.v_x * steps)).rem_euclid(101);
+    robot.y = (robot.y + (robot.v_y * steps)).rem_euclid(103);
+    if robot.x < 0 {
+        robot.x += 101;
     }
+    if robot.y < 0 {
+        robot.y += 103;
+    }
+    robot.time = cur_time;
 }
 
 #[aoc(day14, part1)]
@@ -245,7 +241,7 @@ pub fn part2(input: &str) -> i32 {
         // same square. Hopefully, that's actually true, because that works for my input.
         good = true;
         for i in 0..robots.len() {
-            robots[i].step_through_time::<101, 103>(num_steps);
+            step_through_time(&mut robots[i], num_steps);
             let robot = robots[i];
             let index: usize;
             let b: u64;
