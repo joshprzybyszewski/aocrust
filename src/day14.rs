@@ -197,12 +197,12 @@ pub fn part2(input: &str) -> u64 {
         for robot in robots.iter() {
             let index: usize;
             let b: u64;
-            if robot.y >= 64 {
-                index = 101 + robot.x as usize;
-                b = 1 << (robot.y - 64);
-            } else {
+            if robot.y < 64 {
                 index = robot.x as usize;
                 b = 1 << robot.y;
+            } else {
+                index = 101 + robot.x as usize;
+                b = 1 << (robot.y - 64);
             }
             if exists[index] & b != 0 {
                 good = false;
