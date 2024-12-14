@@ -190,20 +190,19 @@ impl Machine {
 
         let numerator_b = self.a_x * p_y - self.a_y * p_x;
         let denominator_b = self.a_x * self.b_y - self.a_y * self.b_x;
+        let num_b = numerator_b / denominator_b;
         if numerator_b % denominator_b != 0 {
             return 0;
         }
-
-        let num_b = numerator_b / denominator_b;
         if num_b > PRESS_LIMIT {
             return 0;
         }
 
         let x_diff = p_x - (num_b * self.b_x);
+        let num_a = x_diff / self.a_x;
         if x_diff % self.a_x != 0 {
             return 0;
         }
-        let num_a: i64 = x_diff / self.a_x;
         if num_a > PRESS_LIMIT {
             return 0;
         }
