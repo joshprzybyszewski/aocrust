@@ -2,9 +2,9 @@
 name: CodSpeed
 
 on:
-  push:
-    branches:
-      - "main" # or "master"
+  # push:
+  #   branches:
+  #     - "main"
   pull_request:
   # `workflow_dispatch` allows CodSpeed to trigger backtest
   # performance analysis in order to generate initial data.
@@ -26,6 +26,7 @@ jobs:
       - name: Download available input files
         env:
           ADVENT_OF_CODE_SESSION: ${{ secrets.ADVENT_OF_CODE_SESSION }}
+        # Change the number below to fetch the input file for the given day range.
         run: |
           mkdir -p input/2024/
           for i in {1..14}; do
