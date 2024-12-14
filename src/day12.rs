@@ -1,10 +1,10 @@
-use std::collections::VecDeque;
-
 const GRID_SIZE: usize = 140;
 // const GRID_SIZE: usize = 4;
 // checkerboard. oof
 const MAX_REGIONS: usize = GRID_SIZE * GRID_SIZE;
 const UNSEEN: usize = MAX_REGIONS + 2;
+const OOB: usize = UNSEEN + 1;
+const OOB_SQUARE: u8 = b'A' - 1;
 
 #[derive(Copy, Clone, Debug)]
 struct Region {
@@ -123,13 +123,6 @@ struct Garden {
     regions: Vec<Region>,
 }
 
-// impl Index<Coord> for Garden {
-//     type Output = u8;
-//     fn index<'a>(&'a self, coord: Coord) -> &'a u8 {
-//         return &self.grid[coord.row][coord.col];
-//     }
-// }
-
 impl Garden {
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
@@ -155,10 +148,24 @@ impl Garden {
             i += 1; // input[i] is a newline
         }
 
+        let mut seen = [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2];
+        // The borders represent out of bounds
+        for x in 0..seen.len() {
+            seen[x][0] = OOB;
+            seen[x][seen.len() - 1] = OOB;
+            seen[0][x] = OOB;
+            seen[seen.len() - 1][x] = OOB;
+            grid[x][0] = OOB_SQUARE;
+            grid[x][grid.len() - 1] = OOB_SQUARE;
+            grid[0][x] = OOB_SQUARE;
+            grid[grid.len() - 1][x] = OOB_SQUARE;
+        }
+
         return Garden {
             grid: grid,
-            seen: [[UNSEEN; GRID_SIZE + 2]; GRID_SIZE + 2],
+            seen: seen,
             regions: Vec::with_capacity(MAX_REGIONS),
+            // queue: VecDeque::with_capacity(GRID_SIZE * GRID_SIZE),
         };
     }
 
@@ -249,12 +256,15 @@ impl Garden {
     }
 
     fn cost_p2(&mut self) -> u64 {
-        for r in 1..=GRID_SIZE {
-            for c in 1..=GRID_SIZE {
-                let coord = Coord::new(r, c);
+        let mut coord = Coord::new(1, 1);
+        while coord.row <= GRID_SIZE {
+            while coord.col <= GRID_SIZE {
                 let region_id = self.get_region_id(coord);
                 self.regions[region_id].num_corners += self.num_corners(coord);
+                coord.col += 1;
             }
+            coord.col = 1;
+            coord.row += 1;
         }
         return self.regions.iter().map(|region| region.cost_p2()).sum();
     }
@@ -275,76 +285,55 @@ impl Garden {
             return None;
         }
 
-        let mut queue: VecDeque<Coord> = VecDeque::with_capacity(GRID_SIZE);
         let top_left = start.unwrap();
-        queue.push_front(top_left);
-
         let mut region: Region = Region::new(top_left);
         let region_id: usize = self.regions.len();
 
-        loop {
-            let coord = queue.pop_front();
-            if coord.is_none() {
-                break;
-            }
-
-            let coord = coord.unwrap();
-            if coord.row == 0 || coord.col == 0 || coord.row > GRID_SIZE || coord.col > GRID_SIZE {
-                // out of bounds
-                continue;
-            }
-
-            if self.is_seen(coord) {
-                continue;
-            }
-            self.see(coord, region_id);
-            region.area += 1;
-
-            let mine = self.get_square(coord);
-
-            // Look up
-            let other = coord.up();
-            if self.get_square(other) == mine {
-                queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // look right
-            let other = coord.right();
-            if self.get_square(other) == mine {
-                queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // Look down
-            let other = coord.down();
-            if self.get_square(other) == mine {
-                queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-
-            // look left
-            let other = coord.left();
-            if self.get_square(other) == mine {
-                queue.push_back(other);
-            } else {
-                region.perimeter += 1;
-            }
-        }
-
-        // if region.area == 0 || region.perimeter == 0 {
-        //     let coord = start.unwrap();
-        //     println!(
-        //         "Bad region: {:?} at {:?} with {}",
-        //         region, coord, self.grid[coord.row][coord.col]
-        //     );
-        //     unreachable!();
-        // }
+        self.fill_region_dfs(&mut region, &region_id, top_left);
 
         return Some(region);
+    }
+
+    fn fill_region_dfs(&mut self, region: &mut Region, region_id: &usize, coord: Coord) {
+        if self.is_seen(coord) {
+            return;
+        }
+        self.see(coord, *region_id);
+        region.area += 1;
+
+        let mine = self.get_square(coord);
+
+        // look left
+        let other = coord.left();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // Look up
+        let other = coord.up();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // look right
+        let other = coord.right();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
+
+        // Look down
+        let other = coord.down();
+        if self.get_square(other) == mine {
+            self.fill_region_dfs(region, region_id, other);
+        } else {
+            region.perimeter += 1;
+        }
     }
 }
 
