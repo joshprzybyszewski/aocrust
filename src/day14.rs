@@ -163,12 +163,12 @@ fn get_robots(input: &str) -> Vec<Robot> {
 }
 
 #[aoc(day14, part1)]
-pub fn part1(input: &str) -> u64 {
+pub fn part1(input: &str) -> u32 {
     let robots = get_robots(input);
     let quadrants = robots
         .iter()
         .map(|robot| robot.quadrant::<100, 101, 103>())
-        .fold([0u64; 7], |mut acc, q| {
+        .fold([0u32; 7], |mut acc, q| {
             acc[q] += 1;
             return acc;
         });
