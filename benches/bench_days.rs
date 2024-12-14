@@ -14,7 +14,7 @@ macro_rules! get_day_input {
 macro_rules! benches_day {
     ($day_num:literal) => {
         paste! {
-            use aocrust::[<day $day_num>]; // Replace `aoc24` with your crate name
+            use aocrust::[<day $day_num>];
 
             pub fn [<bench_day $day_num>](c: &mut Criterion) {
                 let mut group = c.benchmark_group(concat!("day", $day_num));
@@ -40,4 +40,5 @@ macro_rules! benches {
     };
 }
 
-benches!(/*1, 2, 3, 4, 5, 6, 7, 8, */ 9); // Add more days here
+// Be sure to remember to change codspeed.yml too
+benches!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14); // Add more days here
