@@ -140,9 +140,9 @@ impl Robot {
     }
 
     fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
-        if cur_time == self.time {
-            unreachable!();
-        }
+        // if cur_time == self.time {
+        //     unreachable!();
+        // }
         let steps = cur_time - self.time;
         self.x = (self.x + (self.v_x * steps)) % WIDTH;
         self.y = (self.y + (self.v_y * steps)) % HEIGHT;
