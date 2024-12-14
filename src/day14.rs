@@ -149,8 +149,8 @@ impl Robot {
         //     unreachable!();
         // }
         let steps = cur_time - self.time;
-        self.x = (self.x + (self.v_x * steps)) % WIDTH;
-        self.y = (self.y + (self.v_y * steps)) % HEIGHT;
+        self.x = (self.x + (self.v_x * steps)).rem_euclid(WIDTH);
+        self.y = (self.y + (self.v_y * steps)).rem_euclid(HEIGHT);
         if self.x < 0 {
             self.x += WIDTH;
         }
@@ -201,6 +201,7 @@ pub fn part2(input: &str) -> i32 {
     // check zero steps
     for i in 0..robots.len() {
         let robot = robots[i];
+        // populate the speed now for the sort below.
         robots[i].speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
         let index: usize;
         let b: u64;
