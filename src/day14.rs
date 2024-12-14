@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 #[derive(Copy, Clone, Debug)]
 struct Robot {
     x: i32,
@@ -8,19 +6,12 @@ struct Robot {
     v_x: i32,
     v_y: i32,
 
-    speed: i32,
-
     time: i32,
 }
 
 #[inline(always)]
 fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
     // Parse start x
-    // if input[*i] != b'p' || input[*i + 1] != b'=' {
-    //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
-    //     unreachable!();
-    // }
-
     *i += 2;
     robot.x += (input[*i] - b'0') as i32;
     *i += 1;
@@ -31,11 +22,7 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
     }
 
     // Parse start y.
-    // if input[*i] != b',' {
-    //     unreachable!();
-    // }
     *i += 1;
-
     robot.y += (input[*i] - b'0') as i32;
     *i += 1;
     while input[*i] != b' ' {
@@ -45,11 +32,6 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
     }
 
     // Parse velocity
-    // Parse v_x
-    // if input[*i] != b' ' || input[*i + 1] != b'v' || input[*i + 2] != b'=' {
-    //     unreachable!();
-    // }
-
     *i += 3;
     let is_neg = input[*i] == b'-';
     if is_neg {
@@ -63,15 +45,11 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
         *i += 1;
     }
     if is_neg {
-        robot.v_x *= -1;
+        robot.v_x = -robot.v_x;
     }
 
     // Parse v_y
-    // if input[*i] != b',' {
-    //     unreachable!();
-    // }
     *i += 1;
-
     let is_neg = input[*i] == b'-';
     if is_neg {
         *i += 1;
@@ -85,15 +63,9 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
         *i += 1;
     }
     if is_neg {
-        robot.v_y *= -1;
+        robot.v_y = -robot.v_y;
     }
-
-    // if *i < input.len() && (input[*i] != b'\n') {
-    //     unreachable!();
-    // }
     *i += 1;
-
-    robot.speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
 }
 
 impl Robot {
@@ -229,7 +201,6 @@ pub fn part2(input: &str) -> i32 {
         v_x: 0,
         v_y: 0,
         time: 0,
-        speed: 0,
     }; 500];
 
     let mut i = 0;
@@ -263,16 +234,6 @@ pub fn part2(input: &str) -> i32 {
         // print_robots(&exists);
         return num_steps;
     }
-
-    robots.sort_by(|a: &Robot, b: &Robot| {
-        if a.speed < b.speed {
-            return Ordering::Less;
-        }
-        if a.speed == b.speed {
-            return Ordering::Equal;
-        }
-        return Ordering::Greater;
-    });
 
     loop {
         num_steps += 1;
