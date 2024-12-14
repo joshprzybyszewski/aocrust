@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 const UPPER_RIGHT: usize = 0;
 const UPPER_LEFT: usize = 1;
 const LOWER_LEFT: usize = 2;
@@ -8,11 +10,15 @@ const CENTER: usize = 6;
 
 #[derive(Copy, Clone, Debug)]
 struct Robot {
-    x: i64,
-    y: i64,
+    x: i32,
+    y: i32,
 
-    v_x: i64,
-    v_y: i64,
+    v_x: i32,
+    v_y: i32,
+
+    speed: i32,
+
+    time: i32,
 }
 
 impl Robot {
@@ -22,6 +28,8 @@ impl Robot {
             y: 0,
             v_x: 0,
             v_y: 0,
+            time: 0,
+            speed: 0,
         };
 
         // Parse start x
@@ -31,11 +39,11 @@ impl Robot {
         // }
 
         *i += 2;
-        robot.x += (input[*i] - b'0') as i64;
+        robot.x += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b',' {
             robot.x *= 10;
-            robot.x += (input[*i] - b'0') as i64;
+            robot.x += (input[*i] - b'0') as i32;
             *i += 1;
         }
 
@@ -45,11 +53,11 @@ impl Robot {
         // }
         *i += 1;
 
-        robot.y += (input[*i] - b'0') as i64;
+        robot.y += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b' ' {
             robot.y *= 10;
-            robot.y += (input[*i] - b'0') as i64;
+            robot.y += (input[*i] - b'0') as i32;
             *i += 1;
         }
 
@@ -64,11 +72,11 @@ impl Robot {
         if is_neg {
             *i += 1;
         }
-        robot.v_x += (input[*i] - b'0') as i64;
+        robot.v_x += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b',' {
             robot.v_x *= 10;
-            robot.v_x += (input[*i] - b'0') as i64;
+            robot.v_x += (input[*i] - b'0') as i32;
             *i += 1;
         }
         if is_neg {
@@ -86,11 +94,11 @@ impl Robot {
             *i += 1;
         }
 
-        robot.v_y += (input[*i] - b'0') as i64;
+        robot.v_y += (input[*i] - b'0') as i32;
         *i += 1;
         while *i < input.len() && input[*i] != b'\n' {
             robot.v_y *= 10;
-            robot.v_y += (input[*i] - b'0') as i64;
+            robot.v_y += (input[*i] - b'0') as i32;
             *i += 1;
         }
         if is_neg {
@@ -105,7 +113,7 @@ impl Robot {
         return robot;
     }
 
-    fn quadrant<const STEPS: i64, const WIDTH: i64, const HEIGHT: i64>(&self) -> usize {
+    fn quadrant<const STEPS: i32, const WIDTH: i32, const HEIGHT: i32>(&self) -> usize {
         let mut x = (self.x + (self.v_x * STEPS)) % WIDTH;
         let mut y = (self.y + (self.v_y * STEPS)) % HEIGHT;
         if x < 0 {
@@ -136,15 +144,20 @@ impl Robot {
         return LOWER_RIGHT;
     }
 
-    fn step_through_time<const WIDTH: i64, const HEIGHT: i64>(&mut self) {
-        self.x = (self.x + self.v_x) % WIDTH;
-        self.y = (self.y + self.v_y) % HEIGHT;
+    fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
+        // if cur_time == self.time {
+        //     unreachable!();
+        // }
+        let steps = cur_time - self.time;
+        self.x = (self.x + (self.v_x * steps)).rem_euclid(WIDTH);
+        self.y = (self.y + (self.v_y * steps)).rem_euclid(HEIGHT);
         if self.x < 0 {
             self.x += WIDTH;
         }
         if self.y < 0 {
             self.y += HEIGHT;
         }
+        self.time = cur_time;
     }
 }
 
@@ -163,12 +176,12 @@ fn get_robots(input: &str) -> Vec<Robot> {
 }
 
 #[aoc(day14, part1)]
-pub fn part1(input: &str) -> u64 {
+pub fn part1(input: &str) -> u32 {
     let robots = get_robots(input);
     let quadrants = robots
         .iter()
         .map(|robot| robot.quadrant::<100, 101, 103>())
-        .fold([0u64; 7], |mut acc, q| {
+        .fold([0u32; 7], |mut acc, q| {
             acc[q] += 1;
             return acc;
         });
@@ -179,22 +192,60 @@ pub fn part1(input: &str) -> u64 {
 }
 
 #[aoc(day14, part2)]
-pub fn part2(input: &str) -> u64 {
+pub fn part2(input: &str) -> i32 {
     let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
-    let mut good: bool;
+    let mut good: bool = true;
     let mut robots = get_robots(input);
-    loop {
-        for i in 0..robots.len() {
-            robots[i].step_through_time::<101, 103>();
-        }
-        num_steps += 1;
 
+    // check zero steps
+    for i in 0..robots.len() {
+        let robot = robots[i];
+        // populate the speed now for the sort below.
+        robots[i].speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
+        let index: usize;
+        let b: u64;
+        if robot.y < 64 {
+            index = robot.x as usize;
+            b = 1 << robot.y;
+        } else {
+            index = 101 + robot.x as usize;
+            b = 1 << (robot.y - 64);
+        }
+        if exists[index] & b != 0 {
+            good = false;
+            break;
+        }
+        exists[index] |= b;
+    }
+
+    if good {
+        // print_robots(&exists);
+        return num_steps;
+    }
+
+    robots.sort_by(|a: &Robot, b: &Robot| {
+        if a.speed < b.speed {
+            return Ordering::Less;
+        }
+        if a.speed == b.speed {
+            return Ordering::Equal;
+        }
+        return Ordering::Greater;
+    });
+
+    loop {
+        num_steps += 1;
         for i in 0..exists.len() {
             exists[i] = 0;
         }
+
+        // it seems like the tree is a picture in the space and none of the robots are on the
+        // same square. Hopefully, that's actually true, because that works for my input.
         good = true;
-        for robot in robots.iter() {
+        for i in 0..robots.len() {
+            robots[i].step_through_time::<101, 103>(num_steps);
+            let robot = robots[i];
             let index: usize;
             let b: u64;
             if robot.y < 64 {
@@ -210,11 +261,38 @@ pub fn part2(input: &str) -> u64 {
             }
             exists[index] |= b;
         }
+
         if good {
+            // print_robots(&exists);
             return num_steps;
         }
     }
 }
+
+// fn print_robots(exists: &[u64; 202]) {
+//     for r in 0..63 {
+//         print!("|");
+//         for c in 0..101 {
+//             if exists[c] & 1 << r == 0 {
+//                 print!(" ");
+//             } else {
+//                 print!("X");
+//             }
+//         }
+//         println!("|");
+//     }
+//     for r in 64..103 {
+//         print!("|");
+//         for c in 0..101 {
+//             if exists[101 + c] & 1 << (r - 64) == 0 {
+//                 print!(" ");
+//             } else {
+//                 print!("X");
+//             }
+//         }
+//         println!("|");
+//     }
+// }
 
 #[cfg(test)]
 mod test {
@@ -227,13 +305,20 @@ mod test {
         fs::read_to_string(input_path).unwrap()
     }
 
+    // fn get_input_2() -> String {
+    //     let input_path = "input/2024/day14_2.txt";
+    //     fs::read_to_string(input_path).unwrap()
+    // }
+
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 224438715)
+        assert_eq!(part1(&get_input()), 224438715);
+        // assert_eq!(part1(&get_input_2()), 231221760);
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 7603)
+        assert_eq!(part2(&get_input()), 7603);
+        // assert_eq!(part2(&get_input_2()), 6771);
     }
 }
