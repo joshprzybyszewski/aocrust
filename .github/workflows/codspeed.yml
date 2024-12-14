@@ -28,7 +28,7 @@ jobs:
           ADVENT_OF_CODE_SESSION: ${{ secrets.ADVENT_OF_CODE_SESSION }}
         run: |
           mkdir -p input/2024/
-          for i in {1..13}; do
+          for i in {1..14}; do
             aoc download -I -i input/2024/day$i.txt --year 2024 -d $i || true
           done
       - name: Build the benchmark target(s)

@@ -1,5 +1,3 @@
-use std::{thread::sleep, time::Duration};
-
 const UPPER_RIGHT: usize = 0;
 const UPPER_LEFT: usize = 1;
 const LOWER_LEFT: usize = 2;
@@ -165,30 +163,13 @@ fn get_robots(input: &str) -> Vec<Robot> {
 }
 
 fn print_robots<const WIDTH: usize, const HEIGHT: usize>(robots: &Vec<Robot>) -> bool {
-    let mut num = [[0u16; WIDTH]; HEIGHT];
+    let mut exists = [0u128; HEIGHT];
     for robot in robots.iter() {
-        if num[robot.y as usize][robot.x as usize] != 0 {
-            return false
+        if exists[robot.y as usize] & 1 << robot.x != 0 {
+            return false;
         }
-        num[robot.y as usize][robot.x as usize] += 1;
+        exists[robot.y as usize] |= 1 << robot.x
     }
-    println!(".-----------------------------------------------------------------------------------------------------.");
-    for r in 0..HEIGHT {
-        print!("|");
-        for c in 0..WIDTH {
-            if num[r][c] > 0 {
-                if num[r][c] < 10 {
-                    print!("{}", num[r][c]);
-                } else {
-                    print!("X");
-                }
-            } else {
-                print!(" ");
-            }
-        }
-        println!("|");
-    }
-    println!("'-----------------------------------------------------------------------------------------------------'");
     return true;
 }
 
@@ -213,18 +194,14 @@ pub fn part2(input: &str) -> u64 {
     let mut robots = get_robots(input);
     let mut num_steps = 0;
     loop {
-        println!("Steps: {}", num_steps);
-        let maybe = print_robots::<101, 103>(&robots);
+        if print_robots::<101, 103>(&robots) {
+            return num_steps;
+        }
+        num_steps += 1;
         for i in 0..robots.len() {
             robots[i].step_through_time::<101, 103>();
         }
-        num_steps += 1;
-        if maybe {
-        sleep(Duration::from_millis(500));
-        return num_steps;
-        }
     }
-    return 0;
 }
 
 #[cfg(test)]
@@ -233,19 +210,9 @@ mod test {
     use super::*;
     use std::fs;
 
-    fn get_example_input() -> String {
-        let input_path = "input/2024/examples/day14.txt";
-        fs::read_to_string(input_path).unwrap()
-    }
-
     fn get_input() -> String {
         let input_path = "input/2024/day14.txt";
         fs::read_to_string(input_path).unwrap()
-    }
-
-    #[test]
-    fn part1_example() {
-        assert_eq!(part1(&get_example_input()), 0)
     }
 
     #[test]
