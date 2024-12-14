@@ -13,98 +13,90 @@ struct Robot {
     time: i32,
 }
 
-impl Robot {
-    fn new(input: &[u8], i: &mut usize) -> Self {
-        let mut robot = Robot {
-            x: 0,
-            y: 0,
-            v_x: 0,
-            v_y: 0,
-            time: 0,
-            speed: 0,
-        };
+#[inline(always)]
+fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
+    // Parse start x
+    // if input[*i] != b'p' || input[*i + 1] != b'=' {
+    //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
+    //     unreachable!();
+    // }
 
-        // Parse start x
-        // if input[*i] != b'p' || input[*i + 1] != b'=' {
-        //     println!("input[{}]: {:?}", *i, &input[*i..*i + 11]);
-        //     unreachable!();
-        // }
-
-        *i += 2;
+    *i += 2;
+    robot.x += (input[*i] - b'0') as i32;
+    *i += 1;
+    while input[*i] != b',' {
+        robot.x *= 10;
         robot.x += (input[*i] - b'0') as i32;
         *i += 1;
-        while input[*i] != b',' {
-            robot.x *= 10;
-            robot.x += (input[*i] - b'0') as i32;
-            *i += 1;
-        }
-
-        // Parse start y.
-        // if input[*i] != b',' {
-        //     unreachable!();
-        // }
-        *i += 1;
-
-        robot.y += (input[*i] - b'0') as i32;
-        *i += 1;
-        while input[*i] != b' ' {
-            robot.y *= 10;
-            robot.y += (input[*i] - b'0') as i32;
-            *i += 1;
-        }
-
-        // Parse velocity
-        // Parse v_x
-        // if input[*i] != b' ' || input[*i + 1] != b'v' || input[*i + 2] != b'=' {
-        //     unreachable!();
-        // }
-
-        *i += 3;
-        let is_neg = input[*i] == b'-';
-        if is_neg {
-            *i += 1;
-        }
-        robot.v_x += (input[*i] - b'0') as i32;
-        *i += 1;
-        while input[*i] != b',' {
-            robot.v_x *= 10;
-            robot.v_x += (input[*i] - b'0') as i32;
-            *i += 1;
-        }
-        if is_neg {
-            robot.v_x *= -1;
-        }
-
-        // Parse v_y
-        // if input[*i] != b',' {
-        //     unreachable!();
-        // }
-        *i += 1;
-
-        let is_neg = input[*i] == b'-';
-        if is_neg {
-            *i += 1;
-        }
-
-        robot.v_y += (input[*i] - b'0') as i32;
-        *i += 1;
-        while *i < input.len() && input[*i] != b'\n' {
-            robot.v_y *= 10;
-            robot.v_y += (input[*i] - b'0') as i32;
-            *i += 1;
-        }
-        if is_neg {
-            robot.v_y *= -1;
-        }
-
-        // if *i < input.len() && (input[*i] != b'\n') {
-        //     unreachable!();
-        // }
-        *i += 1;
-
-        return robot;
     }
 
+    // Parse start y.
+    // if input[*i] != b',' {
+    //     unreachable!();
+    // }
+    *i += 1;
+
+    robot.y += (input[*i] - b'0') as i32;
+    *i += 1;
+    while input[*i] != b' ' {
+        robot.y *= 10;
+        robot.y += (input[*i] - b'0') as i32;
+        *i += 1;
+    }
+
+    // Parse velocity
+    // Parse v_x
+    // if input[*i] != b' ' || input[*i + 1] != b'v' || input[*i + 2] != b'=' {
+    //     unreachable!();
+    // }
+
+    *i += 3;
+    let is_neg = input[*i] == b'-';
+    if is_neg {
+        *i += 1;
+    }
+    robot.v_x += (input[*i] - b'0') as i32;
+    *i += 1;
+    while input[*i] != b',' {
+        robot.v_x *= 10;
+        robot.v_x += (input[*i] - b'0') as i32;
+        *i += 1;
+    }
+    if is_neg {
+        robot.v_x *= -1;
+    }
+
+    // Parse v_y
+    // if input[*i] != b',' {
+    //     unreachable!();
+    // }
+    *i += 1;
+
+    let is_neg = input[*i] == b'-';
+    if is_neg {
+        *i += 1;
+    }
+
+    robot.v_y += (input[*i] - b'0') as i32;
+    *i += 1;
+    while *i < input.len() && input[*i] != b'\n' {
+        robot.v_y *= 10;
+        robot.v_y += (input[*i] - b'0') as i32;
+        *i += 1;
+    }
+    if is_neg {
+        robot.v_y *= -1;
+    }
+
+    // if *i < input.len() && (input[*i] != b'\n') {
+    //     unreachable!();
+    // }
+    *i += 1;
+
+    robot.speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
+}
+
+impl Robot {
     fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self, cur_time: i32) {
         // if cur_time == self.time {
         //     unreachable!();
@@ -120,20 +112,6 @@ impl Robot {
         }
         self.time = cur_time;
     }
-}
-
-fn get_robots(input: &str) -> Vec<Robot> {
-    let input = input.as_bytes();
-
-    let mut robots: Vec<Robot> = Vec::with_capacity(500);
-
-    let mut i = 0;
-
-    while i < input.len() {
-        robots.push(Robot::new(input, &mut i));
-    }
-
-    return robots;
 }
 
 #[aoc(day14, part1)]
@@ -242,13 +220,29 @@ pub fn part2(input: &str) -> i32 {
     let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
     let mut good: bool = true;
-    let mut robots = get_robots(input);
+
+    let input = input.as_bytes();
+
+    let mut robots = [Robot {
+        x: 0,
+        y: 0,
+        v_x: 0,
+        v_y: 0,
+        time: 0,
+        speed: 0,
+    }; 500];
+
+    let mut i = 0;
+    let mut r_i = 0;
+
+    while i < input.len() {
+        new_robot(input, &mut i, &mut robots[r_i]);
+        r_i += 1;
+    }
 
     // check zero steps
     for i in 0..robots.len() {
         let robot = robots[i];
-        // populate the speed now for the sort below.
-        robots[i].speed = robot.v_x * robot.v_x + robot.v_y * robot.v_y;
         let index: usize;
         let b: u64;
         if robot.y < 64 {
