@@ -162,17 +162,6 @@ fn get_robots(input: &str) -> Vec<Robot> {
     return robots;
 }
 
-fn print_robots<const WIDTH: usize, const HEIGHT: usize>(robots: &Vec<Robot>) -> bool {
-    let mut exists = [0u128; HEIGHT];
-    for robot in robots.iter() {
-        if exists[robot.y as usize] & 1 << robot.x != 0 {
-            return false;
-        }
-        exists[robot.y as usize] |= 1 << robot.x
-    }
-    return true;
-}
-
 #[aoc(day14, part1)]
 pub fn part1(input: &str) -> u64 {
     let robots = get_robots(input);
@@ -191,15 +180,30 @@ pub fn part1(input: &str) -> u64 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> u64 {
-    let mut robots = get_robots(input);
+    let mut exists = [0u128; 101]; // index is x, since that is 101, not 103.
     let mut num_steps = 0;
+    let mut good: bool;
+    let mut robots = get_robots(input);
     loop {
-        if print_robots::<101, 103>(&robots) {
-            return num_steps;
-        }
-        num_steps += 1;
         for i in 0..robots.len() {
             robots[i].step_through_time::<101, 103>();
+        }
+        num_steps += 1;
+
+        for i in 0..exists.len() {
+            exists[i] = 0;
+        }
+        good = true;
+        for robot in robots.iter() {
+            let b = 1 << robot.y;
+            if exists[robot.x as usize] & b != 0 {
+                good = false;
+                break;
+            }
+            exists[robot.x as usize] |= b;
+        }
+        if good {
+            return num_steps;
         }
     }
 }
