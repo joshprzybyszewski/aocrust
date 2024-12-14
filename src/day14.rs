@@ -8,11 +8,11 @@ const CENTER: usize = 6;
 
 #[derive(Copy, Clone, Debug)]
 struct Robot {
-    x: i64,
-    y: i64,
+    x: i32,
+    y: i32,
 
-    v_x: i64,
-    v_y: i64,
+    v_x: i32,
+    v_y: i32,
 }
 
 impl Robot {
@@ -31,11 +31,11 @@ impl Robot {
         // }
 
         *i += 2;
-        robot.x += (input[*i] - b'0') as i64;
+        robot.x += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b',' {
             robot.x *= 10;
-            robot.x += (input[*i] - b'0') as i64;
+            robot.x += (input[*i] - b'0') as i32;
             *i += 1;
         }
 
@@ -45,11 +45,11 @@ impl Robot {
         // }
         *i += 1;
 
-        robot.y += (input[*i] - b'0') as i64;
+        robot.y += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b' ' {
             robot.y *= 10;
-            robot.y += (input[*i] - b'0') as i64;
+            robot.y += (input[*i] - b'0') as i32;
             *i += 1;
         }
 
@@ -64,11 +64,11 @@ impl Robot {
         if is_neg {
             *i += 1;
         }
-        robot.v_x += (input[*i] - b'0') as i64;
+        robot.v_x += (input[*i] - b'0') as i32;
         *i += 1;
         while input[*i] != b',' {
             robot.v_x *= 10;
-            robot.v_x += (input[*i] - b'0') as i64;
+            robot.v_x += (input[*i] - b'0') as i32;
             *i += 1;
         }
         if is_neg {
@@ -86,11 +86,11 @@ impl Robot {
             *i += 1;
         }
 
-        robot.v_y += (input[*i] - b'0') as i64;
+        robot.v_y += (input[*i] - b'0') as i32;
         *i += 1;
         while *i < input.len() && input[*i] != b'\n' {
             robot.v_y *= 10;
-            robot.v_y += (input[*i] - b'0') as i64;
+            robot.v_y += (input[*i] - b'0') as i32;
             *i += 1;
         }
         if is_neg {
@@ -105,7 +105,7 @@ impl Robot {
         return robot;
     }
 
-    fn quadrant<const STEPS: i64, const WIDTH: i64, const HEIGHT: i64>(&self) -> usize {
+    fn quadrant<const STEPS: i32, const WIDTH: i32, const HEIGHT: i32>(&self) -> usize {
         let mut x = (self.x + (self.v_x * STEPS)) % WIDTH;
         let mut y = (self.y + (self.v_y * STEPS)) % HEIGHT;
         if x < 0 {
@@ -136,7 +136,7 @@ impl Robot {
         return LOWER_RIGHT;
     }
 
-    fn step_through_time<const WIDTH: i64, const HEIGHT: i64>(&mut self) {
+    fn step_through_time<const WIDTH: i32, const HEIGHT: i32>(&mut self) {
         self.x = (self.x + self.v_x).rem_euclid(WIDTH);
         self.y = (self.y + self.v_y).rem_euclid(HEIGHT);
         if self.x < 0 {
