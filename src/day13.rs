@@ -167,18 +167,18 @@ impl Machine {
     }
 
     fn cost_p1(&self) -> i64 {
-        return self.cost::<100>(self.p_x, self.p_y);
+        return self.cost::<true>(self.p_x, self.p_y);
     }
 
     fn cost_p2(&self) -> i64 {
-        return self.cost::<{ 1 << 62 }>(
+        return self.cost::<false>(
             self.p_x + UNIT_CONVERSION_ERROR,
             self.p_y + UNIT_CONVERSION_ERROR,
         );
     }
 
     // where's my linear algebra textbook?
-    fn cost<const PRESS_LIMIT: i64>(&self, p_x: i64, p_y: i64) -> i64 {
+    fn cost<const CHECK_LIMIT: bool>(&self, p_x: i64, p_y: i64) -> i64 {
         // A costs 3 tokens.
         // B costs 1 token.
 
@@ -194,7 +194,7 @@ impl Machine {
         if numerator_b % denominator_b != 0 {
             return 0;
         }
-        if num_b > PRESS_LIMIT {
+        if CHECK_LIMIT && num_b >= 100 {
             return 0;
         }
 
@@ -203,7 +203,7 @@ impl Machine {
         if x_diff % self.a_x != 0 {
             return 0;
         }
-        if num_a > PRESS_LIMIT {
+        if CHECK_LIMIT && num_a >= 100 {
             return 0;
         }
         if num_a * self.a_y + num_b * self.b_y != p_y {
