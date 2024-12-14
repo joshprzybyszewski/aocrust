@@ -1,5 +1,6 @@
 const UNIT_CONVERSION_ERROR: i64 = 10_000_000_000_000;
 
+#[inline(always)]
 fn get_next_cost<const CHECK_LIMIT: bool>(input: &[u8], i: &mut usize) -> i64 {
     let mut a_x: i64 = 0;
     let mut a_y: i64 = 0;
