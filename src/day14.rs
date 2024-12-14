@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 const UPPER_RIGHT: usize = 0;
 const UPPER_LEFT: usize = 1;
 const LOWER_LEFT: usize = 2;
@@ -8,8 +10,8 @@ const CENTER: usize = 6;
 
 #[derive(Copy, Clone, Debug)]
 struct Robot {
-    a_x: i64,
-    a_y: i64,
+    x: i64,
+    y: i64,
 
     v_x: i64,
     v_y: i64,
@@ -18,8 +20,8 @@ struct Robot {
 impl Robot {
     fn new(input: &[u8], i: &mut usize) -> Self {
         let mut robot = Robot {
-            a_x: 0,
-            a_y: 0,
+            x: 0,
+            y: 0,
             v_x: 0,
             v_y: 0,
         };
@@ -31,11 +33,11 @@ impl Robot {
         }
 
         *i += 2;
-        robot.a_x += (input[*i] - b'0') as i64;
+        robot.x += (input[*i] - b'0') as i64;
         *i += 1;
         while input[*i] != b',' {
-            robot.a_x *= 10;
-            robot.a_x += (input[*i] - b'0') as i64;
+            robot.x *= 10;
+            robot.x += (input[*i] - b'0') as i64;
             *i += 1;
         }
 
@@ -45,11 +47,11 @@ impl Robot {
         }
         *i += 1;
 
-        robot.a_y += (input[*i] - b'0') as i64;
+        robot.y += (input[*i] - b'0') as i64;
         *i += 1;
         while input[*i] != b' ' {
-            robot.a_y *= 10;
-            robot.a_y += (input[*i] - b'0') as i64;
+            robot.y *= 10;
+            robot.y += (input[*i] - b'0') as i64;
             *i += 1;
         }
 
@@ -106,8 +108,8 @@ impl Robot {
     }
 
     fn quadrant<const STEPS: i64, const WIDTH: i64, const HEIGHT: i64>(&self) -> usize {
-        let mut x = (self.a_x + (self.v_x * STEPS)) % WIDTH;
-        let mut y = (self.a_y + (self.v_y * STEPS)) % HEIGHT;
+        let mut x = (self.x + (self.v_x * STEPS)) % WIDTH;
+        let mut y = (self.y + (self.v_y * STEPS)) % HEIGHT;
         if x < 0 {
             x += WIDTH;
         }
@@ -135,6 +137,17 @@ impl Robot {
         }
         return LOWER_RIGHT;
     }
+
+    fn step_through_time<const WIDTH: i64, const HEIGHT: i64>(&mut self) {
+        self.x = (self.x + self.v_x) % WIDTH;
+        self.y = (self.y + self.v_y) % HEIGHT;
+        if self.x < 0 {
+            self.x += WIDTH;
+        }
+        if self.y < 0 {
+            self.y += HEIGHT;
+        }
+    }
 }
 
 fn get_robots(input: &str) -> Vec<Robot> {
@@ -149,6 +162,34 @@ fn get_robots(input: &str) -> Vec<Robot> {
     }
 
     return robots;
+}
+
+fn print_robots<const WIDTH: usize, const HEIGHT: usize>(robots: &Vec<Robot>) -> bool {
+    let mut num = [[0u16; WIDTH]; HEIGHT];
+    for robot in robots.iter() {
+        if num[robot.y as usize][robot.x as usize] != 0 {
+            return false
+        }
+        num[robot.y as usize][robot.x as usize] += 1;
+    }
+    println!(".-----------------------------------------------------------------------------------------------------.");
+    for r in 0..HEIGHT {
+        print!("|");
+        for c in 0..WIDTH {
+            if num[r][c] > 0 {
+                if num[r][c] < 10 {
+                    print!("{}", num[r][c]);
+                } else {
+                    print!("X");
+                }
+            } else {
+                print!(" ");
+            }
+        }
+        println!("|");
+    }
+    println!("'-----------------------------------------------------------------------------------------------------'");
+    return true;
 }
 
 #[aoc(day14, part1)]
@@ -169,6 +210,20 @@ pub fn part1(input: &str) -> u64 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> u64 {
+    let mut robots = get_robots(input);
+    let mut num_steps = 0;
+    loop {
+        println!("Steps: {}", num_steps);
+        let maybe = print_robots::<101, 103>(&robots);
+        for i in 0..robots.len() {
+            robots[i].step_through_time::<101, 103>();
+        }
+        num_steps += 1;
+        if maybe {
+        sleep(Duration::from_millis(500));
+        return num_steps;
+        }
+    }
     return 0;
 }
 
@@ -200,6 +255,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0)
+        assert_eq!(part2(&get_input()), 7603)
     }
 }
