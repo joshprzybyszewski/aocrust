@@ -1,6 +1,8 @@
+use std::ops::Add;
+
 const GRID_SIZE: usize = 50;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Coord {
     row: i8,
     col: i8,
@@ -28,6 +30,17 @@ impl Coord {
     }
 }
 
+impl Add for Coord {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            row: self.row + other.row,
+            col: self.col + other.col,
+        }
+    }
+}
+
 struct Warehouse {
     walls: [u64; GRID_SIZE],
     balls: [u64; GRID_SIZE],
@@ -45,7 +58,7 @@ impl Warehouse {
         let mut robot: Coord = Coord::new(-1, -1);
 
         walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
-        let mask: u64 = 1 << SIZE | 1 << 0;
+        let mask: u64 = (1 << SIZE - 1) | 1 << 0;
         for r in 1..SIZE - 1 {
             // should be 1 << 50 | 1 << 0
             walls[r] = mask;
@@ -129,6 +142,74 @@ impl Warehouse {
         };
     }
 
+    fn print(&self, inst: usize) {
+        println!("Inst {inst}");
+        for r in 0..self.size {
+            for c in 0..self.size {
+                let is_wall = self.walls[r] & 1 << c != 0;
+                let is_ball = self.balls[r] & 1 << c != 0;
+                let is_robot = self.robot.row == r as i8 && self.robot.col == c as i8;
+                if is_wall {
+                    if is_ball {
+                        if is_robot {
+                            print!("!")
+                        } else {
+                            print!("?")
+                        }
+                    } else {
+                        if is_robot {
+                            print!("X")
+                        } else {
+                            print!("#")
+                        }
+                    }
+                } else if is_ball {
+                    if is_robot {
+                        print!("-")
+                    } else {
+                        print!("0")
+                    }
+                } else if is_robot {
+                    print!("@")
+                } else {
+                    print!(" ")
+                }
+            }
+            println!("")
+        }
+        println!("")
+    }
+
+    fn follow_instructions(&mut self) {
+        for i in 0..self.instructions.len() {
+            // self.print(i);
+            let empty: Option<Coord> = self.follow_instruction(self.robot, self.instructions[i]);
+            if empty.is_none() {
+                continue;
+            }
+            let clear = self.robot + self.instructions[i];
+            let empty = empty.unwrap();
+            if clear != empty {
+                self.balls[clear.row as usize] &= !(1 << clear.col);
+                self.balls[empty.row as usize] |= 1 << empty.col;
+            }
+            self.robot = self.robot + self.instructions[i];
+        }
+        // self.print(self.instructions.len());
+    }
+
+    fn follow_instruction(&mut self, pos: Coord, delta: Coord) -> Option<Coord> {
+        let updated = pos + delta;
+        let b = 1u64 << updated.col;
+        if self.walls[updated.row as usize] & b == b {
+            return None;
+        }
+        if self.balls[updated.row as usize] & b == 0 {
+            return Some(updated);
+        }
+        return self.follow_instruction(updated, delta);
+    }
+
     fn ball_gps(&self) -> u64 {
         let mut sum: u64 = 0;
         let mut row: u64 = 0;
@@ -152,7 +233,8 @@ pub fn part1(input: &str) -> u64 {
 }
 
 pub fn part1_inner<const SIZE: usize>(input: &str) -> u64 {
-    let warehouse = Warehouse::new::<SIZE>(input);
+    let mut warehouse = Warehouse::new::<SIZE>(input);
+    warehouse.follow_instructions();
     return warehouse.ball_gps();
 }
 
@@ -180,7 +262,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0);
+        assert_eq!(part1(&get_input()), 1471826);
     }
 
     #[test]
