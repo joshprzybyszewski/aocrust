@@ -302,6 +302,11 @@ mod test {
         fs::read_to_string(input_path).unwrap()
     }
 
+    fn get_competition_input() -> String {
+        let input_path = "input/2024/day14_competition.txt";
+        fs::read_to_string(input_path).unwrap()
+    }
+
     // fn get_input_2() -> String {
     //     let input_path = "input/2024/day14_2.txt";
     //     fs::read_to_string(input_path).unwrap()
@@ -310,12 +315,14 @@ mod test {
     #[test]
     fn part1_real_input() {
         assert_eq!(part1(&get_input()), 224438715);
+        assert_eq!(part1(&get_competition_input()), 209409792);
         // assert_eq!(part1(&get_input_2()), 231221760);
     }
 
     #[test]
     fn part2_real_input() {
         assert_eq!(part2(&get_input()), 7603);
+        assert_eq!(part2(&get_competition_input()), 8006);
         // assert_eq!(part2(&get_input_2()), 6771);
     }
 }
