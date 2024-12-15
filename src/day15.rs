@@ -33,6 +33,8 @@ struct Warehouse {
     balls: [u64; GRID_SIZE],
     robot: Coord,
 
+    size: usize,
+
     instructions: Vec<Coord>,
 }
 
@@ -71,25 +73,29 @@ impl Warehouse {
                 } else if input[i] == b'@' {
                     robot = Coord::new(r as i8, c as i8);
                 } else {
+                    println!("Input[{i}] = ({r}, {c}) {}", input[i]);
                     unreachable!();
                 }
                 i += 1;
             }
 
             // input[i] is a wall, then newline, then wall.
-            i += 3;
             if input[i] != b'#' {
+                println!("Input[{i}] = ({r}, x) {}", input[i]);
                 unreachable!();
             }
             if input[i + 1] != b'\n' {
+                println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
                 unreachable!();
             }
             if input[i + 2] != b'#' {
+                println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
                 unreachable!();
             }
+            i += 3;
         }
         // gotta skip past the last row (minus the first wall), then two newlines.
-        i += 51;
+        i += SIZE + 1;
 
         if input[i - 1] != b'\n' {
             unreachable!();
@@ -118,23 +124,40 @@ impl Warehouse {
             walls: walls,
             balls: balls,
             robot: robot,
+            size: SIZE,
             instructions: instructions,
         };
+    }
+
+    fn ball_gps(&self) -> u64 {
+        let mut sum: u64 = 0;
+        let mut row: u64 = 0;
+
+        for r in 1..self.size {
+            row += 100;
+            for c in 1..self.size as u64 {
+                if self.balls[r] & 1 << c != 0 {
+                    sum += row + c;
+                }
+            }
+        }
+
+        return sum;
     }
 }
 
 #[aoc(day15, part1)]
-pub fn part1(input: &str) -> u32 {
+pub fn part1(input: &str) -> u64 {
     return part1_inner::<GRID_SIZE>(input);
 }
 
-pub fn part1_inner<const SIZE: usize>(input: &str) -> u32 {
+pub fn part1_inner<const SIZE: usize>(input: &str) -> u64 {
     let warehouse = Warehouse::new::<SIZE>(input);
-    return 0;
+    return warehouse.ball_gps();
 }
 
 #[aoc(day15, part2)]
-pub fn part2(input: &str) -> i32 {
+pub fn part2(input: &str) -> u64 {
     return 0;
 }
 
@@ -147,6 +170,22 @@ mod test {
     fn get_input() -> String {
         let input_path = "input/2024/day15.txt";
         fs::read_to_string(input_path).unwrap()
+    }
+
+    #[test]
+    fn part1_examples() {
+        assert_eq!(part1_inner::<10>(example_1()), 10092);
+        assert_eq!(part1_inner::<8>(example_2()), 2028);
+    }
+
+    #[test]
+    fn part1_real_input() {
+        assert_eq!(part1(&get_input()), 0);
+    }
+
+    #[test]
+    fn part2_real_input() {
+        assert_eq!(part2(&get_input()), 0);
     }
 
     fn example_1() -> &'static str {
@@ -184,21 +223,5 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
 ########
 
 <^^>>>vv<v>>v<<";
-    }
-
-    #[test]
-    fn part1_examples() {
-        assert_eq!(part1_inner::<10>(example_1()), 10092);
-        assert_eq!(part1_inner::<8>(example_2()), 2028);
-    }
-
-    #[test]
-    fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0);
-    }
-
-    #[test]
-    fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0);
     }
 }
