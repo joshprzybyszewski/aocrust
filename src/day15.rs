@@ -1,0 +1,204 @@
+const GRID_SIZE: usize = 50;
+
+#[derive(Copy, Clone, Debug)]
+struct Coord {
+    row: i8,
+    col: i8,
+}
+
+impl Coord {
+    fn new(r: i8, c: i8) -> Self {
+        return Coord { row: r, col: c };
+    }
+
+    fn down() -> Self {
+        return Coord { row: 1, col: 0 };
+    }
+
+    fn up() -> Self {
+        return Coord { row: -1, col: 0 };
+    }
+
+    fn right() -> Self {
+        return Coord { row: 0, col: 1 };
+    }
+
+    fn left() -> Self {
+        return Coord { row: 0, col: -1 };
+    }
+}
+
+struct Warehouse {
+    walls: [u64; GRID_SIZE],
+    balls: [u64; GRID_SIZE],
+    robot: Coord,
+
+    instructions: Vec<Coord>,
+}
+
+impl Warehouse {
+    fn new<const SIZE: usize>(input: &str) -> Self {
+        let mut walls: [u64; GRID_SIZE] = [0; GRID_SIZE];
+        let mut balls: [u64; GRID_SIZE] = [0; GRID_SIZE];
+        let mut robot: Coord = Coord::new(-1, -1);
+
+        walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+        let mask: u64 = 1 << SIZE | 1 << 0;
+        for r in 1..SIZE - 1 {
+            // should be 1 << 50 | 1 << 0
+            walls[r] = mask;
+        }
+        walls[SIZE - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+
+        // skip first wall line, newline, and first wall.
+        let mut i: usize = SIZE + 2;
+        let input = input.as_bytes();
+        if input[SIZE] != b'\n' {
+            unreachable!();
+        }
+        if input[SIZE + 1] != b'#' {
+            unreachable!();
+        }
+
+        for r in 1..SIZE - 1 {
+            for c in 1..SIZE - 1 {
+                if input[i] == b'.' {
+                    // do nothing
+                } else if input[i] == b'O' {
+                    balls[r] |= 1 << c;
+                } else if input[i] == b'#' {
+                    walls[r] |= 1 << c;
+                } else if input[i] == b'@' {
+                    robot = Coord::new(r as i8, c as i8);
+                } else {
+                    unreachable!();
+                }
+                i += 1;
+            }
+
+            // input[i] is a wall, then newline, then wall.
+            i += 3;
+            if input[i] != b'#' {
+                unreachable!();
+            }
+            if input[i + 1] != b'\n' {
+                unreachable!();
+            }
+            if input[i + 2] != b'#' {
+                unreachable!();
+            }
+        }
+        // gotta skip past the last row (minus the first wall), then two newlines.
+        i += 51;
+
+        if input[i - 1] != b'\n' {
+            unreachable!();
+        }
+        if input[i - 2] != b'\n' {
+            unreachable!();
+        }
+
+        let mut instructions = Vec::with_capacity(20_000);
+        while i < input.len() {
+            if input[i] == b'v' {
+                instructions.push(Coord::down());
+            } else if input[i] == b'^' {
+                instructions.push(Coord::up());
+            } else if input[i] == b'<' {
+                instructions.push(Coord::left());
+            } else if input[i] == b'>' {
+                instructions.push(Coord::right());
+            } else if input[i] != b'\n' {
+                unreachable!();
+            }
+            i += 1;
+        }
+
+        return Warehouse {
+            walls: walls,
+            balls: balls,
+            robot: robot,
+            instructions: instructions,
+        };
+    }
+}
+
+#[aoc(day15, part1)]
+pub fn part1(input: &str) -> u32 {
+    return part1_inner::<GRID_SIZE>(input);
+}
+
+pub fn part1_inner<const SIZE: usize>(input: &str) -> u32 {
+    let warehouse = Warehouse::new::<SIZE>(input);
+    return 0;
+}
+
+#[aoc(day15, part2)]
+pub fn part2(input: &str) -> i32 {
+    return 0;
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use std::fs;
+
+    fn get_input() -> String {
+        let input_path = "input/2024/day15.txt";
+        fs::read_to_string(input_path).unwrap()
+    }
+
+    fn example_1() -> &'static str {
+        return "##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
+
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
+    }
+
+    fn example_2() -> &'static str {
+        return "########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
+
+<^^>>>vv<v>>v<<";
+    }
+
+    #[test]
+    fn part1_examples() {
+        assert_eq!(part1_inner::<10>(example_1()), 10092);
+        assert_eq!(part1_inner::<8>(example_2()), 2028);
+    }
+
+    #[test]
+    fn part1_real_input() {
+        assert_eq!(part1(&get_input()), 0);
+    }
+
+    #[test]
+    fn part2_real_input() {
+        assert_eq!(part2(&get_input()), 0);
+    }
+}
