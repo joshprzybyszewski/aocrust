@@ -49,8 +49,6 @@ struct Warehouse {
     robot: Coord,
 
     size: usize,
-
-    instructions: Vec<Coord>,
 }
 
 impl Warehouse {
@@ -119,57 +117,29 @@ impl Warehouse {
         //     unreachable!();
         // }
 
-        let mut instructions = Vec::with_capacity(20_000);
+        let mut w = Warehouse {
+            walls: walls,
+            balls: balls,
+            robot: robot,
+            size: SIZE,
+        };
+
         while i < input.len() {
             if input[i] == b'v' {
-                instructions.push(Coord::down());
+                follow_instructions_1(&mut w, Coord::down());
             } else if input[i] == b'^' {
-                instructions.push(Coord::up());
+                follow_instructions_1(&mut w, Coord::up());
             } else if input[i] == b'<' {
-                instructions.push(Coord::left());
+                follow_instructions_1(&mut w, Coord::left());
             } else if input[i] == b'>' {
-                instructions.push(Coord::right());
+                follow_instructions_1(&mut w, Coord::right());
                 // } else if input[i] != b'\n' {
                 //     unreachable!();
             }
             i += 1;
         }
 
-        return Warehouse {
-            walls: walls,
-            balls: balls,
-            robot: robot,
-            size: SIZE,
-            instructions: instructions,
-        };
-    }
-
-    fn follow_instructions(&mut self) {
-        for i in 0..self.instructions.len() {
-            let empty: Option<Coord> = self.follow_instruction(self.robot, self.instructions[i]);
-            if empty.is_none() {
-                continue;
-            }
-            let clear = self.robot + self.instructions[i];
-            let empty = empty.unwrap();
-            if clear != empty {
-                self.balls[clear.col as usize] &= !(1 << clear.row);
-                self.balls[empty.col as usize] |= 1 << empty.row;
-            }
-            self.robot = self.robot + self.instructions[i];
-        }
-    }
-
-    fn follow_instruction(&mut self, pos: Coord, delta: Coord) -> Option<Coord> {
-        let updated = pos + delta;
-        let b = 1u64 << updated.row;
-        if self.walls[updated.col as usize] & b == b {
-            return None;
-        }
-        if self.balls[updated.col as usize] & b == 0 {
-            return Some(updated);
-        }
-        return self.follow_instruction(updated, delta);
+        return w;
     }
 
     fn ball_gps(&self) -> u64 {
@@ -191,14 +161,39 @@ impl Warehouse {
     }
 }
 
+fn follow_instructions_1(w: &mut Warehouse, delta: Coord) {
+    let empty: Option<Coord> = follow_instruction_1(w, w.robot, delta);
+    if empty.is_none() {
+        return;
+    }
+    let clear = w.robot + delta;
+    let empty = empty.unwrap();
+    if clear != empty {
+        w.balls[clear.col as usize] &= !(1 << clear.row);
+        w.balls[empty.col as usize] |= 1 << empty.row;
+    }
+    w.robot = clear;
+}
+
+fn follow_instruction_1(w: &mut Warehouse, pos: Coord, delta: Coord) -> Option<Coord> {
+    let updated = pos + delta;
+    let b = 1u64 << updated.row;
+    if w.walls[updated.col as usize] & b == b {
+        return None;
+    }
+    if w.balls[updated.col as usize] & b == 0 {
+        return Some(updated);
+    }
+    return follow_instruction_1(w, updated, delta);
+}
+
 #[aoc(day15, part1)]
 pub fn part1(input: &str) -> u64 {
     return part1_inner::<GRID_SIZE>(input);
 }
 
 pub fn part1_inner<const SIZE: usize>(input: &str) -> u64 {
-    let mut warehouse = Warehouse::new::<SIZE>(input);
-    warehouse.follow_instructions();
+    let warehouse = Warehouse::new::<SIZE>(input);
     return warehouse.ball_gps();
 }
 
@@ -452,7 +447,7 @@ pub fn part2(input: &str) -> u64 {
 }
 
 pub fn part2_inner<const SIZE: usize>(input: &str) -> u64 {
-    let mut warehouse = Warehouse2::new::<SIZE>(input);
+    let warehouse = Warehouse2::new::<SIZE>(input);
     // warehouse.follow_instructions();
     return warehouse.ball_gps();
 }
