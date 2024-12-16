@@ -315,15 +315,15 @@ impl Warehouse2 {
     }
 
     fn follow_instructions(&mut self) {
+        let mut to_move: Vec<Coord> = Vec::with_capacity(500);
         for i in 0..self.instructions.len() {
             // self.print(i);
             let delta = self.instructions[i];
-            let mut to_move: Vec<Coord> = Vec::new();
+            to_move.clear();
             if !self.get_boxes_to_move(&mut to_move, self.robot, delta) {
                 continue;
             }
 
-            // TODO clean this up, probably a lot.
             for old in to_move.iter().rev() {
                 let new = *old + delta;
                 self.balls[new.col as usize] |= 1 << new.row;
