@@ -69,12 +69,12 @@ impl Warehouse {
         // skip first wall line, newline, and first wall.
         let mut i: usize = SIZE + 2;
         let input = input.as_bytes();
-        if input[SIZE] != b'\n' {
-            unreachable!();
-        }
-        if input[SIZE + 1] != b'#' {
-            unreachable!();
-        }
+        // if input[SIZE] != b'\n' {
+        //     unreachable!();
+        // }
+        // if input[SIZE + 1] != b'#' {
+        //     unreachable!();
+        // }
 
         for r in 1..SIZE - 1 {
             let b = 1u64 << r;
@@ -87,37 +87,37 @@ impl Warehouse {
                     walls[c] |= b;
                 } else if input[i] == b'@' {
                     robot = Coord::new(r as i8, c as i8);
-                } else {
-                    println!("Input[{i}] = ({r}, {c}) {}", input[i]);
-                    unreachable!();
+                    // } else {
+                    //     println!("Input[{i}] = ({r}, {c}) {}", input[i]);
+                    //     unreachable!();
                 }
                 i += 1;
             }
 
             // input[i] is a wall, then newline, then wall.
-            if input[i] != b'#' {
-                println!("Input[{i}] = ({r}, x) {}", input[i]);
-                unreachable!();
-            }
-            if input[i + 1] != b'\n' {
-                println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
-                unreachable!();
-            }
-            if input[i + 2] != b'#' {
-                println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
-                unreachable!();
-            }
+            // if input[i] != b'#' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i]);
+            //     unreachable!();
+            // }
+            // if input[i + 1] != b'\n' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
+            //     unreachable!();
+            // }
+            // if input[i + 2] != b'#' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
+            //     unreachable!();
+            // }
             i += 3;
         }
         // gotta skip past the last row (minus the first wall), then two newlines.
         i += SIZE + 1;
 
-        if input[i - 1] != b'\n' {
-            unreachable!();
-        }
-        if input[i - 2] != b'\n' {
-            unreachable!();
-        }
+        // if input[i - 1] != b'\n' {
+        //     unreachable!();
+        // }
+        // if input[i - 2] != b'\n' {
+        //     unreachable!();
+        // }
 
         let mut instructions = Vec::with_capacity(20_000);
         while i < input.len() {
@@ -129,8 +129,8 @@ impl Warehouse {
                 instructions.push(Coord::left());
             } else if input[i] == b'>' {
                 instructions.push(Coord::right());
-            } else if input[i] != b'\n' {
-                unreachable!();
+                // } else if input[i] != b'\n' {
+                //     unreachable!();
             }
             i += 1;
         }
@@ -235,12 +235,12 @@ impl Warehouse2 {
         // skip first wall line, newline, and first wall.
         let mut i: usize = SIZE + 2;
         let input = input.as_bytes();
-        if input[SIZE] != b'\n' {
-            unreachable!();
-        }
-        if input[SIZE + 1] != b'#' {
-            unreachable!();
-        }
+        // if input[SIZE] != b'\n' {
+        //     unreachable!();
+        // }
+        // if input[SIZE + 1] != b'#' {
+        //     unreachable!();
+        // }
 
         for r in 1..SIZE - 1 {
             let b = 1u64 << r;
@@ -255,38 +255,38 @@ impl Warehouse2 {
                     walls[c + 1] |= b;
                 } else if input[i] == b'@' {
                     robot = Coord::new(r as i8, c as i8);
-                } else {
-                    println!("Input[{i}] = ({r}, {c}) {}", input[i]);
-                    unreachable!();
+                    // } else {
+                    //     println!("Input[{i}] = ({r}, {c}) {}", input[i]);
+                    //     unreachable!();
                 }
                 c += 2;
                 i += 1;
             }
 
             // input[i] is a wall, then newline, then wall.
-            if input[i] != b'#' {
-                println!("Input[{i}] = ({r}, x) {}", input[i]);
-                unreachable!();
-            }
-            if input[i + 1] != b'\n' {
-                println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
-                unreachable!();
-            }
-            if input[i + 2] != b'#' {
-                println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
-                unreachable!();
-            }
+            // if input[i] != b'#' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i]);
+            //     unreachable!();
+            // }
+            // if input[i + 1] != b'\n' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
+            //     unreachable!();
+            // }
+            // if input[i + 2] != b'#' {
+            //     println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
+            //     unreachable!();
+            // }
             i += 3;
         }
         // gotta skip past the last row (minus the first wall), then two newlines.
         i += SIZE + 1;
 
-        if input[i - 1] != b'\n' {
-            unreachable!();
-        }
-        if input[i - 2] != b'\n' {
-            unreachable!();
-        }
+        // if input[i - 1] != b'\n' {
+        //     unreachable!();
+        // }
+        // if input[i - 2] != b'\n' {
+        //     unreachable!();
+        // }
 
         let mut instructions = Vec::with_capacity(20_000);
         while i < input.len() {
@@ -298,8 +298,8 @@ impl Warehouse2 {
                 instructions.push(Coord::left());
             } else if input[i] == b'>' {
                 instructions.push(Coord::right());
-            } else if input[i] != b'\n' {
-                unreachable!();
+                // } else if input[i] != b'\n' {
+                //     unreachable!();
             }
             i += 1;
         }
