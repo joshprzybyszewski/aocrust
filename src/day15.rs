@@ -42,6 +42,7 @@ impl Add for Coord {
 }
 
 struct Warehouse {
+    // column indexed!
     walls: [u64; GRID_SIZE],
     balls: [u64; GRID_SIZE],
     robot: Coord,
@@ -59,9 +60,9 @@ impl Warehouse {
 
         walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
         let mask: u64 = (1 << SIZE - 1) | 1 << 0;
-        for r in 1..SIZE - 1 {
+        for c in 1..SIZE - 1 {
             // should be 1 << 50 | 1 << 0
-            walls[r] = mask;
+            walls[c] = mask;
         }
         walls[SIZE - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
 
@@ -76,13 +77,14 @@ impl Warehouse {
         }
 
         for r in 1..SIZE - 1 {
+            let b = 1u64 << r;
             for c in 1..SIZE - 1 {
                 if input[i] == b'.' {
                     // do nothing
                 } else if input[i] == b'O' {
-                    balls[r] |= 1 << c;
+                    balls[c] |= b;
                 } else if input[i] == b'#' {
-                    walls[r] |= 1 << c;
+                    walls[c] |= b;
                 } else if input[i] == b'@' {
                     robot = Coord::new(r as i8, c as i8);
                 } else {
@@ -146,8 +148,8 @@ impl Warehouse {
         println!("Inst {inst}");
         for r in 0..self.size {
             for c in 0..self.size {
-                let is_wall = self.walls[r] & 1 << c != 0;
-                let is_ball = self.balls[r] & 1 << c != 0;
+                let is_wall = self.walls[c] & 1 << r != 0;
+                let is_ball = self.balls[c] & 1 << r != 0;
                 let is_robot = self.robot.row == r as i8 && self.robot.col == c as i8;
                 if is_wall {
                     if is_ball {
@@ -190,8 +192,8 @@ impl Warehouse {
             let clear = self.robot + self.instructions[i];
             let empty = empty.unwrap();
             if clear != empty {
-                self.balls[clear.row as usize] &= !(1 << clear.col);
-                self.balls[empty.row as usize] |= 1 << empty.col;
+                self.balls[clear.col as usize] &= !(1 << clear.row);
+                self.balls[empty.col as usize] |= 1 << empty.row;
             }
             self.robot = self.robot + self.instructions[i];
         }
@@ -200,11 +202,11 @@ impl Warehouse {
 
     fn follow_instruction(&mut self, pos: Coord, delta: Coord) -> Option<Coord> {
         let updated = pos + delta;
-        let b = 1u64 << updated.col;
-        if self.walls[updated.row as usize] & b == b {
+        let b = 1u64 << updated.row;
+        if self.walls[updated.col as usize] & b == b {
             return None;
         }
-        if self.balls[updated.row as usize] & b == 0 {
+        if self.balls[updated.col as usize] & b == 0 {
             return Some(updated);
         }
         return self.follow_instruction(updated, delta);
@@ -216,9 +218,10 @@ impl Warehouse {
 
         for r in 1..self.size {
             row += 100;
-            for c in 1..self.size as u64 {
-                if self.balls[r] & 1 << c != 0 {
-                    sum += row + c;
+            let b = 1u64 << r;
+            for c in 1..self.size {
+                if self.balls[c] & b != 0 {
+                    sum += row + c as u64;
                 }
             }
         }
