@@ -1,10 +1,11 @@
 #[aoc(day16, part1)]
-pub fn part1(input: &str) -> i32 {
+pub fn part1(input: &str) -> u64 {
+    // the reindeer games...
     return 0;
 }
 
 #[aoc(day16, part2)]
-pub fn part2(input: &str) -> i32 {
+pub fn part2(input: &str) -> u64 {
     return 0;
 }
 
