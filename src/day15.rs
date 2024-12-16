@@ -58,29 +58,29 @@ impl Warehouse {
         let mut robot: Coord = Coord::new(-1, -1);
 
         let input = input.as_bytes();
-        let mut SIZE: usize = 50;
-        if input[SIZE] != b'\n' {
-            SIZE = 64;
+        let mut size: usize = 50;
+        if input[size] != b'\n' {
+            size = 64;
             for i in 0..64 {
                 if input[i] == b'\n' {
-                    SIZE = i;
+                    size = i;
                     break;
                 }
             }
-            if SIZE == 64 {
+            if size == 64 {
                 unreachable!();
             }
         }
 
         walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
-        let mask: u64 = (1 << SIZE - 1) | 1 << 0;
-        for c in 1..SIZE - 1 {
+        let mask: u64 = (1 << size - 1) | 1 << 0;
+        for c in 1..size - 1 {
             walls[c] = mask;
         }
-        walls[SIZE - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+        walls[size - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
 
         // skip first wall line, newline, and first wall.
-        let mut i: usize = SIZE + 2;
+        let mut i: usize = size + 2;
         // if input[SIZE] != b'\n' {
         //     unreachable!();
         // }
@@ -88,9 +88,9 @@ impl Warehouse {
         //     unreachable!();
         // }
 
-        for r in 1..SIZE - 1 {
+        for r in 1..size - 1 {
             let b = 1u64 << r;
-            for c in 1..SIZE - 1 {
+            for c in 1..size - 1 {
                 if input[i] == b'.' {
                     // do nothing
                 } else if input[i] == b'O' {
@@ -122,7 +122,7 @@ impl Warehouse {
             i += 3;
         }
         // gotta skip past the last row (minus the first wall), then two newlines.
-        i += SIZE + 1;
+        i += size + 1;
 
         // if input[i - 1] != b'\n' {
         //     unreachable!();
@@ -135,7 +135,7 @@ impl Warehouse {
             walls: walls,
             balls: balls,
             robot: robot,
-            size: SIZE,
+            size,
         };
 
         while i < input.len() {
@@ -224,22 +224,22 @@ impl Warehouse2 {
         let mut robot: Coord = Coord::new(-1, -1);
 
         let input = input.as_bytes();
-        let mut SIZE: usize = 50;
-        if input[SIZE] != b'\n' {
-            SIZE = 64;
+        let mut size: usize = 50;
+        if input[size] != b'\n' {
+            size = 64;
             for i in 0..64 {
                 if input[i] == b'\n' {
-                    SIZE = i;
+                    size = i;
                     break;
                 }
             }
-            if SIZE == 64 {
+            if size == 64 {
                 unreachable!();
             }
         }
 
-        let num_rows = SIZE;
-        let num_cols = SIZE * 2;
+        let num_rows = size;
+        let num_cols = size * 2;
 
         walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
         walls[1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
@@ -251,7 +251,7 @@ impl Warehouse2 {
         walls[num_cols - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
 
         // skip first wall line, newline, and first wall.
-        let mut i: usize = SIZE + 2;
+        let mut i: usize = size + 2;
         // if input[SIZE] != b'\n' {
         //     unreachable!();
         // }
@@ -259,10 +259,10 @@ impl Warehouse2 {
         //     unreachable!();
         // }
 
-        for r in 1..SIZE - 1 {
+        for r in 1..size - 1 {
             let b = 1u64 << r;
             let mut c: usize = 2;
-            for _ in 1..SIZE - 1 {
+            for _ in 1..size - 1 {
                 if input[i] == b'.' {
                     // do nothing
                 } else if input[i] == b'O' {
@@ -296,7 +296,7 @@ impl Warehouse2 {
             i += 3;
         }
         // gotta skip past the last row (minus the first wall), then two newlines.
-        i += SIZE + 1;
+        i += size + 1;
 
         // if input[i - 1] != b'\n' {
         //     unreachable!();
