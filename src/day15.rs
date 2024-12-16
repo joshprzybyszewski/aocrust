@@ -324,19 +324,10 @@ impl Warehouse2 {
             }
 
             // TODO clean this up, probably a lot.
-            let mut all_new: HashSet<Coord> = HashSet::new();
-            for i in 0..to_move.len() {
-                let old = to_move[i];
-                let new = old + delta;
-                all_new.insert(new);
-            }
-            for old in to_move {
-                let new: Coord = old + delta;
+            for old in to_move.iter().rev() {
+                let new = *old + delta;
                 self.balls[new.col as usize] |= 1 << new.row;
-                if !all_new.contains(&old) {
-                    // only clear out the old if nobody else is moving here.
-                    self.balls[old.col as usize] &= !(1 << old.row);
-                }
+                self.balls[old.col as usize] &= !(1 << old.row);
             }
             self.robot = self.robot + self.instructions[i];
         }
