@@ -210,8 +210,6 @@ struct Warehouse2 {
 
     num_rows: usize,
     num_cols: usize,
-
-    instructions: Vec<Coord>,
 }
 
 impl Warehouse2 {
@@ -288,147 +286,31 @@ impl Warehouse2 {
         //     unreachable!();
         // }
 
-        let mut instructions = Vec::with_capacity(20_000);
+        let mut warehouse = Warehouse2 {
+            walls: walls,
+            balls: balls,
+            robot: robot,
+            num_rows: num_rows,
+            num_cols: num_cols,
+        };
+
+        let mut to_move: Vec<Coord> = Vec::with_capacity(500);
         while i < input.len() {
             if input[i] == b'v' {
-                instructions.push(Coord::down());
+                do_instruction(&mut warehouse, &mut to_move, Coord::down());
             } else if input[i] == b'^' {
-                instructions.push(Coord::up());
+                do_instruction(&mut warehouse, &mut to_move, Coord::up());
             } else if input[i] == b'<' {
-                instructions.push(Coord::left());
+                do_instruction(&mut warehouse, &mut to_move, Coord::left());
             } else if input[i] == b'>' {
-                instructions.push(Coord::right());
+                do_instruction(&mut warehouse, &mut to_move, Coord::right());
                 // } else if input[i] != b'\n' {
                 //     unreachable!();
             }
             i += 1;
         }
 
-        return Warehouse2 {
-            walls: walls,
-            balls: balls,
-            robot: robot,
-            num_rows: num_rows,
-            num_cols: num_cols,
-            instructions: instructions,
-        };
-    }
-
-    fn follow_instructions(&mut self) {
-        let mut to_move: Vec<Coord> = Vec::with_capacity(500);
-        for i in 0..self.instructions.len() {
-            // self.print(i);
-            let delta = self.instructions[i];
-            to_move.clear();
-            if !self.get_boxes_to_move(&mut to_move, self.robot, delta) {
-                continue;
-            }
-
-            for old in to_move.iter().rev() {
-                let new = *old + delta;
-                self.balls[new.col as usize] |= 1 << new.row;
-                self.balls[old.col as usize] &= !(1 << old.row);
-            }
-            self.robot = self.robot + self.instructions[i];
-        }
-        // self.print(self.instructions.len());
-    }
-
-    fn get_boxes_to_move(&mut self, to_move: &mut Vec<Coord>, pos: Coord, delta: Coord) -> bool {
-        if delta.row == 0 {
-            let row = 1u64 << pos.row;
-            if delta.col < 0 {
-                return self.get_boxes_to_move_looking_left(row, to_move, pos);
-            }
-            return self.get_boxes_to_move_looking_right(row, to_move, pos);
-        }
-        return self.get_boxes_to_move_vertical(to_move, pos, delta);
-    }
-
-    fn get_boxes_to_move_looking_left(
-        &mut self,
-        row: u64,
-        to_move: &mut Vec<Coord>,
-        pos: Coord,
-    ) -> bool {
-        if self.walls[(pos.col - 1) as usize] & row == row {
-            // it's a wall!
-            return false;
-        }
-
-        if self.balls[(pos.col - 2) as usize] & row == 0 {
-            // empty space!
-            return true;
-        }
-        // there's a box to the left. add it to the list.
-        let pos = Coord::new(pos.row, pos.col - 2);
-        to_move.push(pos);
-        return self.get_boxes_to_move_looking_left(row, to_move, pos);
-    }
-
-    fn get_boxes_to_move_looking_right(
-        &mut self,
-        row: u64,
-        to_move: &mut Vec<Coord>,
-        pos: Coord,
-    ) -> bool {
-        let c_i: usize = (pos.col + 1) as usize;
-        if self.walls[c_i] & row == row {
-            // it's a wall!
-            return false;
-        }
-
-        if self.balls[c_i] & row == 0 {
-            // empty space!
-            return true;
-        }
-        // there's a box to the right. add it to the list.
-        to_move.push(Coord::new(pos.row, pos.col + 1));
-        // add the box's right edge as the leading edge.
-        return self.get_boxes_to_move_looking_right(
-            row,
-            to_move,
-            Coord::new(pos.row, pos.col + 2),
-        );
-    }
-
-    fn get_boxes_to_move_vertical(
-        &mut self,
-        to_move: &mut Vec<Coord>,
-        pos: Coord,
-        delta: Coord,
-    ) -> bool {
-        let wall = pos + delta;
-        let b = 1u64 << wall.row;
-        if self.walls[wall.col as usize] & b == b {
-            return false;
-        }
-
-        // check if we're pushing a ball directly (the left side of the ball)
-        let direct = pos + delta;
-        if self.balls[direct.col as usize] & b == b {
-            // check above/below this one!
-            to_move.push(direct);
-            let lhs = self.get_boxes_to_move_vertical(to_move, direct, delta);
-            if !lhs {
-                return false;
-            }
-            return self.get_boxes_to_move_vertical(to_move, direct + Coord::right(), delta);
-        }
-
-        // check if we're pushing a ball directly (the left side of the ball)
-        let indirect = direct + Coord::left();
-        if self.balls[indirect.col as usize] & b == b {
-            // check above/below this one!
-            to_move.push(indirect);
-            let lhs = self.get_boxes_to_move_vertical(to_move, indirect, delta);
-            if !lhs {
-                return false;
-            }
-            return self.get_boxes_to_move_vertical(to_move, indirect + Coord::right(), delta);
-        }
-
-        return true;
+        return warehouse;
     }
 
     fn ball_gps(&self) -> u64 {
@@ -450,6 +332,120 @@ impl Warehouse2 {
     }
 }
 
+fn do_instruction(w: &mut Warehouse2, to_move: &mut Vec<Coord>, delta: Coord) {
+    // w.print(i);
+    to_move.clear();
+    if !get_boxes_to_move(w, to_move, w.robot, delta) {
+        return;
+    }
+
+    for old in to_move.iter().rev() {
+        let new = *old + delta;
+        w.balls[new.col as usize] |= 1 << new.row;
+        w.balls[old.col as usize] &= !(1 << old.row);
+    }
+    w.robot = w.robot + delta;
+    // w.print(w.instructions.len());
+}
+
+fn get_boxes_to_move(
+    w: &mut Warehouse2,
+    to_move: &mut Vec<Coord>,
+    pos: Coord,
+    delta: Coord,
+) -> bool {
+    if delta.row == 0 {
+        let row = 1u64 << pos.row;
+        if delta.col < 0 {
+            return get_boxes_to_move_looking_left(w, row, to_move, pos);
+        }
+        return get_boxes_to_move_looking_right(w, row, to_move, pos);
+    }
+    return get_boxes_to_move_vertical(w, to_move, pos, delta);
+}
+
+fn get_boxes_to_move_looking_left(
+    w: &mut Warehouse2,
+    row: u64,
+    to_move: &mut Vec<Coord>,
+    pos: Coord,
+) -> bool {
+    if w.walls[(pos.col - 1) as usize] & row == row {
+        // it's a wall!
+        return false;
+    }
+
+    if w.balls[(pos.col - 2) as usize] & row == 0 {
+        // empty space!
+        return true;
+    }
+    // there's a box to the left. add it to the list.
+    let pos = Coord::new(pos.row, pos.col - 2);
+    to_move.push(pos);
+    return get_boxes_to_move_looking_left(w, row, to_move, pos);
+}
+
+fn get_boxes_to_move_looking_right(
+    w: &mut Warehouse2,
+    row: u64,
+    to_move: &mut Vec<Coord>,
+    pos: Coord,
+) -> bool {
+    let c_i: usize = (pos.col + 1) as usize;
+    if w.walls[c_i] & row == row {
+        // it's a wall!
+        return false;
+    }
+
+    if w.balls[c_i] & row == 0 {
+        // empty space!
+        return true;
+    }
+    // there's a box to the right. add it to the list.
+    to_move.push(Coord::new(pos.row, pos.col + 1));
+    // add the box's right edge as the leading edge.
+    return get_boxes_to_move_looking_right(w, row, to_move, Coord::new(pos.row, pos.col + 2));
+}
+
+fn get_boxes_to_move_vertical(
+    w: &mut Warehouse2,
+    to_move: &mut Vec<Coord>,
+    pos: Coord,
+    delta: Coord,
+) -> bool {
+    let wall = pos + delta;
+    let b = 1u64 << wall.row;
+    if w.walls[wall.col as usize] & b == b {
+        return false;
+    }
+
+    // check if we're pushing a ball directly (the left side of the ball)
+    let direct = pos + delta;
+    if w.balls[direct.col as usize] & b == b {
+        // check above/below this one!
+        to_move.push(direct);
+        let lhs = get_boxes_to_move_vertical(w, to_move, direct, delta);
+        if !lhs {
+            return false;
+        }
+        return get_boxes_to_move_vertical(w, to_move, direct + Coord::right(), delta);
+    }
+
+    // check if we're pushing a ball directly (the left side of the ball)
+    let indirect = direct + Coord::left();
+    if w.balls[indirect.col as usize] & b == b {
+        // check above/below this one!
+        to_move.push(indirect);
+        let lhs = get_boxes_to_move_vertical(w, to_move, indirect, delta);
+        if !lhs {
+            return false;
+        }
+        return get_boxes_to_move_vertical(w, to_move, indirect + Coord::right(), delta);
+    }
+
+    return true;
+}
+
 #[aoc(day15, part2)]
 pub fn part2(input: &str) -> u64 {
     return part2_inner::<GRID_SIZE>(input);
@@ -457,7 +453,7 @@ pub fn part2(input: &str) -> u64 {
 
 pub fn part2_inner<const SIZE: usize>(input: &str) -> u64 {
     let mut warehouse = Warehouse2::new::<SIZE>(input);
-    warehouse.follow_instructions();
+    // warehouse.follow_instructions();
     return warehouse.ball_gps();
 }
 
