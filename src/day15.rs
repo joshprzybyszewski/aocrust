@@ -604,8 +604,6 @@ impl Warehouse2 {
 
 #[aoc(day15, part2)]
 pub fn part2(input: &str) -> u64 {
-    // 1122533 is too low
-    // 1457703
     return part2_inner::<GRID_SIZE>(input);
 }
 
