@@ -1,6 +1,7 @@
 use std::ops::Add;
 
 const GRID_SIZE: usize = 50;
+const GRID_SIZE_2: usize = 100;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Coord {
@@ -241,9 +242,248 @@ pub fn part1_inner<const SIZE: usize>(input: &str) -> u64 {
     return warehouse.ball_gps();
 }
 
+struct Warehouse2 {
+    // column indexed!
+    walls: [u64; GRID_SIZE_2],
+    balls: [u64; GRID_SIZE_2],
+    robot: Coord,
+
+    num_rows: usize,
+    num_cols: usize,
+
+    instructions: Vec<Coord>,
+}
+
+impl Warehouse2 {
+    fn new<const SIZE: usize>(input: &str) -> Self {
+        let mut walls: [u64; GRID_SIZE_2] = [0; GRID_SIZE_2];
+        let mut balls: [u64; GRID_SIZE_2] = [0; GRID_SIZE_2];
+        let mut robot: Coord = Coord::new(-1, -1);
+
+        let num_rows = SIZE;
+        let num_cols = SIZE * 2;
+
+        walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+        walls[1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+        let mask: u64 = (1 << num_rows - 1) | 1 << 0;
+        for c in 2..num_cols - 2 {
+            // should be 1 << 50 | 1 << 0
+            walls[c] = mask;
+        }
+        walls[num_cols - 2] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+        walls[num_cols - 1] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
+
+        // skip first wall line, newline, and first wall.
+        let mut i: usize = SIZE + 2;
+        let input = input.as_bytes();
+        if input[SIZE] != b'\n' {
+            unreachable!();
+        }
+        if input[SIZE + 1] != b'#' {
+            unreachable!();
+        }
+
+        for r in 1..SIZE - 1 {
+            let b = 1u64 << r;
+            let mut c: usize = 2;
+            for _ in 1..SIZE - 1 {
+                if input[i] == b'.' {
+                    // do nothing
+                } else if input[i] == b'O' {
+                    balls[c] |= b;
+                } else if input[i] == b'#' {
+                    walls[c] |= b;
+                    walls[c + 1] |= b;
+                } else if input[i] == b'@' {
+                    robot = Coord::new(r as i8, c as i8);
+                } else {
+                    println!("Input[{i}] = ({r}, {c}) {}", input[i]);
+                    unreachable!();
+                }
+                c += 2;
+                i += 1;
+            }
+
+            // input[i] is a wall, then newline, then wall.
+            if input[i] != b'#' {
+                println!("Input[{i}] = ({r}, x) {}", input[i]);
+                unreachable!();
+            }
+            if input[i + 1] != b'\n' {
+                println!("Input[{i}] = ({r}, x) {}", input[i + 1]);
+                unreachable!();
+            }
+            if input[i + 2] != b'#' {
+                println!("Input[{i}] = ({r}, x) {}", input[i + 2]);
+                unreachable!();
+            }
+            i += 3;
+        }
+        // gotta skip past the last row (minus the first wall), then two newlines.
+        i += SIZE + 1;
+
+        if input[i - 1] != b'\n' {
+            unreachable!();
+        }
+        if input[i - 2] != b'\n' {
+            unreachable!();
+        }
+
+        let mut instructions = Vec::with_capacity(20_000);
+        while i < input.len() {
+            if input[i] == b'v' {
+                instructions.push(Coord::down());
+            } else if input[i] == b'^' {
+                instructions.push(Coord::up());
+            } else if input[i] == b'<' {
+                instructions.push(Coord::left());
+            } else if input[i] == b'>' {
+                instructions.push(Coord::right());
+            } else if input[i] != b'\n' {
+                unreachable!();
+            }
+            i += 1;
+        }
+
+        return Warehouse2 {
+            walls: walls,
+            balls: balls,
+            robot: robot,
+            num_rows: num_rows,
+            num_cols: num_cols,
+            instructions: instructions,
+        };
+    }
+
+    fn print(&self, inst: usize) {
+        println!("Inst {inst}");
+        for r in 0..self.num_rows {
+            for c in 0..self.num_cols {
+                print!("{}", self.get_string_for_spot(r, c));
+            }
+            println!("")
+        }
+        println!("")
+    }
+
+    fn get_string_for_spot(&self, r: usize, c: usize) -> &str {
+        let is_wall = self.walls[c] & 1 << r != 0;
+        let is_ball = self.balls[c] & 1 << r != 0;
+        let is_prev_ball = c > 0 && self.balls[c - 1] & 1 << r != 0;
+        let is_robot = self.robot.row == r as i8 && self.robot.col == c as i8;
+        if is_wall {
+            if is_ball {
+                if is_robot {
+                    if is_prev_ball {
+                        return "a";
+                    }
+                    return "!";
+                }
+                if is_prev_ball {
+                    return "b";
+                }
+                return "?";
+            }
+
+            if is_robot {
+                if is_prev_ball {
+                    return "c";
+                }
+                return "X";
+            }
+
+            if is_prev_ball {
+                return "d";
+            }
+
+            return "#";
+        }
+
+        if is_ball {
+            if is_robot {
+                if is_prev_ball {
+                    return "e";
+                }
+                return "-";
+            }
+            if is_prev_ball {
+                return "f";
+            }
+            return "[";
+        }
+
+        if is_robot {
+            if is_prev_ball {
+                return "g";
+            }
+            return "@";
+        }
+
+        if is_prev_ball {
+            return "]";
+        }
+
+        return ".";
+    }
+
+    fn follow_instructions(&mut self) {
+        for i in 0..self.instructions.len() {
+            self.print(i);
+            let empty: Option<Coord> = self.follow_instruction(self.robot, self.instructions[i]);
+            if empty.is_none() {
+                continue;
+            }
+            let clear = self.robot + self.instructions[i];
+            let empty = empty.unwrap();
+            if clear != empty {
+                self.balls[clear.col as usize] &= !(1 << clear.row);
+                self.balls[empty.col as usize] |= 1 << empty.row;
+            }
+            self.robot = self.robot + self.instructions[i];
+        }
+        self.print(self.instructions.len());
+    }
+
+    fn follow_instruction(&mut self, pos: Coord, delta: Coord) -> Option<Coord> {
+        let updated = pos + delta;
+        let b = 1u64 << updated.row;
+        if self.walls[updated.col as usize] & b == b {
+            return None;
+        }
+        if self.balls[updated.col as usize] & b == 0 {
+            return Some(updated);
+        }
+        return self.follow_instruction(updated, delta);
+    }
+
+    fn ball_gps(&self) -> u64 {
+        let mut sum: u64 = 0;
+        let mut row: u64 = 0;
+
+        for r in 1..self.num_rows {
+            row += 100;
+            let b = 1u64 << r;
+            for c in 1..self.num_cols {
+                if self.balls[c] & b != 0 {
+                    sum += row + c as u64;
+                }
+            }
+        }
+
+        return sum;
+    }
+}
+
 #[aoc(day15, part2)]
 pub fn part2(input: &str) -> u64 {
-    return 0;
+    return part2_inner::<GRID_SIZE>(input);
+}
+
+pub fn part2_inner<const SIZE: usize>(input: &str) -> u64 {
+    let mut warehouse = Warehouse2::new::<SIZE>(input);
+    warehouse.print(0);
+    // warehouse.follow_instructions();
+    return warehouse.ball_gps();
 }
 
 #[cfg(test)]
@@ -261,6 +501,12 @@ mod test {
     fn part1_examples() {
         assert_eq!(part1_inner::<10>(example_1()), 10092);
         assert_eq!(part1_inner::<8>(example_2()), 2028);
+    }
+
+    #[test]
+    fn part2_examples() {
+        assert_eq!(part2_inner::<10>(example_1()), 9021);
+        // assert_eq!(part2_inner::<8>(example_2()), 2028);
     }
 
     #[test]
