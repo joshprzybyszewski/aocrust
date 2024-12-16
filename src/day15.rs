@@ -1,4 +1,4 @@
-use std::{collections::HashSet, ops::Add};
+use std::ops::Add;
 
 const GRID_SIZE: usize = 50;
 const GRID_SIZE_2: usize = 100;
@@ -448,7 +448,6 @@ pub fn part2(input: &str) -> u64 {
 
 pub fn part2_inner<const SIZE: usize>(input: &str) -> u64 {
     let warehouse = Warehouse2::new::<SIZE>(input);
-    // warehouse.follow_instructions();
     return warehouse.ball_gps();
 }
 
