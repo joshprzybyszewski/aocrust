@@ -1,7 +1,7 @@
 use std::ops::Add;
 
-const GRID_SIZE: usize = 50;
-const GRID_SIZE_2: usize = 100;
+const GRID_SIZE: usize = 64;
+const GRID_SIZE_2: usize = GRID_SIZE * 2;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 struct Coord {
@@ -52,10 +52,25 @@ struct Warehouse {
 }
 
 impl Warehouse {
-    fn new<const SIZE: usize>(input: &str) -> Self {
+    fn new(input: &str) -> Self {
         let mut walls: [u64; GRID_SIZE] = [0; GRID_SIZE];
         let mut balls: [u64; GRID_SIZE] = [0; GRID_SIZE];
         let mut robot: Coord = Coord::new(-1, -1);
+
+        let input = input.as_bytes();
+        let mut SIZE: usize = 50;
+        if input[SIZE] != b'\n' {
+            SIZE = 64;
+            for i in 0..64 {
+                if input[i] == b'\n' {
+                    SIZE = i;
+                    break;
+                }
+            }
+            if SIZE == 64 {
+                unreachable!();
+            }
+        }
 
         walls[0] = 0xFF_FF_FF_FF_FF_FF_FF_FF;
         let mask: u64 = (1 << SIZE - 1) | 1 << 0;
@@ -66,7 +81,6 @@ impl Warehouse {
 
         // skip first wall line, newline, and first wall.
         let mut i: usize = SIZE + 2;
-        let input = input.as_bytes();
         // if input[SIZE] != b'\n' {
         //     unreachable!();
         // }
@@ -189,11 +203,7 @@ fn follow_instruction_1(w: &mut Warehouse, pos: Coord, delta: Coord) -> Option<C
 
 #[aoc(day15, part1)]
 pub fn part1(input: &str) -> u64 {
-    return part1_inner::<GRID_SIZE>(input);
-}
-
-pub fn part1_inner<const SIZE: usize>(input: &str) -> u64 {
-    let warehouse = Warehouse::new::<SIZE>(input);
+    let warehouse = Warehouse::new(input);
     return warehouse.ball_gps();
 }
 
@@ -208,10 +218,25 @@ struct Warehouse2 {
 }
 
 impl Warehouse2 {
-    fn new<const SIZE: usize>(input: &str) -> Self {
+    fn new(input: &str) -> Self {
         let mut walls: [u64; GRID_SIZE_2] = [0; GRID_SIZE_2];
         let mut balls: [u64; GRID_SIZE_2] = [0; GRID_SIZE_2];
         let mut robot: Coord = Coord::new(-1, -1);
+
+        let input = input.as_bytes();
+        let mut SIZE: usize = 50;
+        if input[SIZE] != b'\n' {
+            SIZE = 64;
+            for i in 0..64 {
+                if input[i] == b'\n' {
+                    SIZE = i;
+                    break;
+                }
+            }
+            if SIZE == 64 {
+                unreachable!();
+            }
+        }
 
         let num_rows = SIZE;
         let num_cols = SIZE * 2;
@@ -227,7 +252,6 @@ impl Warehouse2 {
 
         // skip first wall line, newline, and first wall.
         let mut i: usize = SIZE + 2;
-        let input = input.as_bytes();
         // if input[SIZE] != b'\n' {
         //     unreachable!();
         // }
@@ -443,11 +467,7 @@ fn get_boxes_to_move_vertical(
 
 #[aoc(day15, part2)]
 pub fn part2(input: &str) -> u64 {
-    return part2_inner::<GRID_SIZE>(input);
-}
-
-pub fn part2_inner<const SIZE: usize>(input: &str) -> u64 {
-    let warehouse = Warehouse2::new::<SIZE>(input);
+    let warehouse = Warehouse2::new(input);
     return warehouse.ball_gps();
 }
 
@@ -464,19 +484,19 @@ mod test {
 
     #[test]
     fn part1_examples() {
-        assert_eq!(part1_inner::<10>(example_1()), 10092);
-        assert_eq!(part1_inner::<8>(example_2()), 2028);
+        assert_eq!(part1(example_1()), 10092);
+        assert_eq!(part1(example_2()), 2028);
     }
 
     #[test]
     fn part2_examples() {
-        assert_eq!(part2_inner::<7>(example_4()), 104 + 106 + 205);
-        assert_eq!(part2_inner::<7>(example_5()), 102 + 104);
-        assert_eq!(part2_inner::<7>(example_5b()), 108 + 110);
-        // assert_eq!(part2_inner::<7>(example_6()), 0);
-        // assert_eq!(part2_inner::<7>(example_3()), 105 + 207 + 306);
-        // assert_eq!(part2_inner::<10>(example_1()), 9021);
-        // assert_eq!(part2_inner::<8>(example_2()), -1);
+        assert_eq!(part2(example_4()), 104 + 106 + 205);
+        assert_eq!(part2(example_5()), 102 + 104);
+        assert_eq!(part2(example_5b()), 108 + 110);
+        // assert_eq!(part2(example_6()), 0);
+        // assert_eq!(part2(example_3()), 105 + 207 + 306);
+        // assert_eq!(part2(example_1()), 9021);
+        // assert_eq!(part2(example_2()), -1);
     }
 
     #[test]
