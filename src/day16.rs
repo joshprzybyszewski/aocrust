@@ -99,8 +99,8 @@ impl Position {
         match self.direction {
             Direction::East => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row - 1, self.coord.col),
+                    cost: self.cost + 1001,
                     direction: Direction::North,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -108,8 +108,8 @@ impl Position {
             }
             Direction::North => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row, self.coord.col - 1),
+                    cost: self.cost + 1001,
                     direction: Direction::West,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -117,8 +117,8 @@ impl Position {
             }
             Direction::West => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row + 1, self.coord.col),
+                    cost: self.cost + 1001,
                     direction: Direction::South,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -126,8 +126,8 @@ impl Position {
             }
             Direction::South => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row, self.coord.col + 1),
+                    cost: self.cost + 1001,
                     direction: Direction::East,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -140,8 +140,8 @@ impl Position {
         match self.direction {
             Direction::East => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row + 1, self.coord.col),
+                    cost: self.cost + 1001,
                     direction: Direction::South,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -149,8 +149,8 @@ impl Position {
             }
             Direction::North => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row, self.coord.col + 1),
+                    cost: self.cost + 1001,
                     direction: Direction::East,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -158,8 +158,8 @@ impl Position {
             }
             Direction::West => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row - 1, self.coord.col),
+                    cost: self.cost + 1001,
                     direction: Direction::North,
                     id,
                     prev_ids: Vec::from([self.id]),
@@ -167,8 +167,8 @@ impl Position {
             }
             Direction::South => {
                 return Position {
-                    coord: self.coord,
-                    cost: self.cost + 1000,
+                    coord: Coord::new(self.coord.row, self.coord.col - 1),
+                    cost: self.cost + 1001,
                     direction: Direction::West,
                     id,
                     prev_ids: Vec::from([self.id]),
