@@ -22,6 +22,17 @@ enum Direction {
     South = 3,
 }
 
+impl Direction {
+    fn index(self) -> usize {
+        match self {
+            Direction::East => return 0,
+            Direction::North => return 1,
+            Direction::West => return 2,
+            Direction::South => return 3,
+        }
+    }
+}
+
 #[derive(Clone, Eq, PartialEq, Debug)]
 struct Position {
     cost: u64,
@@ -290,56 +301,17 @@ impl Finder {
 
     fn check_cost(&mut self, id: usize) -> bool {
         let pos = &self.fifo[id];
-        match pos.direction {
-            Direction::East => {
-                if self.best[pos.coord.row][pos.coord.col][0] < pos.cost {
-                    return true;
-                }
-                if self.best[pos.coord.row][pos.coord.col][0] == pos.cost {
-                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][0];
-                    self.fifo[current_best_id].prev_ids.push(id);
-                    return true;
-                }
-                self.best[pos.coord.row][pos.coord.col][0] = pos.cost;
-                self.best_index[pos.coord.row][pos.coord.col][0] = id;
-            }
-            Direction::North => {
-                if self.best[pos.coord.row][pos.coord.col][1] < pos.cost {
-                    return true;
-                }
-                if self.best[pos.coord.row][pos.coord.col][1] == pos.cost {
-                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][1];
-                    self.fifo[current_best_id].prev_ids.push(id);
-                    return true;
-                }
-                self.best[pos.coord.row][pos.coord.col][1] = pos.cost;
-                self.best_index[pos.coord.row][pos.coord.col][1] = id;
-            }
-            Direction::West => {
-                if self.best[pos.coord.row][pos.coord.col][2] < pos.cost {
-                    return true;
-                }
-                if self.best[pos.coord.row][pos.coord.col][2] == pos.cost {
-                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][2];
-                    self.fifo[current_best_id].prev_ids.push(id);
-                    return true;
-                }
-                self.best[pos.coord.row][pos.coord.col][2] = pos.cost;
-                self.best_index[pos.coord.row][pos.coord.col][2] = id;
-            }
-            Direction::South => {
-                if self.best[pos.coord.row][pos.coord.col][3] < pos.cost {
-                    return true;
-                }
-                if self.best[pos.coord.row][pos.coord.col][3] == pos.cost {
-                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][3];
-                    self.fifo[current_best_id].prev_ids.push(id);
-                    return true;
-                }
-                self.best[pos.coord.row][pos.coord.col][3] = pos.cost;
-                self.best_index[pos.coord.row][pos.coord.col][3] = id;
-            }
+        if self.best[pos.coord.row][pos.coord.col][pos.direction.index()] < pos.cost {
+            return true;
         }
+        if self.best[pos.coord.row][pos.coord.col][pos.direction.index()] == pos.cost {
+            let current_best_id =
+                self.best_index[pos.coord.row][pos.coord.col][pos.direction.index()];
+            self.fifo[current_best_id].prev_ids.push(id);
+            return true;
+        }
+        self.best[pos.coord.row][pos.coord.col][pos.direction.index()] = pos.cost;
+        self.best_index[pos.coord.row][pos.coord.col][pos.direction.index()] = id;
         return false;
     }
 
