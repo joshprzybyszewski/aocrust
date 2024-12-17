@@ -1,7 +1,4 @@
-use std::cmp::{min, Ordering};
-use std::collections::VecDeque;
-
-// use std::ops::{Index, IndexMut};
+use std::cmp::min;
 
 const GRID_SIZE: usize = 141;
 
@@ -17,7 +14,7 @@ impl Coord {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum Direction {
     East = 0,
     North = 1,
@@ -173,8 +170,9 @@ impl Position {
 struct Finder {
     start: Coord,
     goal: Coord,
-    // the best cost
+    // the best cost. A cache of using the best_index.
     best: [[[u64; 4]; GRID_SIZE]; GRID_SIZE],
+    // the index into self.fifo to find the Position with the best cost.
     best_index: [[[usize; 4]; GRID_SIZE]; GRID_SIZE],
 
     fifo: Vec<Position>,
@@ -252,12 +250,15 @@ impl Finder {
                 target_cost = self.get_best_goal_cost();
             }
 
-            // println!("Processing {:?}", pos);
+            // TODO push forward until hitting a wall.
             self.fifo.push(self.fifo[i].forward(self.fifo.len()));
-            // TODO choose left or right based on where pos is in relation to self.goal.
-            self.fifo.push(self.fifo[i].left(self.fifo.len()));
-            self.fifo.push(self.fifo[i].right(self.fifo.len()));
-            // queue.sort();
+            if self.choose_left(i) {
+                self.fifo.push(self.fifo[i].left(self.fifo.len()));
+                self.fifo.push(self.fifo[i].right(self.fifo.len()));
+            } else {
+                self.fifo.push(self.fifo[i].right(self.fifo.len()));
+                self.fifo.push(self.fifo[i].left(self.fifo.len()));
+            }
             i += 1;
         }
         if PART1 {
@@ -265,6 +266,25 @@ impl Finder {
         }
 
         return self.get_best_paths_length();
+    }
+
+    fn choose_left(&self, id: usize) -> bool {
+        let pos = &self.fifo[id];
+
+        match pos.direction {
+            Direction::East => {
+                return pos.coord.row > self.goal.row;
+            }
+            Direction::North => {
+                return pos.coord.col > self.goal.col;
+            }
+            Direction::West => {
+                return pos.coord.row < self.goal.row;
+            }
+            Direction::South => {
+                return pos.coord.col < self.goal.col;
+            }
+        }
     }
 
     fn get_best_goal_cost(&self) -> u64 {
@@ -361,68 +381,24 @@ impl Finder {
     }
 
     fn get_best_paths_length_from_id(&self, seen: &mut [[bool; GRID_SIZE]; GRID_SIZE], id: usize) {
-        if id == 0 {
-            // shouldn't happen!
-            unreachable!();
-        }
-        let pos = &self.fifo[id];
-        // if seen[pos.coord.row][pos.coord.col] {
-        //     println!("have seen {:?}", pos);
-        //     return;
+        // if id == 0 {
+        //     // shouldn't happen!
+        //     unreachable!();
         // }
-        println!("Checking {:?}", pos);
+        let pos = &self.fifo[id];
         seen[pos.coord.row][pos.coord.col] = true;
-        if id == 1 {
-            if pos.prev_ids.len() > 0 {
-                // sanity check
-                unreachable!();
-            }
-        }
+        // if id == 1 {
+        //     if pos.prev_ids.len() > 0 {
+        //         // sanity check
+        //         unreachable!();
+        //     }
+        // }
 
         for i in 0..pos.prev_ids.len() {
             self.get_best_paths_length_from_id(seen, pos.prev_ids[i]);
         }
     }
 }
-
-// impl Index<Position> for [[[u64; 4]; GRID_SIZE]; GRID_SIZE] {
-//     type Output = u64;
-
-//     fn index(&self, pos: Position) -> &Self::Output {
-//         match pos.direction {
-//             Direction::East => &self[pos.coord.row as usize][pos.coord.col as usize][0],
-//             Direction::North => &self[pos.coord.row as usize][pos.coord.col as usize][1],
-//             Direction::West => &self[pos.coord.row as usize][pos.coord.col as usize][2],
-//             Direction::South => &self[pos.coord.row as usize][pos.coord.col as usize][3],
-//         }
-//     }
-// }
-
-// impl IndexMut<Position> for [[[u64; 4]; GRID_SIZE]; GRID_SIZE] {
-//     fn index_mut(&mut self, pos: Position) -> &mut Self::Output {
-//         match pos.direction {
-//             Direction::East => &mut self[pos.coord.row as usize][pos.coord.col as usize][0],
-//             Direction::North => &mut self[pos.coord.row as usize][pos.coord.col as usize][1],
-//             Direction::West => &mut self[pos.coord.row as usize][pos.coord.col as usize][2],
-//             Direction::South => &mut self[pos.coord.row as usize][pos.coord.col as usize][3],
-//         }
-//     }
-// }
-
-// impl Ord for Position {
-//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-//         self.cost
-//             .cmp(&other.cost)
-//             .then(self.coord.cmp(&other.coord))
-//             .then(self.direction.cmp(&other.direction))
-//     }
-// }
-
-// impl PartialOrd for Position {
-//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-//         Some(self.cmp(other))
-//     }
-// }
 
 #[aoc(day16, part1)]
 pub fn part1(input: &str) -> u64 {
@@ -434,7 +410,6 @@ pub fn part1(input: &str) -> u64 {
 #[aoc(day16, part2)]
 pub fn part2(input: &str) -> u64 {
     let mut finder = Finder::new(input);
-    // 634 is too low
     return finder.find::<false>();
 }
 
