@@ -9,6 +9,16 @@ struct CPU_1 {
 }
 
 impl CPU_1 {
+    fn copy(&self) -> Self {
+        return CPU_1 {
+            register_a: self.register_a,
+            register_b: self.register_b,
+            register_c: self.register_c,
+            pc: self.pc,
+            program: self.program.to_vec(),
+        };
+    }
+
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
         let mut cpu = CPU_1 {
@@ -64,7 +74,7 @@ impl CPU_1 {
         return cpu;
     }
 
-    fn run(&mut self) -> Vec<u8> {
+    fn run<const FIND_COPY: bool>(&mut self) -> Vec<u8> {
         let mut output = Vec::with_capacity(32);
 
         loop {
@@ -81,9 +91,7 @@ impl CPU_1 {
             match op_code {
                 0 => {
                     // adv
-                    let numerator = self.register_a;
-                    let denominator = 1 << self.combo_operand(operand);
-                    self.register_a = numerator / denominator;
+                    self.register_a >>= self.combo_operand(operand);
                 }
                 1 => {
                     // bxl
@@ -105,19 +113,22 @@ impl CPU_1 {
                 }
                 5 => {
                     // out
-                    output.push((self.combo_operand(operand) as u8) & 0x07)
+                    let next = (self.combo_operand(operand) as u8) & 0x07;
+                    if FIND_COPY {
+                        if next != self.program[output.len()] {
+                            // not a copy. early exit.
+                            return output;
+                        }
+                    }
+                    output.push(next);
                 }
                 6 => {
                     // bdv
-                    let numerator = self.register_a;
-                    let denominator = 1 << self.combo_operand(operand);
-                    self.register_b = numerator / denominator;
+                    self.register_b = self.register_a >> self.combo_operand(operand);
                 }
                 7 => {
                     // cdv
-                    let numerator = self.register_a;
-                    let denominator = 1 << self.combo_operand(operand);
-                    self.register_c = numerator / denominator;
+                    self.register_c = self.register_a >> self.combo_operand(operand);
                 }
                 _ => unreachable!(),
             }
@@ -144,7 +155,7 @@ impl CPU_1 {
 #[aoc(day17, part1)]
 pub fn part1(input: &str) -> String {
     let mut cpu = CPU_1::new(input);
-    let output = cpu.run();
+    let output = cpu.run::<false>();
     return output
         .into_iter()
         .map(|v| v.to_string())
@@ -153,11 +164,22 @@ pub fn part1(input: &str) -> String {
 }
 
 #[aoc(day17, part2)]
-pub fn part2(input: &str) -> u64 {
-    let mut cpu = CPU_1::new(input);
-    let output = cpu.run();
-
-    return 0;
+pub fn part2(input: &str) -> i64 {
+    let cpu = CPU_1::new(input);
+    let mut test = cpu.copy();
+    test.register_a = 0;
+    loop {
+        let start = test.register_a;
+        println!("checking {start}");
+        let output = test.run::<true>();
+        if output.len() == test.program.len() {
+            return start;
+        }
+        test.register_a = start + 1;
+        test.register_b = cpu.register_b;
+        test.register_c = cpu.register_c;
+        test.pc = cpu.pc;
+    }
 }
 
 #[cfg(test)]
@@ -196,6 +218,6 @@ Program: 0,1,5,4,3,0";
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), "0");
+        assert_eq!(part2(&get_input()), 5);
     }
 }
