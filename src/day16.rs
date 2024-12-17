@@ -1,4 +1,5 @@
 use std::cmp::{min, Ordering};
+use std::collections::VecDeque;
 // use std::ops::{Index, IndexMut};
 
 const GRID_SIZE: usize = 141;
@@ -12,18 +13,6 @@ struct Coord {
 impl Coord {
     fn new(r: usize, c: usize) -> Self {
         return Coord { row: r, col: c };
-    }
-}
-
-impl Ord for Coord {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.row.cmp(&other.row).then(self.col.cmp(&other.col))
-    }
-}
-
-impl PartialOrd for Coord {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 
@@ -203,22 +192,22 @@ impl Finder {
     }
 
     fn find(&mut self) -> u64 {
-        let mut queue: Vec<Position> = Vec::with_capacity(GRID_SIZE * GRID_SIZE * 4);
-        queue.push(Position::new(self.start));
+        let mut queue: VecDeque<Position> = VecDeque::new();
+        queue.push_front(Position::new(self.start));
 
         let mut target_cost = self.get_best_goal_cost();
 
         while !queue.is_empty() {
-            let pos = queue.pop().unwrap();
+            let pos = queue.pop_front().unwrap();
             if pos.cost >= target_cost || pos.cost >= self.get_cost(pos) {
                 continue;
             }
             println!("Processing {:?}", pos);
             self.set_cost(pos);
             // self.process(pos.forward(), queue);
-            queue.push(pos.forward());
-            queue.push(pos.left());
-            queue.push(pos.right());
+            queue.push_back(pos.forward());
+            queue.push_back(pos.left());
+            queue.push_back(pos.right());
             // queue.sort();
 
             if pos.coord == self.goal {
@@ -295,20 +284,20 @@ impl Finder {
 //     }
 // }
 
-impl Ord for Position {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cost
-            .cmp(&other.cost)
-            .then(self.coord.cmp(&other.coord))
-            .then(self.direction.cmp(&other.direction))
-    }
-}
+// impl Ord for Position {
+//     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+//         self.cost
+//             .cmp(&other.cost)
+//             .then(self.coord.cmp(&other.coord))
+//             .then(self.direction.cmp(&other.direction))
+//     }
+// }
 
-impl PartialOrd for Position {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
+// impl PartialOrd for Position {
+//     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
 
 #[aoc(day16, part1)]
 pub fn part1(input: &str) -> u64 {
@@ -335,7 +324,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 0);
+        assert_eq!(part1(&get_input()), 147628);
     }
 
     #[test]
