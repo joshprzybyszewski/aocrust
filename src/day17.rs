@@ -77,23 +77,12 @@ impl CPU_1 {
             self.pc += 2;
 
             let literal_operand: i64 = operand as i64;
-            let combo_operand: i64;
-            if operand == 7 {
-                unreachable!();
-            } else if operand == 6 {
-                combo_operand = self.register_c
-            } else if operand == 5 {
-                combo_operand = self.register_b
-            } else if operand == 4 {
-                combo_operand = self.register_a
-            } else {
-                combo_operand = operand as i64
-            }
+
             match op_code {
                 0 => {
                     // adv
                     let numerator = self.register_a;
-                    let denominator = 2 << combo_operand;
+                    let denominator = 1 << self.combo_operand(operand);
                     self.register_a = numerator / denominator;
                 }
                 1 => {
@@ -102,7 +91,7 @@ impl CPU_1 {
                 }
                 2 => {
                     // bst
-                    self.register_b = combo_operand & 0x07;
+                    self.register_b = self.combo_operand(operand) & 0x07;
                 }
                 3 => {
                     // jnz
@@ -116,18 +105,18 @@ impl CPU_1 {
                 }
                 5 => {
                     // out
-                    output.push((combo_operand as u8) & 0x07)
+                    output.push((self.combo_operand(operand) as u8) & 0x07)
                 }
                 6 => {
                     // bdv
                     let numerator = self.register_a;
-                    let denominator = 2 << combo_operand;
+                    let denominator = 1 << self.combo_operand(operand);
                     self.register_b = numerator / denominator;
                 }
                 7 => {
                     // cdv
                     let numerator = self.register_a;
-                    let denominator = 2 << combo_operand;
+                    let denominator = 1 << self.combo_operand(operand);
                     self.register_c = numerator / denominator;
                 }
                 _ => unreachable!(),
@@ -135,6 +124,20 @@ impl CPU_1 {
         }
 
         return output;
+    }
+
+    fn combo_operand(&self, operand: u8) -> i64 {
+        if operand == 7 {
+            unreachable!();
+        } else if operand == 6 {
+            return self.register_c;
+        } else if operand == 5 {
+            return self.register_b;
+        } else if operand == 4 {
+            return self.register_a;
+        } else {
+            return operand as i64;
+        }
     }
 }
 
@@ -150,8 +153,11 @@ pub fn part1(input: &str) -> String {
 }
 
 #[aoc(day17, part2)]
-pub fn part2(input: &str) -> String {
-    return String::new();
+pub fn part2(input: &str) -> u64 {
+    let mut cpu = CPU_1::new(input);
+    let output = cpu.run();
+
+    return 0;
 }
 
 #[cfg(test)]
@@ -179,8 +185,13 @@ Program: 0,1,5,4,3,0";
     }
 
     #[test]
+    fn part2_example() {
+        assert_eq!(part2(&get_example_input()), 117440);
+    }
+
+    #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), "0");
+        assert_eq!(part1(&get_input()), "2,1,0,1,7,2,5,0,3");
     }
 
     #[test]
