@@ -1,5 +1,6 @@
 use std::cmp::{min, Ordering};
 use std::collections::VecDeque;
+
 // use std::ops::{Index, IndexMut};
 
 const GRID_SIZE: usize = 141;
@@ -24,29 +25,36 @@ enum Direction {
     South = 3,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 struct Position {
     cost: u64,
     coord: Coord,
     direction: Direction,
+
+    id: usize,
+    prev_ids: Vec<usize>,
 }
 
 impl Position {
-    fn new(coord: Coord) -> Self {
+    fn new(id: usize, coord: Coord) -> Self {
         return Position {
             coord,
             cost: 0,
             direction: Direction::East,
+            id: id,
+            prev_ids: Vec::new(),
         };
     }
 
-    fn forward(&self) -> Position {
+    fn forward(&self, id: usize) -> Position {
         match self.direction {
             Direction::East => {
                 return Position {
                     coord: Coord::new(self.coord.row, self.coord.col + 1),
                     cost: self.cost + 1,
                     direction: self.direction,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::North => {
@@ -54,6 +62,8 @@ impl Position {
                     coord: Coord::new(self.coord.row - 1, self.coord.col),
                     cost: self.cost + 1,
                     direction: self.direction,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::West => {
@@ -61,6 +71,8 @@ impl Position {
                     coord: Coord::new(self.coord.row, self.coord.col - 1),
                     cost: self.cost + 1,
                     direction: self.direction,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::South => {
@@ -68,18 +80,22 @@ impl Position {
                     coord: Coord::new(self.coord.row + 1, self.coord.col),
                     cost: self.cost + 1,
                     direction: self.direction,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
         }
     }
 
-    fn left(&self) -> Position {
+    fn left(&self, id: usize) -> Position {
         match self.direction {
             Direction::East => {
                 return Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::North,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::North => {
@@ -87,6 +103,8 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::West,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::West => {
@@ -94,6 +112,8 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::South,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::South => {
@@ -101,18 +121,22 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::East,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
         }
     }
 
-    fn right(&self) -> Position {
+    fn right(&self, id: usize) -> Position {
         match self.direction {
             Direction::East => {
                 return Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::South,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::North => {
@@ -120,6 +144,8 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::East,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::West => {
@@ -127,6 +153,8 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::North,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
             Direction::South => {
@@ -134,6 +162,8 @@ impl Position {
                     coord: self.coord,
                     cost: self.cost + 1000,
                     direction: Direction::West,
+                    id,
+                    prev_ids: Vec::from([self.id]),
                 };
             }
         }
@@ -143,7 +173,11 @@ impl Position {
 struct Finder {
     start: Coord,
     goal: Coord,
+    // the best cost
     best: [[[u64; 4]; GRID_SIZE]; GRID_SIZE],
+    best_index: [[[usize; 4]; GRID_SIZE]; GRID_SIZE],
+
+    fifo: Vec<Position>,
 }
 
 impl Finder {
@@ -188,35 +222,49 @@ impl Finder {
             start: start.unwrap(),
             goal: goal.unwrap(),
             best,
+            best_index: [[[0; 4]; GRID_SIZE]; GRID_SIZE],
+            fifo: Vec::new(),
         };
     }
 
-    fn find(&mut self) -> u64 {
-        let mut queue: VecDeque<Position> = VecDeque::new();
-        queue.push_front(Position::new(self.start));
+    fn find<const PART1: bool>(&mut self) -> u64 {
+        // zero'th element represents invalid for backwards lookup.
+        self.fifo.push(Position::new(0, Coord::new(0, 0)));
+        self.fifo.push(Position::new(1, self.start));
+        let mut i: usize = 1;
 
         let mut target_cost = self.get_best_goal_cost();
 
-        while !queue.is_empty() {
-            let pos = queue.pop_front().unwrap();
-            if pos.cost >= target_cost || pos.cost >= self.get_cost(pos) {
+        while i < self.fifo.len() {
+            if self.fifo[i].cost > target_cost {
+                i += 1;
+                // optimization to eliminate a ton of things at the end.
                 continue;
             }
-            println!("Processing {:?}", pos);
-            self.set_cost(pos);
-            // self.process(pos.forward(), queue);
-            queue.push_back(pos.forward());
-            queue.push_back(pos.left());
-            queue.push_back(pos.right());
-            // queue.sort();
+            if self.check_cost(i) {
+                i += 1;
+                continue;
+            }
 
+            let pos = &self.fifo[i];
             if pos.coord == self.goal {
                 // update the target cost
                 target_cost = self.get_best_goal_cost();
             }
+
+            // println!("Processing {:?}", pos);
+            self.fifo.push(self.fifo[i].forward(self.fifo.len()));
+            // TODO choose left or right based on where pos is in relation to self.goal.
+            self.fifo.push(self.fifo[i].left(self.fifo.len()));
+            self.fifo.push(self.fifo[i].right(self.fifo.len()));
+            // queue.sort();
+            i += 1;
+        }
+        if PART1 {
+            return target_cost;
         }
 
-        return target_cost;
+        return self.get_best_paths_length();
     }
 
     fn get_best_goal_cost(&self) -> u64 {
@@ -233,29 +281,106 @@ impl Finder {
         return best_cost;
     }
 
-    fn get_cost(&self, pos: Position) -> u64 {
-        match pos.direction {
-            Direction::East => self.best[pos.coord.row as usize][pos.coord.col as usize][0],
-            Direction::North => self.best[pos.coord.row as usize][pos.coord.col as usize][1],
-            Direction::West => self.best[pos.coord.row as usize][pos.coord.col as usize][2],
-            Direction::South => self.best[pos.coord.row as usize][pos.coord.col as usize][3],
-        }
-    }
-
-    fn set_cost(&mut self, pos: Position) {
+    fn check_cost(&mut self, id: usize) -> bool {
+        let pos = &self.fifo[id];
         match pos.direction {
             Direction::East => {
-                self.best[pos.coord.row as usize][pos.coord.col as usize][0] = pos.cost
+                if self.best[pos.coord.row][pos.coord.col][0] < pos.cost {
+                    return true;
+                }
+                if self.best[pos.coord.row][pos.coord.col][0] == pos.cost {
+                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][0];
+                    self.fifo[current_best_id].prev_ids.push(id);
+                    return true;
+                }
+                self.best[pos.coord.row][pos.coord.col][0] = pos.cost;
+                self.best_index[pos.coord.row][pos.coord.col][0] = id;
             }
             Direction::North => {
-                self.best[pos.coord.row as usize][pos.coord.col as usize][1] = pos.cost
+                if self.best[pos.coord.row][pos.coord.col][1] < pos.cost {
+                    return true;
+                }
+                if self.best[pos.coord.row][pos.coord.col][1] == pos.cost {
+                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][1];
+                    self.fifo[current_best_id].prev_ids.push(id);
+                    return true;
+                }
+                self.best[pos.coord.row][pos.coord.col][1] = pos.cost;
+                self.best_index[pos.coord.row][pos.coord.col][1] = id;
             }
             Direction::West => {
-                self.best[pos.coord.row as usize][pos.coord.col as usize][2] = pos.cost
+                if self.best[pos.coord.row][pos.coord.col][2] < pos.cost {
+                    return true;
+                }
+                if self.best[pos.coord.row][pos.coord.col][2] == pos.cost {
+                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][2];
+                    self.fifo[current_best_id].prev_ids.push(id);
+                    return true;
+                }
+                self.best[pos.coord.row][pos.coord.col][2] = pos.cost;
+                self.best_index[pos.coord.row][pos.coord.col][2] = id;
             }
             Direction::South => {
-                self.best[pos.coord.row as usize][pos.coord.col as usize][3] = pos.cost
+                if self.best[pos.coord.row][pos.coord.col][3] < pos.cost {
+                    return true;
+                }
+                if self.best[pos.coord.row][pos.coord.col][3] == pos.cost {
+                    let current_best_id = self.best_index[pos.coord.row][pos.coord.col][3];
+                    self.fifo[current_best_id].prev_ids.push(id);
+                    return true;
+                }
+                self.best[pos.coord.row][pos.coord.col][3] = pos.cost;
+                self.best_index[pos.coord.row][pos.coord.col][3] = id;
             }
+        }
+        return false;
+    }
+
+    fn get_best_paths_length(&self) -> u64 {
+        let mut seen: [[bool; GRID_SIZE]; GRID_SIZE] = [[false; GRID_SIZE]; GRID_SIZE];
+        let best_goal_cost = self.get_best_goal_cost();
+        for dir_i in 0..4 {
+            if best_goal_cost < self.best[self.goal.row][self.goal.col][dir_i] {
+                continue;
+            }
+            self.get_best_paths_length_from_id(
+                &mut seen,
+                self.best_index[self.goal.row][self.goal.col][dir_i],
+            );
+        }
+
+        let mut output = 0;
+        for row in seen {
+            for val in row {
+                if val {
+                    output += 1;
+                }
+            }
+        }
+        return output;
+    }
+
+    fn get_best_paths_length_from_id(&self, seen: &mut [[bool; GRID_SIZE]; GRID_SIZE], id: usize) {
+        if id == 0 {
+            // shouldn't happen!
+            unreachable!();
+        }
+        let pos = &self.fifo[id];
+        // if seen[pos.coord.row][pos.coord.col] {
+        //     println!("have seen {:?}", pos);
+        //     return;
+        // }
+        println!("Checking {:?}", pos);
+        seen[pos.coord.row][pos.coord.col] = true;
+        if id == 1 {
+            if pos.prev_ids.len() > 0 {
+                // sanity check
+                unreachable!();
+            }
+        }
+
+        for i in 0..pos.prev_ids.len() {
+            self.get_best_paths_length_from_id(seen, pos.prev_ids[i]);
         }
     }
 }
@@ -303,12 +428,14 @@ impl Finder {
 pub fn part1(input: &str) -> u64 {
     // the reindeer games...
     let mut finder = Finder::new(input);
-    return finder.find();
+    return finder.find::<true>();
 }
 
 #[aoc(day16, part2)]
 pub fn part2(input: &str) -> u64 {
-    return 0;
+    let mut finder = Finder::new(input);
+    // 634 is too low
+    return finder.find::<false>();
 }
 
 #[cfg(test)]
@@ -329,6 +456,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 0);
+        assert_eq!(part2(&get_input()), 670);
     }
 }
