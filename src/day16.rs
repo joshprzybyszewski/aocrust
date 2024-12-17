@@ -231,23 +231,10 @@ impl Finder {
         self.fifo.push(Position::new(1, self.start));
         let mut i: usize = 1;
 
-        let mut target_cost = self.get_best_goal_cost();
-
         while i < self.fifo.len() {
-            if self.fifo[i].cost > target_cost {
-                i += 1;
-                // optimization to eliminate a ton of things at the end.
-                continue;
-            }
             if self.check_cost(i) {
                 i += 1;
                 continue;
-            }
-
-            let pos = &self.fifo[i];
-            if pos.coord == self.goal {
-                // update the target cost
-                target_cost = self.get_best_goal_cost();
             }
 
             // TODO push forward until hitting a wall.
@@ -262,7 +249,7 @@ impl Finder {
             i += 1;
         }
         if PART1 {
-            return target_cost;
+            return self.get_best_goal_cost();
         }
 
         return self.get_best_paths_length();
