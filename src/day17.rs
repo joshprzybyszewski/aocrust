@@ -29,8 +29,8 @@ impl CPU_1 {
             i += 1;
         }
 
-        // skip past "Register B: "
-        i += 12;
+        // skip past "\nRegister B: "
+        i += 13;
         cpu.register_b += (input[i] - b'0') as i64;
         i += 1;
         while input[i] != b'\n' {
@@ -39,8 +39,8 @@ impl CPU_1 {
             i += 1;
         }
 
-        // skip past "Register C: "
-        i += 12;
+        // skip past "\nRegister C: "
+        i += 13;
         cpu.register_c += (input[i] - b'0') as i64;
         i += 1;
         while input[i] != b'\n' {
@@ -49,8 +49,8 @@ impl CPU_1 {
             i += 1;
         }
 
-        // skip past "\nProgram: "
-        i += 10;
+        // skip past "\n\nProgram: "
+        i += 11;
 
         loop {
             cpu.program.push(input[i] - b'0');
@@ -64,12 +64,19 @@ impl CPU_1 {
         return cpu;
     }
 
-    fn run(&mut self) -> Vec<u64> {
-        let output = Vec::with_capacity(32);
+    fn run(&mut self) -> Vec<u8> {
+        let mut output = Vec::with_capacity(32);
 
         loop {
+            if self.pc + 1 >= self.program.len() {
+                break;
+            }
+
             let op_code = self.program[self.pc];
             let operand = self.program[self.pc + 1];
+            self.pc += 2;
+
+            let literal_operand: i64 = operand as i64;
             let combo_operand: i64;
             if operand == 7 {
                 unreachable!();
@@ -91,18 +98,25 @@ impl CPU_1 {
                 }
                 1 => {
                     // bxl
+                    self.register_b ^= literal_operand;
                 }
                 2 => {
                     // bst
+                    self.register_b = combo_operand & 0x07;
                 }
                 3 => {
                     // jnz
+                    if self.register_a != 0 {
+                        self.pc = operand as usize;
+                    }
                 }
                 4 => {
                     // bxc
+                    self.register_b ^= self.register_c;
                 }
                 5 => {
                     // out
+                    output.push((combo_operand as u8) & 0x07)
                 }
                 6 => {
                     // bdv
@@ -128,7 +142,11 @@ impl CPU_1 {
 pub fn part1(input: &str) -> String {
     let mut cpu = CPU_1::new(input);
     let output = cpu.run();
-    return String::new(); // output.iter().join(",");
+    return output
+        .into_iter()
+        .map(|v| v.to_string())
+        .collect::<Vec<String>>()
+        .join(",");
 }
 
 #[aoc(day17, part2)]
