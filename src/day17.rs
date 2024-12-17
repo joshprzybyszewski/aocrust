@@ -63,12 +63,72 @@ impl CPU_1 {
 
         return cpu;
     }
+
+    fn run(&mut self) -> Vec<u64> {
+        let output = Vec::with_capacity(32);
+
+        loop {
+            let op_code = self.program[self.pc];
+            let operand = self.program[self.pc + 1];
+            let combo_operand: i64;
+            if operand == 7 {
+                unreachable!();
+            } else if operand == 6 {
+                combo_operand = self.register_c
+            } else if operand == 5 {
+                combo_operand = self.register_b
+            } else if operand == 4 {
+                combo_operand = self.register_a
+            } else {
+                combo_operand = operand as i64
+            }
+            match op_code {
+                0 => {
+                    // adv
+                    let numerator = self.register_a;
+                    let denominator = 2 << combo_operand;
+                    self.register_a = numerator / denominator;
+                }
+                1 => {
+                    // bxl
+                }
+                2 => {
+                    // bst
+                }
+                3 => {
+                    // jnz
+                }
+                4 => {
+                    // bxc
+                }
+                5 => {
+                    // out
+                }
+                6 => {
+                    // bdv
+                    let numerator = self.register_a;
+                    let denominator = 2 << combo_operand;
+                    self.register_b = numerator / denominator;
+                }
+                7 => {
+                    // cdv
+                    let numerator = self.register_a;
+                    let denominator = 2 << combo_operand;
+                    self.register_c = numerator / denominator;
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        return output;
+    }
 }
 
 #[aoc(day17, part1)]
 pub fn part1(input: &str) -> String {
-    let cpu = CPU_1::new(input);
-    return String::new();
+    let mut cpu = CPU_1::new(input);
+    let output = cpu.run();
+    return String::new(); // output.iter().join(",");
 }
 
 #[aoc(day17, part2)]
