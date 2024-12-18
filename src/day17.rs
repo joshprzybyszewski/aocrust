@@ -1,3 +1,30 @@
+// Replaces
+// let mut a: i64 = 0;
+// for _ in 0..(program.num_instructions - 1) {
+//     a <<= 3;
+//     a += 0x07;
+// }
+const STARTING: [i64; 17] = [
+    0,
+    0,
+    0x00_00_00_00_00_07,
+    0x00_00_00_00_00_3F,
+    0x00_00_00_00_01_FF,
+    0x00_00_00_00_0F_FF,
+    0x00_00_00_00_7F_FF,
+    0x00_00_00_03_FF_FF,
+    0x00_00_00_1F_FF_FF,
+    0x00_00_00_FF_FF_FF,
+    0x00_00_07_FF_FF_FF,
+    0x00_00_3F_FF_FF_FF,
+    0x00_01_FF_FF_FF_FF,
+    0x00_0F_FF_FF_FF_FF,
+    0x00_7F_FF_FF_FF_FF,
+    0x03_FF_FF_FF_FF_FF,
+    0x1F_FF_FF_FF_FF_FF,
+    // 0xFF_FF_FF_FF_FF_FF,
+];
+
 const VALS: [i64; 17] = [
     1 << 0,
     1 << 3,
@@ -270,16 +297,7 @@ fn parse_input_2(input: &str) -> Program {
 pub fn part2(input: &str) -> i64 {
     let program = parse_input_2(input);
 
-    let mut a: i64 = 0;
-    for _ in 0..(program.num_instructions - 1) {
-        a <<= 3;
-        a += 0x07;
-    }
-
-    let a = check(&program, a, 0);
-    if a.is_none() {
-        unreachable!();
-    }
+    let a = check(&program, STARTING[program.num_instructions], 0);
     return a.unwrap();
 }
 
@@ -312,7 +330,7 @@ fn matches_last_n(output: &Program, gold: &Program, n: usize) -> bool {
     if output.num_instructions < n {
         return false;
     }
-    for i in 1..=n {
+    for i in (1..=n).rev() {
         if output.instructions[output.num_instructions - i]
             != gold.instructions[gold.num_instructions - i]
         {
