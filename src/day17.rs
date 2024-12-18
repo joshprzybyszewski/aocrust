@@ -170,7 +170,6 @@ pub fn part2(input: &str) -> i64 {
     test.register_a = 0;
     loop {
         let start = test.register_a;
-        println!("checking {start}");
         let output = test.run::<true>();
         if output.len() == test.program.len() {
             return start;
