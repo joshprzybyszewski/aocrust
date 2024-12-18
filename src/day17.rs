@@ -207,46 +207,126 @@ fn parse_input_2(input: &str) -> Program {
 
 #[derive(Copy, Clone)]
 struct ReverseCPU {
-    register_a: i64,
+    register_a: Option<i64>,
     register_b: Option<i64>,
     register_c: Option<i64>,
 
     pc: usize,
+    instruction_index: usize,
 }
 
-fn find_starting_condition(program: &Program) -> ReverseCPU {
-    return ReverseCPU {
-        register_a: 0,
-        register_b: None,
-        register_c: None,
-        pc: 0,
-    };
+#[derive(Copy, Clone)]
+struct ProgramMeta {
+    valid_pc: [bool; 32],
+
+    // the index(es) where there could be out commands
+    outs: [usize; 32],
+    num_outs: usize,
+
+    // jumped_from[my_index][index_of_jnz]
+    jumped_from: [[usize; 32]; 32],
 }
 
-#[aoc(day17, part2)]
-pub fn part2(input: &str) -> i64 {
-    let program = parse_input_2(input);
-    let starting = find_starting_condition(&program);
+impl ProgramMeta {
+    #[inline(always)]
+    fn new(program: &Program) -> Self {
+        let mut meta = ProgramMeta {
+            valid_pc: [true; 32],
+            outs: [33; 32],
+            num_outs: 0,
+            jumped_from: [[33; 32]; 32],
+        };
 
-    // sanity check
+        for i in 0..program.num_instructions - 1 {
+            if program.instructions[i + 1] == 7
+                && (program.instructions[i] == 0
+                    || program.instructions[i] == 2
+                    || program.instructions[i] > 4)
+            {
+                meta.valid_pc[i] = false;
+                // TODO if i >= 8, then all subsequent i+2x indexes are not valid. probably
+            }
+
+            // remember jumps: jnz
+            if program.instructions[i] == 3 {
+                let dest = program.instructions[i + 1] as usize;
+                for j in 0..32 {
+                    if meta.jumped_from[dest][j] > 32 {
+                        meta.jumped_from[dest][j] = i;
+                        break;
+                    }
+                }
+            }
+
+            // remember outs: out
+            if program.instructions[i] == 5 {
+                meta.outs[meta.num_outs] = i;
+                meta.num_outs += 1;
+            }
+        }
+
+        return meta;
+    }
+}
+
+fn find_starting_condition(program: &Program, meta: &ProgramMeta) -> ReverseCPU {
+    for out_index in (0..meta.num_outs - 1).rev() {
+        let start = ReverseCPU {
+            register_a: None,
+            register_b: None,
+            register_c: None,
+            pc: out_index,
+            instruction_index: program.num_instructions - 1,
+        };
+
+        let answer = dfs_back(program, &start);
+        if answer.is_none() {
+            continue;
+        }
+        let answer = answer.unwrap();
+        if sanity_check(program, &answer) {
+            return answer;
+        }
+    }
+
+    unreachable!();
+}
+
+fn dfs_back(program: &Program, reverse: &ReverseCPU) -> Option<ReverseCPU> {
+    //
+    return None;
+}
+
+fn sanity_check(program: &Program, starting: &ReverseCPU) -> bool {
+    if starting.register_a.is_none() {
+        return false;
+    }
+
     let mut cpu = CPU {
-        register_a: starting.register_a,
+        register_a: starting.register_a.unwrap(),
         register_b: starting.register_b.unwrap_or(0),
         register_c: starting.register_c.unwrap_or(0),
         pc: 0,
     };
     let output = cpu.run(&program);
     if output.len() != program.num_instructions {
-        unreachable!();
+        return false;
     }
     for i in 0..output.len() {
         if output[i] != program.instructions[i] {
-            unreachable!();
+            return false;
         }
     }
-    // end sanity check
+    return true;
+}
 
-    return starting.register_a;
+#[aoc(day17, part2)]
+pub fn part2(input: &str) -> i64 {
+    let program = parse_input_2(input);
+    let meta = ProgramMeta::new(&program);
+    let starting = find_starting_condition(&program, &meta);
+
+    return starting.register_a.unwrap();
 }
 
 #[cfg(test)]
