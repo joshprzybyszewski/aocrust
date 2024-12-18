@@ -1,89 +1,32 @@
+#[derive(Copy, Clone)]
+struct Program {
+    // might only need 16, but 32 is fine.
+    instructions: [u8; 32],
+
+    num_instructions: usize,
+}
+
+#[derive(Copy, Clone)]
 struct CPU {
     register_a: i64,
     register_b: i64,
     register_c: i64,
 
     pc: usize,
-
-    program: Vec<u8>,
 }
 
 impl CPU {
-    fn copy(&self) -> Self {
-        return CPU {
-            register_a: self.register_a,
-            register_b: self.register_b,
-            register_c: self.register_c,
-            pc: self.pc,
-            program: self.program.to_vec(),
-        };
-    }
-
-    fn new(input: &str) -> Self {
-        let input = input.as_bytes();
-        let mut cpu = CPU {
-            register_a: 0,
-            register_b: 0,
-            register_c: 0,
-            pc: 0,
-            program: Vec::with_capacity(32),
-        };
-
-        // skip past "Register A: "
-        let mut i: usize = 12;
-        cpu.register_a += (input[i] - b'0') as i64;
-        i += 1;
-        while input[i] != b'\n' {
-            cpu.register_a *= 10;
-            cpu.register_a += (input[i] - b'0') as i64;
-            i += 1;
-        }
-
-        // skip past "\nRegister B: "
-        i += 13;
-        cpu.register_b += (input[i] - b'0') as i64;
-        i += 1;
-        while input[i] != b'\n' {
-            cpu.register_b *= 10;
-            cpu.register_b += (input[i] - b'0') as i64;
-            i += 1;
-        }
-
-        // skip past "\nRegister C: "
-        i += 13;
-        cpu.register_c += (input[i] - b'0') as i64;
-        i += 1;
-        while input[i] != b'\n' {
-            cpu.register_c *= 10;
-            cpu.register_c += (input[i] - b'0') as i64;
-            i += 1;
-        }
-
-        // skip past "\n\nProgram: "
-        i += 11;
-
-        loop {
-            cpu.program.push(input[i] - b'0');
-            i += 1;
-            if i >= input.len() || input[i] != b',' {
-                break;
-            }
-            i += 1;
-        }
-
-        return cpu;
-    }
-
-    fn run<const FIND_COPY: bool>(&mut self) -> Vec<u8> {
+    #[inline(always)]
+    fn run(&mut self, program: &Program) -> Vec<u8> {
         let mut output = Vec::with_capacity(32);
 
         loop {
-            if self.pc + 1 >= self.program.len() {
+            if self.pc + 1 >= program.num_instructions {
                 break;
             }
 
-            let op_code = self.program[self.pc];
-            let operand = self.program[self.pc + 1];
+            let op_code = program.instructions[self.pc];
+            let operand = program.instructions[self.pc + 1];
             self.pc += 2;
 
             let literal_operand: i64 = operand as i64;
@@ -114,12 +57,6 @@ impl CPU {
                 5 => {
                     // out
                     let next = (self.combo_operand(operand) as u8) & 0x07;
-                    if FIND_COPY {
-                        if next != self.program[output.len()] {
-                            // not a copy. early exit.
-                            return output;
-                        }
-                    }
                     output.push(next);
                 }
                 6 => {
@@ -137,6 +74,7 @@ impl CPU {
         return output;
     }
 
+    #[inline(always)]
     fn combo_operand(&self, operand: u8) -> i64 {
         if operand == 7 {
             unreachable!();
@@ -152,10 +90,71 @@ impl CPU {
     }
 }
 
+#[inline(always)]
+fn parse_input(input: &str) -> (CPU, Program) {
+    let input = input.as_bytes();
+    let mut cpu = CPU {
+        register_a: 0,
+        register_b: 0,
+        register_c: 0,
+        pc: 0,
+    };
+
+    // skip past "Register A: "
+    let mut i: usize = 12;
+    cpu.register_a += (input[i] - b'0') as i64;
+    i += 1;
+    while input[i] != b'\n' {
+        cpu.register_a *= 10;
+        cpu.register_a += (input[i] - b'0') as i64;
+        i += 1;
+    }
+
+    // skip past "\nRegister B: "
+    i += 13;
+    cpu.register_b += (input[i] - b'0') as i64;
+    i += 1;
+    while input[i] != b'\n' {
+        cpu.register_b *= 10;
+        cpu.register_b += (input[i] - b'0') as i64;
+        i += 1;
+    }
+
+    // skip past "\nRegister C: "
+    i += 13;
+    cpu.register_c += (input[i] - b'0') as i64;
+    i += 1;
+    while input[i] != b'\n' {
+        cpu.register_c *= 10;
+        cpu.register_c += (input[i] - b'0') as i64;
+        i += 1;
+    }
+
+    // skip past "\n\nProgram: "
+    i += 11;
+
+    let mut program = Program {
+        instructions: [0; 32],
+        num_instructions: 0,
+    };
+
+    loop {
+        program.instructions[program.num_instructions] = (input[i] - b'0');
+        program.num_instructions += 1;
+        i += 1;
+        if i >= input.len() || input[i] != b',' {
+            break;
+        }
+        i += 1;
+    }
+
+    return (cpu, program);
+}
+
 #[aoc(day17, part1)]
 pub fn part1(input: &str) -> String {
-    let mut cpu = CPU::new(input);
-    let output = cpu.run::<false>();
+    let (mut cpu, program) = parse_input(input);
+    let output = cpu.run(&program);
     return output
         .into_iter()
         .map(|v| v.to_string())
@@ -165,20 +164,8 @@ pub fn part1(input: &str) -> String {
 
 #[aoc(day17, part2)]
 pub fn part2(input: &str) -> i64 {
-    let cpu = CPU::new(input);
-    let mut test = cpu.copy();
-    test.register_a = 0;
-    loop {
-        let start = test.register_a;
-        let output = test.run::<true>();
-        if output.len() == test.program.len() {
-            return start;
-        }
-        test.register_a = start + 1;
-        test.register_b = cpu.register_b;
-        test.register_c = cpu.register_c;
-        test.pc = cpu.pc;
-    }
+    let (mut cpu, program) = parse_input(input);
+    return 0;
 }
 
 #[cfg(test)]
