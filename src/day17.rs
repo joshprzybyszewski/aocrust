@@ -286,6 +286,7 @@ fn find_starting_condition(program: &Program, meta: &ProgramMeta) -> ReverseCPU 
             continue;
         }
         let answer = answer.unwrap();
+        println!("Found: {:?}", answer);
         if sanity_check(program, &answer) {
             return answer;
         }
