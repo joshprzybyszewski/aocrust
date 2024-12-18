@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-const MAX_GRID_SIZE: usize = 72;
+const MAX_GRID_SIZE: usize = 73;
 
 #[derive(Copy, Clone, Debug)]
 struct Coord {
@@ -91,7 +91,7 @@ impl Step {
 }
 
 #[inline(always)]
-fn build_input(input: &str, corrupted: &mut [u128; MAX_GRID_SIZE], n: usize) {
+fn build_input(input: &str, cheapest: &mut [[u64; MAX_GRID_SIZE]; MAX_GRID_SIZE], n: usize) {
     let input = input.as_bytes();
 
     let mut i: usize = 0;
@@ -117,17 +117,14 @@ fn build_input(input: &str, corrupted: &mut [u128; MAX_GRID_SIZE], n: usize) {
             i += 1;
         }
         i += 1;
-        corrupted[r + 1] |= 1 << (c + 1);
+        println!("corruption[{num_corruptions}] at ({}, {})", r + 1, c + 1);
+        cheapest[r + 1][c + 1] = 0;
         num_corruptions += 1;
     }
 }
 
 #[aoc(day18, part1)]
 pub fn part1(input: &str) -> u64 {
-    let mut corrupted: [u128; MAX_GRID_SIZE] = [0; MAX_GRID_SIZE];
-    build_input(input, &mut corrupted, 1024);
-    let corrupted = corrupted;
-
     let maximum = (MAX_GRID_SIZE * MAX_GRID_SIZE * 2) as u64;
     let mut cheapest: [[u64; MAX_GRID_SIZE]; MAX_GRID_SIZE] =
         [[maximum; MAX_GRID_SIZE]; MAX_GRID_SIZE];
@@ -139,6 +136,8 @@ pub fn part1(input: &str) -> u64 {
         cheapest[MAX_GRID_SIZE - 1][x] = 0;
     }
 
+    build_input(input, &mut cheapest, 1024);
+
     let mut queue: VecDeque<Step> = VecDeque::with_capacity(4 * MAX_GRID_SIZE * MAX_GRID_SIZE);
     queue.push_front(Step::new(Coord::new(1, 1), 0));
 
@@ -146,10 +145,6 @@ pub fn part1(input: &str) -> u64 {
         let step = queue.pop_front().unwrap();
         if cheapest[step.coord.row][step.coord.col] <= step.cost {
             // println!("not cheapest {:?}", step);
-            continue;
-        }
-        if corrupted[step.coord.row] & 1u128 << step.coord.col != 0 {
-            // println!("corrupted {:?}", step);
             continue;
         }
         // println!("Checking {:?}", step);
@@ -179,7 +174,7 @@ pub fn part1(input: &str) -> u64 {
     }
 
     // 10368 is too high
-    return cheapest[70][70];
+    return cheapest[MAX_GRID_SIZE - 2][MAX_GRID_SIZE - 2];
 }
 
 #[aoc(day18, part2)]
@@ -193,29 +188,14 @@ mod test {
     use super::*;
     use std::fs;
 
-    fn get_example_input() -> String {
-        let input_path = "input/2024/examples/day18.txt";
-        fs::read_to_string(input_path).unwrap()
-    }
-
     fn get_input() -> String {
         let input_path = "input/2024/day18.txt";
         fs::read_to_string(input_path).unwrap()
     }
 
     #[test]
-    fn part1_example() {
-        assert_eq!(part1(&get_example_input()), 36);
-    }
-
-    #[test]
-    fn part2_example() {
-        assert_eq!(part2(&get_example_input()), 81);
-    }
-
-    #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 798)
+        assert_eq!(part1(&get_input()), 294)
     }
 
     #[test]
