@@ -1,4 +1,4 @@
-struct CPU_1 {
+struct CPU {
     register_a: i64,
     register_b: i64,
     register_c: i64,
@@ -8,9 +8,9 @@ struct CPU_1 {
     program: Vec<u8>,
 }
 
-impl CPU_1 {
+impl CPU {
     fn copy(&self) -> Self {
-        return CPU_1 {
+        return CPU {
             register_a: self.register_a,
             register_b: self.register_b,
             register_c: self.register_c,
@@ -21,7 +21,7 @@ impl CPU_1 {
 
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
-        let mut cpu = CPU_1 {
+        let mut cpu = CPU {
             register_a: 0,
             register_b: 0,
             register_c: 0,
@@ -154,7 +154,7 @@ impl CPU_1 {
 
 #[aoc(day17, part1)]
 pub fn part1(input: &str) -> String {
-    let mut cpu = CPU_1::new(input);
+    let mut cpu = CPU::new(input);
     let output = cpu.run::<false>();
     return output
         .into_iter()
@@ -165,7 +165,7 @@ pub fn part1(input: &str) -> String {
 
 #[aoc(day17, part2)]
 pub fn part2(input: &str) -> i64 {
-    let cpu = CPU_1::new(input);
+    let cpu = CPU::new(input);
     let mut test = cpu.copy();
     test.register_a = 0;
     loop {
