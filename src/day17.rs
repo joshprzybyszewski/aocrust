@@ -182,10 +182,6 @@ pub fn part1(input: &str) -> String {
     let (mut cpu, program) = parse_input(input);
     let output = cpu.run(&program);
     return output.to_string();
-    // .into_iter()
-    // .map(|v| v.to_string())
-    // .collect::<Vec<String>>()
-    // .join(",");
 }
 
 #[inline(always)]
@@ -237,6 +233,7 @@ pub fn part2(input: &str) -> i64 {
         a <<= 3;
         a += 0x07;
     }
+
     let a = check(&program, a, 0);
     if a.is_none() {
         unreachable!();
@@ -244,15 +241,55 @@ pub fn part2(input: &str) -> i64 {
     return a.unwrap();
 }
 
+const VALS: [i64; 17] = [
+    1 << 0,
+    1 << 3,
+    1 << 6,
+    1 << 9,
+    1 << 12,
+    1 << 15,
+    1 << 18,
+    1 << 21,
+    1 << 24,
+    1 << 27,
+    1 << 30,
+    1 << 33,
+    1 << 36,
+    1 << 39,
+    1 << 42,
+    1 << 45,
+    1 << 48,
+];
+
+const MASKS: [i64; 17] = [
+    !(0x07i64 << 0),
+    !(0x07i64 << 3),
+    !(0x07i64 << 6),
+    !(0x07i64 << 9),
+    !(0x07i64 << 12),
+    !(0x07i64 << 15),
+    !(0x07i64 << 18),
+    !(0x07i64 << 21),
+    !(0x07i64 << 24),
+    !(0x07i64 << 27),
+    !(0x07i64 << 30),
+    !(0x07i64 << 33),
+    !(0x07i64 << 36),
+    !(0x07i64 << 39),
+    !(0x07i64 << 42),
+    !(0x07i64 << 45),
+    !(0x07i64 << 48),
+];
+
 #[inline(always)]
 fn check(program: &Program, a: i64, n: usize) -> Option<i64> {
     if n > program.num_instructions {
         return Some(a);
     }
 
-    let val: i64 = 1i64 << 3 * (program.num_instructions - n);
-    let mask: i64 = 0x07i64 << 3 * (program.num_instructions - n);
-    let mut a = a & !mask;
+    let val = VALS[program.num_instructions - n];
+    let mask = MASKS[program.num_instructions - n];
+    let mut a = a & mask;
 
     for _ in 0..8 {
         let mut cpu = CPU::with_a(a);
