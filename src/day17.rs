@@ -235,7 +235,6 @@ fn parse_input_2(input: &str) -> Program {
 #[aoc(day17, part2)]
 pub fn part2(input: &str) -> i64 {
     let program = parse_input_2(input);
-    println!("GOLD: {}", program.to_string());
 
     let mut a: i64 = 0;
     for _ in 0..(program.num_instructions - 1) {
