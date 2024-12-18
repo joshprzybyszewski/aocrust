@@ -124,20 +124,29 @@ impl CPU {
             let operand = program.instructions[self.pc + 1];
             self.pc += 2;
 
-            let literal_operand: i64 = operand as i64;
-
             match op_code {
+                5 => {
+                    // out
+                    let next = (self.combo_operand(operand) as u8) & 0x07;
+                    output.instructions[output.num_instructions] = next;
+                    output.num_instructions += 1;
+                }
+                7 => {
+                    // cdv
+                    self.register_c = self.register_a >> self.combo_operand(operand);
+                }
+                4 => {
+                    // bxc
+                    self.register_b ^= self.register_c;
+                }
                 0 => {
                     // adv
                     self.register_a >>= self.combo_operand(operand);
                 }
                 1 => {
                     // bxl
+                    let literal_operand: i64 = operand as i64;
                     self.register_b ^= literal_operand;
-                }
-                2 => {
-                    // bst
-                    self.register_b = self.combo_operand(operand) & 0x07;
                 }
                 3 => {
                     // jnz
@@ -145,25 +154,15 @@ impl CPU {
                         self.pc = operand as usize;
                     }
                 }
-                4 => {
-                    // bxc
-                    self.register_b ^= self.register_c;
-                }
-                5 => {
-                    // out
-                    let next = (self.combo_operand(operand) as u8) & 0x07;
-                    output.instructions[output.num_instructions] = next;
-                    output.num_instructions += 1;
+                2 => {
+                    // bst
+                    self.register_b = self.combo_operand(operand) & 0x07;
                 }
                 6 => {
                     // bdv
                     self.register_b = self.register_a >> self.combo_operand(operand);
                 }
-                7 => {
-                    // cdv
-                    self.register_c = self.register_a >> self.combo_operand(operand);
-                }
-                _ => unreachable!(),
+                _ => {} // unreachable!(),
             }
         }
 
@@ -178,13 +177,13 @@ impl CPU {
         if operand < 4 {
             return operand as i64;
         }
-        if operand == 6 {
-            return self.register_c;
-        } else if operand == 5 {
-            return self.register_b;
-        } else {
+        if operand == 4 {
             return self.register_a;
         }
+        if operand == 5 {
+            return self.register_b;
+        }
+        return self.register_c;
     }
 }
 
