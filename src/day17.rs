@@ -13,11 +13,6 @@ impl Program {
         };
     }
 
-    fn add(&mut self, v: u8) {
-        self.instructions[self.num_instructions] = v;
-        self.num_instructions += 1;
-    }
-
     fn to_string(&self) -> String {
         if self.num_instructions == 0 {
             return String::new();
@@ -90,7 +85,8 @@ impl CPU {
                 5 => {
                     // out
                     let next = (self.combo_operand(operand) as u8) & 0x07;
-                    output.add(next);
+                    output.instructions[output.num_instructions] = next;
+                    output.num_instructions += 1;
                 }
                 6 => {
                     // bdv
@@ -248,6 +244,7 @@ pub fn part2(input: &str) -> i64 {
     return a.unwrap();
 }
 
+#[inline(always)]
 fn check(program: &Program, a: i64, n: usize) -> Option<i64> {
     if n > program.num_instructions {
         return Some(a);
@@ -271,6 +268,7 @@ fn check(program: &Program, a: i64, n: usize) -> Option<i64> {
     return None;
 }
 
+#[inline(always)]
 fn matches_last_n(output: &Program, gold: &Program, n: usize) -> bool {
     if output.num_instructions < n {
         return false;
