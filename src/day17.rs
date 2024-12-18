@@ -162,10 +162,91 @@ pub fn part1(input: &str) -> String {
         .join(",");
 }
 
+#[inline(always)]
+fn parse_input_2(input: &str) -> Program {
+    let input = input.as_bytes();
+
+    // skip past "Register A: "
+    let mut i: usize = 13;
+    while input[i] != b'\n' {
+        i += 1;
+    }
+
+    // skip past "\nRegister B: "
+    i += 14;
+    while input[i] != b'\n' {
+        i += 1;
+    }
+
+    // skip past "\nRegister C: "
+    i += 14;
+    while input[i] != b'\n' {
+        i += 1;
+    }
+
+    // skip past "\n\nProgram: "
+    i += 11;
+
+    let mut program = Program {
+        instructions: [0; 32],
+        num_instructions: 0,
+    };
+
+    loop {
+        program.instructions[program.num_instructions] = (input[i] - b'0');
+        program.num_instructions += 1;
+        i += 1;
+        if i >= input.len() || input[i] != b',' {
+            break;
+        }
+        i += 1;
+    }
+
+    return program;
+}
+
+#[derive(Copy, Clone)]
+struct ReverseCPU {
+    register_a: i64,
+    register_b: Option<i64>,
+    register_c: Option<i64>,
+
+    pc: usize,
+}
+
+fn find_starting_condition(program: &Program) -> ReverseCPU {
+    return ReverseCPU {
+        register_a: 0,
+        register_b: None,
+        register_c: None,
+        pc: 0,
+    };
+}
+
 #[aoc(day17, part2)]
 pub fn part2(input: &str) -> i64 {
-    let (mut cpu, program) = parse_input(input);
-    return 0;
+    let program = parse_input_2(input);
+    let starting = find_starting_condition(&program);
+
+    // sanity check
+    let mut cpu = CPU {
+        register_a: starting.register_a,
+        register_b: starting.register_b.unwrap_or(0),
+        register_c: starting.register_c.unwrap_or(0),
+        pc: 0,
+    };
+    let output = cpu.run(&program);
+    if output.len() != program.num_instructions {
+        unreachable!();
+    }
+    for i in 0..output.len() {
+        if output[i] != program.instructions[i] {
+            unreachable!();
+        }
+    }
+    // end sanity check
+
+    return starting.register_a;
 }
 
 #[cfg(test)]
