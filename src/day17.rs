@@ -162,6 +162,8 @@ pub fn part1(input: &str) -> String {
         .join(",");
 }
 
+const ARBITRARY_MAX_CHECK_VALUE: i64 = 0xFF_FF;
+
 #[inline(always)]
 fn parse_input_2(input: &str) -> Program {
     let input = input.as_bytes();
@@ -205,7 +207,7 @@ fn parse_input_2(input: &str) -> Program {
     return program;
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct ReverseCPU {
     register_a: Option<i64>,
     register_b: Option<i64>,
@@ -215,7 +217,7 @@ struct ReverseCPU {
     instruction_index: usize,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct ProgramMeta {
     valid_pc: [bool; 32],
 
@@ -309,7 +311,21 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
         }
         1 => {
             // bxl
-            // self.register_b ^= literal_operand;
+            if reverse.register_b.is_none() {
+                for possible in 0i64..ARBITRARY_MAX_CHECK_VALUE {
+                    let mut coalesced = *reverse;
+                    coalesced.register_b = Some(possible ^ literal_operand);
+                    let answer = check_back_a_step(program, meta, &coalesced);
+                    if !answer.is_none() {
+                        return answer;
+                    }
+                }
+                println!("stopped searching. {:?}", reverse);
+                return None;
+            }
+            let mut coalesced = *reverse;
+            coalesced.register_b = Some(coalesced.register_b.unwrap() ^ literal_operand);
+            return check_back_a_step(program, meta, &coalesced);
         }
         2 => {
             // bst
@@ -317,20 +333,63 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
         }
         3 => {
             // jnz
-            // if self.register_a != 0 {
-            //     self.pc = operand as usize;
-            // }
+            return check_back_a_step(program, meta, reverse);
         }
         4 => {
             // bxc
             // self.register_b ^= self.register_c;
+            if reverse.register_b.is_none() {
+                if reverse.register_c.is_none() {
+                    for possible_b in 0i64..ARBITRARY_MAX_CHECK_VALUE {
+                        for possible_c in 0i64..ARBITRARY_MAX_CHECK_VALUE {
+                            let mut coalesced = *reverse;
+                            coalesced.register_b = Some(possible_b ^ possible_c);
+                            coalesced.register_c = Some(possible_b ^ possible_c);
+                            let answer = check_back_a_step(program, meta, &coalesced);
+                            if !answer.is_none() {
+                                return answer;
+                            }
+                        }
+                    }
+                    println!("stopped searching. {:?}", reverse);
+                    return None;
+                }
+                for possible_b in 0i64..ARBITRARY_MAX_CHECK_VALUE {
+                    let mut coalesced = *reverse;
+                    coalesced.register_b = Some(possible_b ^ reverse.register_c.unwrap());
+                    let answer = check_back_a_step(program, meta, &coalesced);
+                    if !answer.is_none() {
+                        return answer;
+                    }
+                }
+                println!("stopped searching. {:?}", reverse);
+                return None;
+            }
+            if reverse.register_c.is_none() {
+                for possible_c in 0i64..ARBITRARY_MAX_CHECK_VALUE {
+                    let mut coalesced = *reverse;
+                    coalesced.register_b = Some(coalesced.register_b.unwrap() ^ possible_c);
+                    coalesced.register_c = Some(possible_c);
+                    let answer = check_back_a_step(program, meta, &coalesced);
+                    if !answer.is_none() {
+                        return answer;
+                    }
+                }
+                println!("stopped searching. {:?}", reverse);
+                return None;
+            }
+
+            let mut coalesced = *reverse;
+            coalesced.register_b =
+                Some(coalesced.register_b.unwrap() ^ coalesced.register_c.unwrap());
+            return check_back_a_step(program, meta, &coalesced);
         }
         5 => {
             // out
             let needs_to_be = program.instructions[reverse.instruction_index];
             if operand == 6 {
                 if reverse.register_c.is_none() {
-                    for possible in 0i64..32 {
+                    for possible in 0i64..ARBITRARY_MAX_CHECK_VALUE {
                         let value = possible << 3 | (needs_to_be as i64);
                         let mut coalesced = *reverse;
                         coalesced.register_c = Some(value);
@@ -339,17 +398,17 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
                             return answer;
                         }
                     }
-                    unreachable!();
-                } else {
-                    let combo_operand = reverse.register_c.unwrap();
-                    if needs_to_be != (combo_operand as u8 & 0x07) {
-                        return None;
-                    }
-                    return check_back_a_step(program, meta, reverse);
+                    println!("stopped searching. {:?}", reverse);
+                    return None;
                 }
+                let combo_operand = reverse.register_c.unwrap();
+                if needs_to_be != (combo_operand as u8 & 0x07) {
+                    return None;
+                }
+                return check_back_a_step(program, meta, reverse);
             } else if operand == 5 {
                 if reverse.register_b.is_none() {
-                    for possible in 0i64..32 {
+                    for possible in 0i64..ARBITRARY_MAX_CHECK_VALUE {
                         let value = possible << 3 | (needs_to_be as i64);
                         let mut coalesced = *reverse;
                         coalesced.register_b = Some(value);
@@ -358,16 +417,17 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
                             return answer;
                         }
                     }
-                } else {
-                    let combo_operand = reverse.register_b.unwrap();
-                    if needs_to_be != (combo_operand as u8 & 0x07) {
-                        return None;
-                    }
-                    return check_back_a_step(program, meta, reverse);
+                    println!("stopped searching. {:?}", reverse);
+                    return None;
                 }
+                let combo_operand = reverse.register_b.unwrap();
+                if needs_to_be != (combo_operand as u8 & 0x07) {
+                    return None;
+                }
+                return check_back_a_step(program, meta, reverse);
             } else if operand == 4 {
                 if reverse.register_a.is_none() {
-                    for possible in 0i64..32 {
+                    for possible in 0i64..ARBITRARY_MAX_CHECK_VALUE {
                         let value = possible << 3 | (needs_to_be as i64);
                         let mut coalesced = *reverse;
                         coalesced.register_a = Some(value);
@@ -376,13 +436,14 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
                             return answer;
                         }
                     }
-                } else {
-                    let combo_operand = reverse.register_a.unwrap();
-                    if needs_to_be != (combo_operand as u8 & 0x07) {
-                        return None;
-                    }
-                    return check_back_a_step(program, meta, reverse);
+                    println!("stopped searching. {:?}", reverse);
+                    return None;
                 }
+                let combo_operand = reverse.register_a.unwrap();
+                if needs_to_be != (combo_operand as u8 & 0x07) {
+                    return None;
+                }
+                return check_back_a_step(program, meta, reverse);
             } else if operand < 4 {
                 if needs_to_be != operand & 0x07 {
                     return None;
@@ -401,8 +462,7 @@ fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Opti
         }
         _ => unreachable!(),
     }
-    // TODO remove
-    return None;
+    unreachable!();
 }
 
 fn check_back_a_step(
