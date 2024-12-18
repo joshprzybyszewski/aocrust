@@ -223,7 +223,7 @@ struct ProgramMeta {
     outs: [usize; 32],
     num_outs: usize,
 
-    // jumped_from[my_index][index_of_jnz]
+    // jumped_from[my_pc][pc_of_jnz]
     jumped_from: [[usize; 32]; 32],
 }
 
@@ -279,7 +279,7 @@ fn find_starting_condition(program: &Program, meta: &ProgramMeta) -> ReverseCPU 
             instruction_index: program.num_instructions - 1,
         };
 
-        let answer = dfs_back(program, &start);
+        let answer = dfs_back(program, meta, &start);
         if answer.is_none() {
             continue;
         }
@@ -292,8 +292,142 @@ fn find_starting_condition(program: &Program, meta: &ProgramMeta) -> ReverseCPU 
     unreachable!();
 }
 
-fn dfs_back(program: &Program, reverse: &ReverseCPU) -> Option<ReverseCPU> {
-    //
+fn dfs_back(program: &Program, meta: &ProgramMeta, reverse: &ReverseCPU) -> Option<ReverseCPU> {
+    if !meta.valid_pc[reverse.pc] {
+        return None;
+    }
+
+    let op_code = program.instructions[reverse.pc];
+    let operand = program.instructions[reverse.pc + 1];
+
+    let literal_operand: i64 = operand as i64;
+
+    match op_code {
+        0 => {
+            // adv
+            // self.register_a >>= self.combo_operand(operand);
+        }
+        1 => {
+            // bxl
+            // self.register_b ^= literal_operand;
+        }
+        2 => {
+            // bst
+            // self.register_b = self.combo_operand(operand) & 0x07;
+        }
+        3 => {
+            // jnz
+            // if self.register_a != 0 {
+            //     self.pc = operand as usize;
+            // }
+        }
+        4 => {
+            // bxc
+            // self.register_b ^= self.register_c;
+        }
+        5 => {
+            // out
+            let needs_to_be = program.instructions[reverse.instruction_index];
+            if operand == 6 {
+                if reverse.register_c.is_none() {
+                    for possible in 0i64..32 {
+                        let value = possible << 3 | (needs_to_be as i64);
+                        let mut coalesced = *reverse;
+                        coalesced.register_c = Some(value);
+                        let answer = check_back_a_step(program, meta, &coalesced);
+                        if !answer.is_none() {
+                            return answer;
+                        }
+                    }
+                    unreachable!();
+                } else {
+                    let combo_operand = reverse.register_c.unwrap();
+                    if needs_to_be != (combo_operand as u8 & 0x07) {
+                        return None;
+                    }
+                    return check_back_a_step(program, meta, reverse);
+                }
+            } else if operand == 5 {
+                if reverse.register_b.is_none() {
+                    for possible in 0i64..32 {
+                        let value = possible << 3 | (needs_to_be as i64);
+                        let mut coalesced = *reverse;
+                        coalesced.register_b = Some(value);
+                        let answer = check_back_a_step(program, meta, &coalesced);
+                        if !answer.is_none() {
+                            return answer;
+                        }
+                    }
+                } else {
+                    let combo_operand = reverse.register_b.unwrap();
+                    if needs_to_be != (combo_operand as u8 & 0x07) {
+                        return None;
+                    }
+                    return check_back_a_step(program, meta, reverse);
+                }
+            } else if operand == 4 {
+                if reverse.register_a.is_none() {
+                    for possible in 0i64..32 {
+                        let value = possible << 3 | (needs_to_be as i64);
+                        let mut coalesced = *reverse;
+                        coalesced.register_a = Some(value);
+                        let answer = check_back_a_step(program, meta, &coalesced);
+                        if !answer.is_none() {
+                            return answer;
+                        }
+                    }
+                } else {
+                    let combo_operand = reverse.register_a.unwrap();
+                    if needs_to_be != (combo_operand as u8 & 0x07) {
+                        return None;
+                    }
+                    return check_back_a_step(program, meta, reverse);
+                }
+            } else if operand < 4 {
+                if needs_to_be != operand & 0x07 {
+                    return None;
+                }
+                return check_back_a_step(program, meta, reverse);
+            }
+            unreachable!();
+        }
+        6 => {
+            // bdv
+            // self.register_b = self.register_a >> self.combo_operand(operand);
+        }
+        7 => {
+            // cdv
+            // self.register_c = self.register_a >> self.combo_operand(operand);
+        }
+        _ => unreachable!(),
+    }
+    // TODO remove
+    return None;
+}
+
+fn check_back_a_step(
+    program: &Program,
+    meta: &ProgramMeta,
+    reverse: &ReverseCPU,
+) -> Option<ReverseCPU> {
+    if reverse.pc > 1 {
+        let mut standard = *reverse;
+        standard.pc -= 2;
+        return dfs_back(program, meta, &standard);
+    }
+
+    if !reverse.register_a.is_none() && reverse.register_a.unwrap() != 0 {
+        for jnz_pc in meta.jumped_from[reverse.pc] {
+            if jnz_pc >= program.num_instructions {
+                break;
+            }
+
+            let mut jnz_source = *reverse;
+            jnz_source.pc = jnz_pc;
+            return dfs_back(program, meta, &jnz_source);
+        }
+    }
+
     return None;
 }
 
