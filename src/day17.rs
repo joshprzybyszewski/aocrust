@@ -145,16 +145,18 @@ impl CPU {
 
     #[inline(always)]
     fn combo_operand(&self, operand: u8) -> i64 {
-        if operand == 7 {
-            unreachable!();
-        } else if operand == 6 {
+        // if operand == 7 {
+        //     unreachable!();
+        // } else
+        if operand < 4 {
+            return operand as i64;
+        }
+        if operand == 6 {
             return self.register_c;
         } else if operand == 5 {
             return self.register_b;
-        } else if operand == 4 {
-            return self.register_a;
         } else {
-            return operand as i64;
+            return self.register_a;
         }
     }
 }
