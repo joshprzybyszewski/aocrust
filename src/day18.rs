@@ -40,7 +40,7 @@ impl<'a> CorruptionProvider<'a> {
 }
 
 const MAX_GRID_SIZE: usize = 73;
-const MAX_GRID_VALUE: u64 = (MAX_GRID_SIZE * MAX_GRID_SIZE * 2) as u64;
+const MAX_GRID_VALUE: u16 = (MAX_GRID_SIZE * MAX_GRID_SIZE * 2) as u16;
 
 #[derive(Copy, Clone, Debug)]
 struct Coord {
@@ -152,11 +152,11 @@ impl Coord {
 #[derive(Copy, Clone, Debug)]
 struct Step {
     coord: Coord,
-    cost: u64, // TODO u16
+    cost: u16,
 }
 
 impl Step {
-    fn new(coord: Coord, cost: u64) -> Self {
+    fn new(coord: Coord, cost: u16) -> Self {
         return Step { coord, cost };
     }
 
@@ -194,8 +194,8 @@ impl Step {
 }
 
 #[aoc(day18, part1)]
-pub fn part1(input: &str) -> u64 {
-    let mut cheapest: [[u64; MAX_GRID_SIZE]; MAX_GRID_SIZE] =
+pub fn part1(input: &str) -> u16 {
+    let mut cheapest: [[u16; MAX_GRID_SIZE]; MAX_GRID_SIZE] =
         [[MAX_GRID_VALUE; MAX_GRID_SIZE]; MAX_GRID_SIZE];
 
     for x in 0..MAX_GRID_SIZE {
