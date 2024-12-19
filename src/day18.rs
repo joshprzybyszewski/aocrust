@@ -239,23 +239,24 @@ pub fn part2(input: &str) -> String {
     loop {
         // zero-index'd, but needs to be one-indexed.
         let corruption = provider.next();
+        let coord = corruption.to_one_index();
 
-        let nearby = side[corruption.row][corruption.col]
-            | side[corruption.row][corruption.col + 1]
-            | side[corruption.row][corruption.col + 2]
-            | side[corruption.row + 1][corruption.col]
-            | side[corruption.row + 1][corruption.col + 2]
-            | side[corruption.row + 2][corruption.col]
-            | side[corruption.row + 2][corruption.col + 1]
-            | side[corruption.row + 2][corruption.col + 2];
+        let nearby = side[coord.row - 1][coord.col - 1]
+            | side[coord.row - 1][coord.col]
+            | side[coord.row - 1][coord.col + 1]
+            | side[coord.row][coord.col - 1]
+            | side[coord.row][coord.col + 1]
+            | side[coord.row + 1][coord.col - 1]
+            | side[coord.row + 1][coord.col]
+            | side[coord.row + 1][coord.col + 1];
         let value = nearby & BOTH;
         if value == BOTH {
             return corruption.to_string();
         }
 
-        side[corruption.row + 1][corruption.col + 1] = UNKNOWN;
+        side[coord.row][coord.col] = UNKNOWN;
         if value != 0 {
-            infect_nearby(&mut side, value, corruption.to_one_index());
+            infect_nearby(&mut side, value, coord);
         }
         // print_sides(&side);
     }
