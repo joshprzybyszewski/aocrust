@@ -224,11 +224,6 @@ pub fn part1(input: &str) -> u16 {
 
         cheapest[step.coord.row][step.coord.col] = step.cost;
 
-        // Look up
-        let next = step.up();
-        if cheapest[next.coord.row][next.coord.col] > next.cost {
-            queue.push_back(next);
-        }
         // look right
         let next = step.right();
         if cheapest[next.coord.row][next.coord.col] > next.cost {
@@ -241,6 +236,11 @@ pub fn part1(input: &str) -> u16 {
         }
         // look left
         let next = step.left();
+        if cheapest[next.coord.row][next.coord.col] > next.cost {
+            queue.push_back(next);
+        }
+        // Look up
+        let next = step.up();
         if cheapest[next.coord.row][next.coord.col] > next.cost {
             queue.push_back(next);
         }
