@@ -198,123 +198,121 @@ impl Design {
     }
 }
 
-struct DesignMatches {
-    jumps: [Vec<usize>; 60],
-    farthest: [usize; 60],
-    num_possible: [u64; 61],
+#[inline(always)]
+fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
+    let mut farthest: [usize; 60] = [0; 60];
+    let mut possibilities: [u64; 61] = [0; 61];
+    // TODO consider if there's a way to avoid doing the jumps checks.
+    let mut jumps = get_empty_jumps();
+
+    for design_index in 0..design.len {
+        let start = design.colors[design_index];
+        patterns.patterns_by_start_color[start as usize]
+            .iter()
+            .for_each(|pattern| {
+                // TODO once we match a pattern, if we stop matching patterns, we don't need to check any after that.
+                for i in 0..pattern.len {
+                    if design_index + i >= design.len
+                        || design.colors[design_index + i] != pattern.colors[i]
+                    {
+                        return;
+                    }
+                }
+                jumps[design_index].push(pattern.len);
+            });
+        jumps[design_index].reverse();
+    }
+
+    possibilities[design.len] = 1;
+    for i in (0..design.len).rev() {
+        let mut max_distance = 0;
+        let mut num_possible = 0;
+
+        jumps[i].iter().for_each(|jump| {
+            let my_max = *jump + farthest[i + *jump];
+            if max_distance > my_max {
+                return;
+            }
+            if my_max > max_distance {
+                num_possible = 0;
+                max_distance = my_max;
+            }
+            num_possible += possibilities[i + *jump];
+        });
+
+        farthest[i] = max_distance;
+        possibilities[i] = num_possible;
+    }
+    if farthest[0] != design.len {
+        return 0;
+    }
+    return possibilities[0];
 }
 
-impl DesignMatches {
-    fn new(design: &Design, patterns: &AllPatterns) -> Self {
-        let mut matches = DesignMatches::empty();
-
-        for design_index in 0..design.len {
-            let start = design.colors[design_index];
-            patterns.patterns_by_start_color[start as usize]
-                .iter()
-                .for_each(|pattern| {
-                    for i in 0..pattern.len {
-                        if design_index + i >= design.len
-                            || design.colors[design_index + i] != pattern.colors[i]
-                        {
-                            return;
-                        }
-                    }
-                    matches.jumps[design_index].push(pattern.len);
-                });
-            matches.jumps[design_index].reverse();
-        }
-        matches.num_possible[design.len] = 1;
-        for i in (0..design.len).rev() {
-            let mut max_distance = 0;
-            let mut num_possible = 0;
-
-            matches.jumps[i].iter().for_each(|jump| {
-                let my_max = *jump + matches.farthest[i + *jump];
-                if max_distance > my_max {
-                    return;
-                }
-                if my_max > max_distance {
-                    num_possible = 0;
-                    max_distance = my_max;
-                }
-                num_possible += matches.num_possible[i + *jump];
-            });
-
-            matches.farthest[i] = max_distance;
-            matches.num_possible[i] = num_possible;
-        }
-        return matches;
-    }
-
-    fn empty() -> Self {
-        DesignMatches {
-            farthest: [0; 60],
-            num_possible: [0; 61],
-            jumps: [
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-                Vec::with_capacity(2),
-            ],
-        }
-    }
+#[inline(always)]
+fn get_empty_jumps() -> [Vec<usize>; 60] {
+    return [
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+        Vec::with_capacity(2),
+    ];
 }
 
 fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
@@ -352,20 +350,14 @@ fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
     return (patterns, designs);
 }
 
+#[inline(always)]
 fn is_possible(design: &Design, patterns: &AllPatterns) -> bool {
-    // println!("Checking {}", design.to_string());
-    let matches = DesignMatches::new(design, patterns);
-    return matches.farthest[0] == design.len;
+    return get_num_to_end(design, patterns) != 0;
 }
 
+#[inline(always)]
 fn num_possible(design: &Design, patterns: &AllPatterns) -> u64 {
-    // println!("Checking {}", design.to_string());
-    let matches = DesignMatches::new(design, patterns);
-    if matches.farthest[0] != design.len {
-        return 0;
-    }
-    // println!(" has {}", matches.num_possible[0]);
-    return matches.num_possible[0];
+    return get_num_to_end(design, patterns);
 }
 
 #[aoc(day19, part1)]
