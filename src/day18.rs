@@ -302,11 +302,11 @@ fn infect_left_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], coord: Co
     side[coord.row][coord.col] = LEFT;
     infect_left_nearby(side, coord.right());
     infect_left_nearby(side, coord.up());
+    infect_left_nearby(side, coord.up_right());
     infect_left_nearby(side, coord.left());
     infect_left_nearby(side, coord.down());
-    infect_left_nearby(side, coord.up_right());
-    infect_left_nearby(side, coord.up_left());
     infect_left_nearby(side, coord.down_right());
+    infect_left_nearby(side, coord.up_left());
     infect_left_nearby(side, coord.down_left());
 }
 
@@ -318,9 +318,9 @@ fn infect_right_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], coord: C
     side[coord.row][coord.col] = RIGHT;
     infect_right_nearby(side, coord.down());
     infect_right_nearby(side, coord.left());
+    infect_right_nearby(side, coord.down_left());
     infect_right_nearby(side, coord.up());
     infect_right_nearby(side, coord.right());
-    infect_right_nearby(side, coord.down_left());
     infect_right_nearby(side, coord.up_left());
     infect_right_nearby(side, coord.down_right());
     infect_right_nearby(side, coord.up_right());
