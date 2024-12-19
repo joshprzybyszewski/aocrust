@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use std::cmp::{max, Ordering};
 use string_builder::Builder;
 
 // white (w), blue (u), black (b), red (r), or green (g)
@@ -167,7 +167,10 @@ impl Design {
                 b'g' => {
                     design.colors[design.len] = GREEN;
                 }
-                _ => unreachable!(),
+                _ => {
+                    println!("input[{}] = {}", *i, input[*i]);
+                    unreachable!();
+                }
             }
             design.len += 1;
             *i += 1;
@@ -176,6 +179,137 @@ impl Design {
             }
         }
         return design;
+    }
+
+    #[allow(dead_code)]
+    fn to_string(&self) -> String {
+        let mut array: [u8; 60] = [b' '; 60];
+        for i in 0..self.len {
+            match self.colors[i] {
+                WHITE => array[i] = b'w',
+                BLUE => array[i] = b'u',
+                BLACK => array[i] = b'b',
+                RED => array[i] = b'r',
+                GREEN => array[i] = b'g',
+                _ => unreachable!(),
+            }
+        }
+        return String::from_utf8_lossy(&array[0..self.len]).to_string();
+    }
+}
+
+struct DesignMatches {
+    jumps: [Vec<usize>; 60],
+    farthest: [usize; 60],
+}
+
+impl DesignMatches {
+    fn new(design: &Design, patterns: &AllPatterns) -> Self {
+        let mut matches = DesignMatches::empty();
+
+        for design_index in 0..design.len {
+            let start = design.colors[design_index];
+            patterns.patterns_by_start_color[start as usize]
+                .iter()
+                .for_each(|pattern| {
+                    for i in 0..pattern.len {
+                        if design_index + i >= design.len
+                            || design.colors[design_index + i] != pattern.colors[i]
+                        {
+                            return;
+                        }
+                    }
+                    matches.jumps[design_index].push(pattern.len);
+                });
+            matches.jumps[design_index].reverse();
+        }
+        for i in (0..design.len).rev() {
+            let mut max_distance = 0;
+            matches.jumps[i].iter().for_each(|jump| {
+                //
+                max_distance = max(max_distance, *jump + matches.farthest[i + *jump])
+            });
+            matches.farthest[i] = max_distance;
+        }
+        return matches;
+    }
+
+    fn empty() -> Self {
+        DesignMatches {
+            farthest: [0; 60],
+            jumps: [
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+                Vec::with_capacity(2),
+            ],
+        }
+    }
+
+    fn can_reach(&self, start: usize, target: usize) -> bool {
+        return self.farthest[start] == target;
+        // if start == target {
+        //     return true;
+        // }
+        // return self.jumps[start]
+        //     .iter()
+        //     .any(|jump| self.can_reach(start + *jump, target));
     }
 }
 
@@ -207,13 +341,17 @@ fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
     let mut designs: Vec<Design> = Vec::with_capacity(512);
     while i < input.len() {
         designs.push(Design::new(input, &mut i));
+        // skip the newline
+        i += 1;
     }
 
     return (patterns, designs);
 }
 
 fn is_possible(design: &Design, patterns: &AllPatterns) -> bool {
-    return false;
+    // println!("Checking {}", design.to_string());
+    let matches = DesignMatches::new(design, patterns);
+    return matches.can_reach(0, design.len);
 }
 
 #[aoc(day19, part1)]
@@ -262,7 +400,7 @@ bbrgwb";
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 353)
     }
 
     #[test]
