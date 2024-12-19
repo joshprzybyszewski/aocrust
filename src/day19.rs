@@ -1,4 +1,4 @@
-use std::cmp::{max, Ordering};
+use std::cmp::Ordering;
 use string_builder::Builder;
 
 // white (w), blue (u), black (b), red (r), or green (g)
@@ -201,6 +201,7 @@ impl Design {
 struct DesignMatches {
     jumps: [Vec<usize>; 60],
     farthest: [usize; 60],
+    num_possible: [u64; 61],
 }
 
 impl DesignMatches {
@@ -223,13 +224,25 @@ impl DesignMatches {
                 });
             matches.jumps[design_index].reverse();
         }
+        matches.num_possible[design.len] = 1;
         for i in (0..design.len).rev() {
             let mut max_distance = 0;
+            let mut num_possible = 0;
+
             matches.jumps[i].iter().for_each(|jump| {
-                //
-                max_distance = max(max_distance, *jump + matches.farthest[i + *jump])
+                let my_max = *jump + matches.farthest[i + *jump];
+                if max_distance > my_max {
+                    return;
+                }
+                if my_max > max_distance {
+                    num_possible = 0;
+                    max_distance = my_max;
+                }
+                num_possible += matches.num_possible[i + *jump];
             });
+
             matches.farthest[i] = max_distance;
+            matches.num_possible[i] = num_possible;
         }
         return matches;
     }
@@ -237,6 +250,7 @@ impl DesignMatches {
     fn empty() -> Self {
         DesignMatches {
             farthest: [0; 60],
+            num_possible: [0; 61],
             jumps: [
                 Vec::with_capacity(2),
                 Vec::with_capacity(2),
@@ -301,16 +315,6 @@ impl DesignMatches {
             ],
         }
     }
-
-    fn can_reach(&self, start: usize, target: usize) -> bool {
-        return self.farthest[start] == target;
-        // if start == target {
-        //     return true;
-        // }
-        // return self.jumps[start]
-        //     .iter()
-        //     .any(|jump| self.can_reach(start + *jump, target));
-    }
 }
 
 fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
@@ -351,7 +355,17 @@ fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
 fn is_possible(design: &Design, patterns: &AllPatterns) -> bool {
     // println!("Checking {}", design.to_string());
     let matches = DesignMatches::new(design, patterns);
-    return matches.can_reach(0, design.len);
+    return matches.farthest[0] == design.len;
+}
+
+fn num_possible(design: &Design, patterns: &AllPatterns) -> u64 {
+    // println!("Checking {}", design.to_string());
+    let matches = DesignMatches::new(design, patterns);
+    if matches.farthest[0] != design.len {
+        return 0;
+    }
+    // println!(" has {}", matches.num_possible[0]);
+    return matches.num_possible[0];
 }
 
 #[aoc(day19, part1)]
@@ -365,8 +379,13 @@ pub fn part1(input: &str) -> u32 {
 }
 
 #[aoc(day19, part2)]
-pub fn part2(input: &str) -> u32 {
-    return 0;
+pub fn part2(input: &str) -> u64 {
+    let (patterns, designs) = parse_input(input);
+
+    return designs
+        .iter()
+        .map(|design| num_possible(design, &patterns))
+        .sum();
 }
 
 #[cfg(test)]
@@ -404,7 +423,12 @@ bbrgwb";
     }
 
     #[test]
+    fn part2_example() {
+        assert_eq!(part2(get_example_input()), 16)
+    }
+
+    #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), 880877787214477)
     }
 }
