@@ -287,27 +287,45 @@ pub fn part2(input: &str) -> String {
         }
 
         side[coord.row][coord.col] = UNKNOWN;
-        if value != 0 {
-            infect_nearby(&mut side, value, coord);
+        if value == LEFT {
+            infect_left_nearby(&mut side, coord);
+        } else if value == RIGHT {
+            infect_right_nearby(&mut side, coord);
         }
         // print_sides(&side);
     }
 }
 
-fn infect_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], value: u8, coord: Coord) {
+fn infect_left_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], coord: Coord) {
     if side[coord.row][coord.col] != UNKNOWN {
         return;
     }
 
-    side[coord.row][coord.col] = value;
-    infect_nearby(side, value, coord.left());
-    infect_nearby(side, value, coord.right());
-    infect_nearby(side, value, coord.up());
-    infect_nearby(side, value, coord.down());
-    infect_nearby(side, value, coord.up_left());
-    infect_nearby(side, value, coord.up_right());
-    infect_nearby(side, value, coord.down_left());
-    infect_nearby(side, value, coord.down_right());
+    side[coord.row][coord.col] = LEFT;
+    infect_left_nearby(side, coord.right());
+    infect_left_nearby(side, coord.up());
+    infect_left_nearby(side, coord.left());
+    infect_left_nearby(side, coord.down());
+    infect_left_nearby(side, coord.up_right());
+    infect_left_nearby(side, coord.up_left());
+    infect_left_nearby(side, coord.down_right());
+    infect_left_nearby(side, coord.down_left());
+}
+
+fn infect_right_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], coord: Coord) {
+    if side[coord.row][coord.col] != UNKNOWN {
+        return;
+    }
+
+    side[coord.row][coord.col] = RIGHT;
+    infect_right_nearby(side, coord.down());
+    infect_right_nearby(side, coord.left());
+    infect_right_nearby(side, coord.up());
+    infect_right_nearby(side, coord.right());
+    infect_right_nearby(side, coord.down_left());
+    infect_right_nearby(side, coord.up_left());
+    infect_right_nearby(side, coord.down_right());
+    infect_right_nearby(side, coord.up_right());
 }
 
 fn print_sides(side: &[[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE]) {
