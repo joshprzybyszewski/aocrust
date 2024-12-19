@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use string_builder::Builder;
 
 // white (w), blue (u), black (b), red (r), or green (g)
 const WHITE: u8 = 1; // 4419
@@ -36,6 +37,23 @@ impl AllPatterns {
         self.patterns_by_start_color[BLACK as usize].sort();
         self.patterns_by_start_color[RED as usize].sort();
         self.patterns_by_start_color[GREEN as usize].sort();
+    }
+
+    #[allow(dead_code)]
+    fn to_string(&self) -> String {
+        let mut builder = Builder::default();
+        for i in 1..=(GREEN as usize) {
+            builder.append("");
+            builder.append(
+                self.patterns_by_start_color[i]
+                    .iter()
+                    .map(|pattern| pattern.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+            builder.append(" ");
+        }
+        return builder.string().unwrap();
     }
 }
 
@@ -81,6 +99,22 @@ impl Pattern {
             }
         }
         return pattern;
+    }
+
+    #[allow(dead_code)]
+    fn to_string(&self) -> String {
+        let mut array: [u8; 8] = [b' '; 8];
+        for i in 0..self.len {
+            match self.colors[i] {
+                WHITE => array[i] = b'w',
+                BLUE => array[i] = b'u',
+                BLACK => array[i] = b'b',
+                RED => array[i] = b'r',
+                GREEN => array[i] = b'g',
+                _ => unreachable!(),
+            }
+        }
+        return String::from_utf8_lossy(&array[0..self.len]).to_string();
     }
 }
 
@@ -166,9 +200,9 @@ fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
         i += 2;
     }
 
-    println!("All patterns: {:?}", patterns);
+    // println!("All patterns: {:?}", patterns.to_string());
     patterns.sort();
-    println!("All patterns: {:?}", patterns);
+    // println!("All patterns: {:?}", patterns.to_string());
 
     let mut designs: Vec<Design> = Vec::with_capacity(512);
     while i < input.len() {
@@ -206,6 +240,24 @@ mod test {
     fn get_input() -> String {
         let input_path = "input/2024/day19.txt";
         fs::read_to_string(input_path).unwrap()
+    }
+
+    fn get_example_input() -> &'static str {
+        return "r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb";
+    }
+
+    #[test]
+    fn part1_example() {
+        assert_eq!(part1(get_example_input()), 6)
     }
 
     #[test]
