@@ -85,10 +85,26 @@ impl Coord {
     }
 
     #[inline(always)]
+    fn up_left(&self) -> Coord {
+        return Coord {
+            row: self.row - 1,
+            col: self.col - 1,
+        };
+    }
+
+    #[inline(always)]
     fn up(&self) -> Coord {
         return Coord {
             row: self.row - 1,
             col: self.col,
+        };
+    }
+
+    #[inline(always)]
+    fn up_right(&self) -> Coord {
+        return Coord {
+            row: self.row - 1,
+            col: self.col + 1,
         };
     }
 
@@ -101,10 +117,26 @@ impl Coord {
     }
 
     #[inline(always)]
+    fn down_left(&self) -> Coord {
+        return Coord {
+            row: self.row + 1,
+            col: self.col - 1,
+        };
+    }
+
+    #[inline(always)]
     fn down(&self) -> Coord {
         return Coord {
             row: self.row + 1,
             col: self.col,
+        };
+    }
+
+    #[inline(always)]
+    fn down_right(&self) -> Coord {
+        return Coord {
+            row: self.row + 1,
+            col: self.col + 1,
         };
     }
 
@@ -268,14 +300,14 @@ fn infect_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], value: u8, coo
     }
 
     side[coord.row][coord.col] = value;
-    infect_nearby(side, value, coord.up().left());
-    infect_nearby(side, value, coord.up());
-    infect_nearby(side, value, coord.up().right());
-    infect_nearby(side, value, coord.down().left());
-    infect_nearby(side, value, coord.down());
-    infect_nearby(side, value, coord.down().right());
     infect_nearby(side, value, coord.left());
     infect_nearby(side, value, coord.right());
+    infect_nearby(side, value, coord.up());
+    infect_nearby(side, value, coord.down());
+    infect_nearby(side, value, coord.up_left());
+    infect_nearby(side, value, coord.up_right());
+    infect_nearby(side, value, coord.down_left());
+    infect_nearby(side, value, coord.down_right());
 }
 
 fn print_sides(side: &[[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE]) {
