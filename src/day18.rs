@@ -217,10 +217,8 @@ pub fn part1(input: &str) -> u16 {
     while !queue.is_empty() {
         let step = queue.pop_front().unwrap();
         if cheapest[step.coord.row][step.coord.col] <= step.cost {
-            // println!("not cheapest {:?}", step);
             continue;
         }
-        // println!("Checking {:?}", step);
 
         cheapest[step.coord.row][step.coord.col] = step.cost;
 
@@ -328,8 +326,8 @@ fn infect_right_nearby(side: &mut [[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE], coord: C
     infect_right_nearby(side, coord.up_right());
 }
 
+#[allow(dead_code)]
 fn print_sides(side: &[[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE]) {
-    //
     println!("-------------------------");
     for row in side {
         for col in row {
@@ -347,6 +345,7 @@ fn print_sides(side: &[[u8; MAX_GRID_SIZE]; MAX_GRID_SIZE]) {
         }
         println!("");
     }
+    thread::sleep(time::Duration::from_millis(16));
 }
 #[cfg(test)]
 mod test {
