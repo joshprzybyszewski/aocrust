@@ -119,16 +119,17 @@ fn dfs(
 
 fn count_cheats(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
     let mut cheats = 0;
-    if grid[current.row - 2][current.col] > grid[current.row][current.col] + 100 {
+    let min_val = grid[current.row][current.col] + 100;
+    if grid[current.row - 2][current.col] > min_val {
         cheats += 1;
     }
-    if grid[current.row + 2][current.col] > grid[current.row][current.col] + 100 {
+    if grid[current.row + 2][current.col] > min_val {
         cheats += 1;
     }
-    if grid[current.row][current.col - 2] > grid[current.row][current.col] + 100 {
+    if grid[current.row][current.col - 2] > min_val {
         cheats += 1;
     }
-    if grid[current.row][current.col + 2] > grid[current.row][current.col] + 100 {
+    if grid[current.row][current.col + 2] > min_val {
         cheats += 1;
     }
     return cheats;
