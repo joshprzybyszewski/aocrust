@@ -93,17 +93,15 @@ fn dfs<const PART1: bool>(
 
     if current == *goal {
         let mut total = 0;
-        for row in grid {
-            for col in row {
-                if *col == u32::MAX {
-                    unreachable!();
-                }
-                if *col > 0 {
+        for r_i in 0..TOTAL_GRID_SIZE {
+            for c_i in 0..TOTAL_GRID_SIZE {
+                if grid[r_i][c_i] > 0 {
                     total += 1;
                 }
             }
         }
         if total != pos {
+            print_grid(grid);
             unreachable!();
         }
         return 0;
@@ -157,22 +155,42 @@ fn count_cheats_2(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coo
     return cheats;
 }
 
+fn print_grid(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE]) {
+    for r_i in 0..TOTAL_GRID_SIZE {
+        for c_i in 0..TOTAL_GRID_SIZE {
+            if grid[r_i][c_i] == u32::MAX {
+                unreachable!();
+            }
+            if r_i < BUFFER
+                || c_i < BUFFER
+                || r_i >= TOTAL_GRID_SIZE - BUFFER
+                || c_i >= TOTAL_GRID_SIZE - BUFFER
+            {
+                if grid[r_i][c_i] != 0 {
+                    print!("!")
+                } else {
+                    print!(" ")
+                }
+            } else {
+                if grid[r_i][c_i] == 0 {
+                    print!(" ")
+                } else {
+                    print!("{}", grid[r_i][c_i] % 10)
+                }
+            }
+        }
+        print!("\n")
+    }
+}
+
 fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
     let mut cheats = 0;
     let min_val = grid[current.row][current.col] + 100;
 
-    // in (0, 0) -> buf (20, 20)
-    // check:
-    //  buf                     (0, 20)
-    //  buf           (1, 19),  (1, 20),  (1, 21)
-    //  buf (2, 18),  (2, 19),  (2, 20),  (2, 21), (2, 22)
-    //  buf ...
-    //  buf          (39, 19), (39, 20), (39, 21)
-    //  buf                    (40, 20)
-    //
     let mut row = current.row - 20;
     let mut min_dc = current.col;
     let mut max_dc = current.col + 1;
+
     for _ in 0..20 {
         if current.row - row + (current.col - min_dc) != 20 {
             unreachable!()
@@ -231,6 +249,12 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
         row += 1;
         min_dc += 1;
         max_dc -= 1;
+    }
+
+    if min_dc != max_dc + 1 {
+        println!("min_dc = {min_dc}");
+        println!("max_dc = {max_dc}");
+        unreachable!()
     }
 
     return cheats;
