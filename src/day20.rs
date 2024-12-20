@@ -92,7 +92,7 @@ fn dfs(
     grid[current.row][current.col] = pos;
 
     if current == *goal {
-        return count_cheats(grid, current);
+        return 0;
     }
 
     let next: Coord;
@@ -109,7 +109,12 @@ fn dfs(
         unreachable!();
     }
     // do dfs first, then count cheats.
-    return dfs(grid, pos + 1, next, goal) + count_cheats(grid, current);
+    let prev = dfs(grid, pos + 1, next, goal);
+    if grid[current.row][current.col] + 100 > grid[goal.row][goal.col] {
+        // no reason to look at the 100 steps closest to the goal
+        return 0;
+    }
+    return prev + count_cheats(grid, current);
 }
 
 fn count_cheats(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
