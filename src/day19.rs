@@ -1,16 +1,20 @@
 use std::cmp::Ordering;
 use string_builder::Builder;
 
+const MAX_PATTERN_LEN: usize = 8;
+const MAX_DESIGN_LEN: usize = 60;
+
 // white (w), blue (u), black (b), red (r), or green (g)
 const WHITE: u8 = 1; // 4419
 const BLUE: u8 = 2; //  4332
 const BLACK: u8 = 3; // 4478
 const RED: u8 = 4; //   4390
 const GREEN: u8 = 5; // 4352
+const NUM_COLORS: usize = 6; // none is a color
 
 #[derive(Clone, Debug)]
 struct AllPatterns {
-    patterns_by_start_color: [Vec<Pattern>; 6],
+    patterns_by_start_color: [Vec<Pattern>; NUM_COLORS],
 }
 
 impl AllPatterns {
@@ -59,7 +63,7 @@ impl AllPatterns {
 
 #[derive(Copy, Clone, Debug)]
 struct Pattern {
-    colors: [u8; 8],
+    colors: [u8; MAX_PATTERN_LEN],
 
     len: usize,
 }
@@ -67,7 +71,7 @@ struct Pattern {
 impl Pattern {
     fn new(input: &[u8], i: &mut usize) -> Self {
         let mut pattern = Pattern {
-            colors: [0; 8],
+            colors: [0; MAX_PATTERN_LEN],
             len: 0,
         };
         loop {
@@ -103,7 +107,7 @@ impl Pattern {
 
     #[allow(dead_code)]
     fn to_string(&self) -> String {
-        let mut array: [u8; 8] = [b' '; 8];
+        let mut array: [u8; MAX_PATTERN_LEN] = [b' '; MAX_PATTERN_LEN];
         for i in 0..self.len {
             match self.colors[i] {
                 WHITE => array[i] = b'w',
@@ -140,14 +144,14 @@ impl Eq for Pattern {}
 
 #[derive(Copy, Clone, Debug)]
 struct Design {
-    colors: [u8; 60],
+    colors: [u8; MAX_DESIGN_LEN],
     len: usize,
 }
 
 impl Design {
     fn new(input: &[u8], i: &mut usize) -> Self {
         let mut design = Design {
-            colors: [0; 60],
+            colors: [0; MAX_DESIGN_LEN],
             len: 0,
         };
         loop {
@@ -183,7 +187,7 @@ impl Design {
 
     #[allow(dead_code)]
     fn to_string(&self) -> String {
-        let mut array: [u8; 60] = [b' '; 60];
+        let mut array: [u8; MAX_DESIGN_LEN] = [b' '; MAX_DESIGN_LEN];
         for i in 0..self.len {
             match self.colors[i] {
                 WHITE => array[i] = b'w',
@@ -239,8 +243,8 @@ fn solve<const PART1: bool>(input: &str) -> u64 {
 
 #[inline(always)]
 fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
-    let mut farthest: [usize; 60] = [0; 60];
-    let mut possibilities: [u64; 61] = [0; 61];
+    let mut farthest: [usize; MAX_DESIGN_LEN] = [0; MAX_DESIGN_LEN];
+    let mut possibilities: [u64; MAX_DESIGN_LEN + 1] = [0; MAX_DESIGN_LEN + 1];
 
     possibilities[design.len] = 1;
     for design_index in (0..design.len).rev() {
