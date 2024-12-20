@@ -46,11 +46,11 @@ impl Coord {
     }
 }
 
-fn solve(input: &str) -> u64 {
+fn solve(input: &str) -> u32 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
     let mut goal: Option<Coord> = None;
-    let mut grid: [[u64; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE] =
+    let mut grid: [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE] =
         [[0; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE];
 
     let mut i: usize = 0;
@@ -60,14 +60,14 @@ fn solve(input: &str) -> u64 {
             match input[i] {
                 b'#' => {}
                 b'.' => {
-                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
+                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
                 }
                 b'S' => {
-                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
+                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
                     start = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 b'E' => {
-                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
+                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
                     goal = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 _ => unreachable!(),
@@ -83,55 +83,59 @@ fn solve(input: &str) -> u64 {
 }
 
 fn dfs(
-    grid: &mut [[u64; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
-    pos: u64,
+    grid: &mut [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+    pos: u32,
     current: Coord,
     goal: &Coord,
-) -> u64 {
+) -> u32 {
     // println!("dfs({pos}, {:?})", current);
     grid[current.row][current.col] = pos;
 
+    if current == *goal {
+        return count_cheats(grid, current);
+    }
+
+    let next: Coord;
+    if grid[current.row - 1][current.col] == u32::MAX {
+        next = current.up();
+    } else if grid[current.row + 1][current.col] == u32::MAX {
+        next = current.down();
+    } else if grid[current.row][current.col - 1] == u32::MAX {
+        next = current.left();
+    } else if grid[current.row][current.col + 1] == u32::MAX {
+        next = current.right();
+    } else {
+        println!("current: {:?}", current);
+        unreachable!();
+    }
+    // do dfs first, then count cheats.
+    return dfs(grid, pos + 1, next, goal) + count_cheats(grid, current);
+}
+
+fn count_cheats(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
     let mut cheats = 0;
-    if current != *goal {
-        let next: Coord;
-        if grid[current.row - 1][current.col] == u64::MAX {
-            next = current.up();
-        } else if grid[current.row + 1][current.col] == u64::MAX {
-            next = current.down();
-        } else if grid[current.row][current.col - 1] == u64::MAX {
-            next = current.left();
-        } else if grid[current.row][current.col + 1] == u64::MAX {
-            next = current.right();
-        } else {
-            println!("current: {:?}", current);
-            unreachable!();
-        }
-        cheats += dfs(grid, pos + 1, next, goal);
-    }
-
-    if grid[current.row - 2][current.col] > pos + 100 {
+    if grid[current.row - 2][current.col] > grid[current.row][current.col] + 100 {
         cheats += 1;
     }
-    if grid[current.row + 2][current.col] > pos + 100 {
+    if grid[current.row + 2][current.col] > grid[current.row][current.col] + 100 {
         cheats += 1;
     }
-    if grid[current.row][current.col - 2] > pos + 100 {
+    if grid[current.row][current.col - 2] > grid[current.row][current.col] + 100 {
         cheats += 1;
     }
-    if grid[current.row][current.col + 2] > pos + 100 {
+    if grid[current.row][current.col + 2] > grid[current.row][current.col] + 100 {
         cheats += 1;
     }
-
     return cheats;
 }
 
 #[aoc(day20, part1)]
-pub fn part1(input: &str) -> u64 {
+pub fn part1(input: &str) -> u32 {
     return solve(input);
 }
 
 #[aoc(day20, part2)]
-pub fn part2(input: &str) -> u64 {
+pub fn part2(input: &str) -> u32 {
     return 0;
 }
 
