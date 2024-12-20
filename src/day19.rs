@@ -4,7 +4,7 @@ const MAX_PATTERN_LEN: usize = 8;
 // 5 ^ 8 = 390_625
 // However, more practically, I can't have more nodes than the length of the first line
 // in my input file.
-const MAX_NODES: usize = 2048;
+const MAX_NODES: usize = 4096;
 // In my input, this is actually 60. Let's assume it can go up to 64.
 const MAX_DESIGN_LEN: usize = 64;
 
