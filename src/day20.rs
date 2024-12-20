@@ -1,4 +1,6 @@
 const GRID_SIZE: usize = 141;
+const BUFFER: usize = 20;
+const TOTAL_GRID_SIZE: usize = BUFFER + GRID_SIZE + BUFFER;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Coord {
@@ -48,23 +50,25 @@ fn solve(input: &str) -> u64 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
     let mut goal: Option<Coord> = None;
-    let mut grid: [[u64; GRID_SIZE]; GRID_SIZE] = [[u64::MAX; GRID_SIZE]; GRID_SIZE];
+    let mut grid: [[u64; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE] =
+        [[0; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE];
 
     let mut i: usize = 0;
 
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
             match input[i] {
-                b'#' => {
-                    grid[r][c] = 0;
+                b'#' => {}
+                b'.' => {
+                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
                 }
-
-                b'.' => {}
                 b'S' => {
-                    start = Some(Coord::new(r, c));
+                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
+                    start = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 b'E' => {
-                    goal = Some(Coord::new(r, c));
+                    grid[r + BUFFER][c + BUFFER] = u64::MAX;
+                    goal = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 _ => unreachable!(),
             }
@@ -78,13 +82,18 @@ fn solve(input: &str) -> u64 {
     return dfs(&mut grid, 1, start, &goal);
 }
 
-fn dfs(grid: &mut [[u64; GRID_SIZE]; GRID_SIZE], pos: u64, current: Coord, goal: &Coord) -> u64 {
-    // println!("dfs({:?}", current);
+fn dfs(
+    grid: &mut [[u64; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+    pos: u64,
+    current: Coord,
+    goal: &Coord,
+) -> u64 {
+    // println!("dfs({pos}, {:?})", current);
     grid[current.row][current.col] = pos;
 
     let mut cheats = 0;
     if current != *goal {
-        let next: Coord; // = current;
+        let next: Coord;
         if grid[current.row - 1][current.col] == u64::MAX {
             next = current.up();
         } else if grid[current.row + 1][current.col] == u64::MAX {
@@ -94,21 +103,22 @@ fn dfs(grid: &mut [[u64; GRID_SIZE]; GRID_SIZE], pos: u64, current: Coord, goal:
         } else if grid[current.row][current.col + 1] == u64::MAX {
             next = current.right();
         } else {
+            println!("current: {:?}", current);
             unreachable!();
         }
         cheats += dfs(grid, pos + 1, next, goal);
     }
 
-    if current.row > 1 && grid[current.row - 2][current.col] > pos + 100 {
+    if grid[current.row - 2][current.col] > pos + 100 {
         cheats += 1;
     }
-    if current.row < GRID_SIZE - 2 && grid[current.row + 2][current.col] > pos + 100 {
+    if grid[current.row + 2][current.col] > pos + 100 {
         cheats += 1;
     }
-    if current.col > 1 && grid[current.row][current.col - 2] > pos + 100 {
+    if grid[current.row][current.col - 2] > pos + 100 {
         cheats += 1;
     }
-    if current.col < GRID_SIZE - 2 && grid[current.row][current.col + 2] > pos + 100 {
+    if grid[current.row][current.col + 2] > pos + 100 {
         cheats += 1;
     }
 
