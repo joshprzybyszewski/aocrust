@@ -1,8 +1,15 @@
 use std::cmp::Ordering;
 use string_builder::Builder;
 
+// experientially, this is my longest pattern. Hopefully that's true.
 const MAX_PATTERN_LEN: usize = 8;
-const MAX_DESIGN_LEN: usize = 60;
+// This is bound by the number of colors to the power of the max pattern len.
+// 5 ^ 8 = 390_625
+// However, more practically, I can't have more nodes than the length of the first line
+// in my input file.
+const MAX_NODES: usize = 2048;
+// In my input, this is actually 60. Let's assume it can go up to 64.
+const MAX_DESIGN_LEN: usize = 64;
 
 // white (w), blue (u), black (b), red (r), or green (g)
 const WHITE: u8 = 1; // 4419
@@ -12,35 +19,50 @@ const RED: u8 = 4; //   4390
 const GREEN: u8 = 5; // 4352
 const NUM_COLORS: usize = 6; // none is a color
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 struct AllPatterns {
-    patterns_by_start_color: [Vec<Pattern>; NUM_COLORS],
+    nodes: [Node; MAX_NODES],
+    num_nodes: usize,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Node {
+    next: [usize; NUM_COLORS],
 }
 
 impl AllPatterns {
     fn new() -> Self {
         return AllPatterns {
-            patterns_by_start_color: [
-                Vec::with_capacity(100),
-                Vec::with_capacity(100),
-                Vec::with_capacity(100),
-                Vec::with_capacity(100),
-                Vec::with_capacity(100),
-                Vec::with_capacity(100),
-            ],
+            nodes: [Node {
+                next: [0; NUM_COLORS],
+            }; MAX_NODES],
+            num_nodes: NUM_COLORS,
         };
     }
 
-    fn add(&mut self, pattern: Pattern) {
-        self.patterns_by_start_color[pattern.colors[0] as usize].push(pattern);
+    fn is_available(&self, node_id: usize) -> bool {
+        return self.nodes[node_id].next[0] == MAX_NODES;
     }
 
-    fn sort(&mut self) {
-        self.patterns_by_start_color[WHITE as usize].sort();
-        self.patterns_by_start_color[BLUE as usize].sort();
-        self.patterns_by_start_color[BLACK as usize].sort();
-        self.patterns_by_start_color[RED as usize].sort();
-        self.patterns_by_start_color[GREEN as usize].sort();
+    fn next_node_id(&self, node_id: usize, color: u8) -> usize {
+        return self.nodes[node_id].next[color as usize];
+    }
+
+    fn add(&mut self, pattern: Pattern) {
+        let mut node_id = pattern.colors[0] as usize;
+        for i in 1..pattern.len {
+            let next_id = self.nodes[node_id].next[pattern.colors[i] as usize];
+            if next_id != 0 {
+                node_id = next_id;
+                continue;
+            }
+            let next_id = self.num_nodes;
+            self.num_nodes += 1;
+            self.nodes[node_id].next[pattern.colors[i] as usize] = next_id;
+            node_id = next_id;
+        }
+        // mark this as is_available
+        self.nodes[node_id].next[0] = MAX_NODES;
     }
 
     #[allow(dead_code)]
@@ -48,13 +70,13 @@ impl AllPatterns {
         let mut builder = Builder::default();
         for i in 1..=(GREEN as usize) {
             builder.append("");
-            builder.append(
-                self.patterns_by_start_color[i]
-                    .iter()
-                    .map(|pattern| pattern.to_string())
-                    .collect::<Vec<String>>()
-                    .join(","),
-            );
+            // builder.append(
+            //     self.patterns_by_start_color[i]
+            //         .iter()
+            //         .map(|pattern| pattern.to_string())
+            //         .collect::<Vec<String>>()
+            //         .join(","),
+            // );
             builder.append(" ");
         }
         return builder.string().unwrap();
@@ -223,10 +245,6 @@ fn solve<const PART1: bool>(input: &str) -> u64 {
         i += 2;
     }
 
-    // println!("All patterns: {:?}", patterns.to_string());
-    patterns.sort();
-    // println!("All patterns: {:?}", patterns.to_string());
-
     let mut total: u64 = 0;
     while i < input.len() {
         let design = Design::new(input, &mut i);
@@ -251,29 +269,29 @@ fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
         let mut max_distance = 0;
         let mut num_possible = 0;
 
-        patterns.patterns_by_start_color[design.colors[design_index] as usize]
-            .iter()
-            .for_each(|pattern| {
-                // TODO once we match a pattern, if we stop matching patterns, we don't need to check any after that.
-                let jump = pattern.len;
-                for i in 0..pattern.len {
-                    if design_index + i >= design.len
-                        || design.colors[design_index + i] != pattern.colors[i]
-                    {
-                        return;
-                    }
-                }
-
+        let mut node_id = design.colors[design_index] as usize;
+        for offset in 1..=MAX_PATTERN_LEN {
+            if patterns.is_available(node_id) {
+                let jump = offset;
                 let my_max = jump + farthest[design_index + jump];
-                if max_distance > my_max {
-                    return;
+                if my_max >= max_distance {
+                    if my_max > max_distance {
+                        num_possible = 0;
+                        max_distance = my_max;
+                    }
+                    num_possible += possibilities[design_index + jump];
                 }
-                if my_max > max_distance {
-                    num_possible = 0;
-                    max_distance = my_max;
-                }
-                num_possible += possibilities[design_index + jump];
-            });
+            }
+            if design_index + offset >= design.len {
+                break;
+            }
+
+            node_id = patterns.next_node_id(node_id, design.colors[design_index + offset]);
+            if node_id == 0 {
+                // invalid
+                break;
+            }
+        }
 
         farthest[design_index] = max_distance;
         possibilities[design_index] = num_possible;
