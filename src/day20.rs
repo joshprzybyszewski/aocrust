@@ -116,6 +116,8 @@ fn dfs<const PART1: bool>(
         return 0;
     }
 
+    // TODO there's some mad caching we could do if we know how to inspect only the
+    // diff of the changed diamond.
     if PART1 {
         return prev + count_cheats_2(grid, current);
     }
@@ -158,6 +160,12 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
     let mut min_dc = current.col;
     let mut max_dc = current.col + 1;
     for _ in 0..20 {
+        if current.row - row + (current.col - min_dc) != 20 {
+            unreachable!()
+        }
+        if current.row - row + (max_dc - current.col) != 21 {
+            unreachable!()
+        }
         for col in min_dc..max_dc {
             if current.row - row + ((current.col - col) as i32).abs() as usize > 20 {
                 unreachable!();
@@ -171,6 +179,12 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
         max_dc += 1;
     }
 
+    if min_dc != current.col - 20 {
+        unreachable!()
+    }
+    if max_dc != current.col + 21 {
+        unreachable!()
+    }
     for col in min_dc..max_dc {
         if ((current.col - col) as i32).abs() as usize > 20 {
             unreachable!();
@@ -185,6 +199,12 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
     max_dc -= 1;
 
     for _ in 0..20 {
+        if row - current.row + (current.col - min_dc) != 20 {
+            unreachable!()
+        }
+        if row - current.row + (max_dc - current.col) != 21 {
+            unreachable!()
+        }
         for col in min_dc..max_dc {
             if row - current.row + ((current.col - col) as i32).abs() as usize > 20 {
                 unreachable!();
