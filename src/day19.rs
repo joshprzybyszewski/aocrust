@@ -198,6 +198,45 @@ impl Design {
     }
 }
 
+fn solve<const PART1: bool>(input: &str) -> u64 {
+    // patterns: max len 8
+    // total patterns 446.
+    // total designs is 400
+    // longest string is 60 for a design
+
+    let input = input.as_bytes();
+    let mut i: usize = 0;
+
+    let mut patterns = AllPatterns::new();
+    loop {
+        patterns.add(Pattern::new(input, &mut i));
+        if input[i] == b'\n' {
+            // skip the two newlines
+            i += 2;
+            break;
+        }
+        // skip the comma and the space
+        i += 2;
+    }
+
+    // println!("All patterns: {:?}", patterns.to_string());
+    patterns.sort();
+    // println!("All patterns: {:?}", patterns.to_string());
+
+    let mut total: u64 = 0;
+    while i < input.len() {
+        let design = Design::new(input, &mut i);
+        let num_possible = get_num_to_end(&design, &patterns);
+        if num_possible > 0 {
+            total += if PART1 { 1 } else { num_possible }
+        }
+        // skip the newline
+        i += 1;
+    }
+
+    return total;
+}
+
 #[inline(always)]
 fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
     let mut farthest: [usize; 60] = [0; 60];
@@ -239,55 +278,6 @@ fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
         return 0;
     }
     return possibilities[0];
-}
-
-fn solve<const PART1: bool>(input: &str) -> u64 {
-    // patterns: max len 8
-    // total patterns 446.
-    // total designs is 400
-    // longest string is 60 for a design
-
-    let input = input.as_bytes();
-    let mut i: usize = 0;
-
-    let mut patterns = AllPatterns::new();
-    loop {
-        patterns.add(Pattern::new(input, &mut i));
-        if input[i] == b'\n' {
-            // skip the two newlines
-            i += 2;
-            break;
-        }
-        // skip the comma and the space
-        i += 2;
-    }
-
-    // println!("All patterns: {:?}", patterns.to_string());
-    patterns.sort();
-    // println!("All patterns: {:?}", patterns.to_string());
-
-    let mut total: u64 = 0;
-    while i < input.len() {
-        let design = Design::new(input, &mut i);
-        let num_possible = num_possible(&design, &patterns);
-        if num_possible > 0 {
-            total += if PART1 { 1 } else { num_possible }
-        }
-        // skip the newline
-        i += 1;
-    }
-
-    return total;
-}
-
-#[inline(always)]
-fn is_possible(design: &Design, patterns: &AllPatterns) -> bool {
-    return get_num_to_end(design, patterns) != 0;
-}
-
-#[inline(always)]
-fn num_possible(design: &Design, patterns: &AllPatterns) -> u64 {
-    return get_num_to_end(design, patterns);
 }
 
 #[aoc(day19, part1)]
