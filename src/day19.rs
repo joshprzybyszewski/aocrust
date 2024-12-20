@@ -241,7 +241,7 @@ fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
     return possibilities[0];
 }
 
-fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
+fn solve<const PART1: bool>(input: &str) -> u64 {
     // patterns: max len 8
     // total patterns 446.
     // total designs is 400
@@ -273,7 +273,17 @@ fn parse_input(input: &str) -> (AllPatterns, Vec<Design>) {
         i += 1;
     }
 
-    return (patterns, designs);
+    if PART1 {
+        return designs
+            .iter()
+            .map(|design| if is_possible(design, &patterns) { 1 } else { 0 })
+            .sum();
+    }
+
+    return designs
+        .iter()
+        .map(|design| num_possible(design, &patterns))
+        .sum();
 }
 
 #[inline(always)]
@@ -287,23 +297,13 @@ fn num_possible(design: &Design, patterns: &AllPatterns) -> u64 {
 }
 
 #[aoc(day19, part1)]
-pub fn part1(input: &str) -> u32 {
-    let (patterns, designs) = parse_input(input);
-
-    return designs
-        .iter()
-        .map(|design| if is_possible(design, &patterns) { 1 } else { 0 })
-        .sum();
+pub fn part1(input: &str) -> u64 {
+    return solve::<true>(input);
 }
 
 #[aoc(day19, part2)]
 pub fn part2(input: &str) -> u64 {
-    let (patterns, designs) = parse_input(input);
-
-    return designs
-        .iter()
-        .map(|design| num_possible(design, &patterns))
-        .sum();
+    return solve::<false>(input);
 }
 
 #[cfg(test)]
