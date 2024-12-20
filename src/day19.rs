@@ -266,24 +266,18 @@ fn solve<const PART1: bool>(input: &str) -> u64 {
     patterns.sort();
     // println!("All patterns: {:?}", patterns.to_string());
 
-    let mut designs: Vec<Design> = Vec::with_capacity(512);
+    let mut total: u64 = 0;
     while i < input.len() {
-        designs.push(Design::new(input, &mut i));
+        let design = Design::new(input, &mut i);
+        let num_possible = num_possible(&design, &patterns);
+        if num_possible > 0 {
+            total += if PART1 { 1 } else { num_possible }
+        }
         // skip the newline
         i += 1;
     }
 
-    if PART1 {
-        return designs
-            .iter()
-            .map(|design| if is_possible(design, &patterns) { 1 } else { 0 })
-            .sum();
-    }
-
-    return designs
-        .iter()
-        .map(|design| num_possible(design, &patterns))
-        .sum();
+    return total;
 }
 
 #[inline(always)]
