@@ -4,7 +4,7 @@ const MAX_PATTERN_LEN: usize = 8;
 // 5 ^ 8 = 390_625
 // However, more practically, I can't have more nodes than the length of the first line
 // in my input file.
-const MAX_NODES: usize = 4096;
+const MAX_NODES: usize = 390_625 + 1;
 // In my input, this is actually 60. Let's assume it can go up to 64.
 const MAX_DESIGN_LEN: usize = 64;
 
@@ -16,10 +16,9 @@ const RED: u8 = 4; //   4390
 const GREEN: u8 = 5; // 4352
 const NUM_COLORS: usize = 6; // none is a color
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 struct AllPatterns {
-    nodes: [Node; MAX_NODES],
-    num_nodes: usize,
+    nodes: Vec<Node>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -29,12 +28,17 @@ struct Node {
 
 impl AllPatterns {
     fn new() -> Self {
-        return AllPatterns {
-            nodes: [Node {
-                next: [0; NUM_COLORS],
-            }; MAX_NODES],
-            num_nodes: NUM_COLORS,
+        let mut output = AllPatterns {
+            nodes: Vec::with_capacity(1024),
         };
+
+        for _ in 0..NUM_COLORS {
+            output.nodes.push(Node {
+                next: [0; NUM_COLORS],
+            });
+        }
+
+        return output;
     }
 
     #[inline(always)]
@@ -47,6 +51,7 @@ impl AllPatterns {
         return self.nodes[node_id].next[color as usize];
     }
 
+    #[inline(always)]
     fn add(&mut self, pattern: Pattern) {
         let mut node_id = pattern.colors[0] as usize;
         for i in 1..pattern.len {
@@ -55,8 +60,11 @@ impl AllPatterns {
                 node_id = next_id;
                 continue;
             }
-            let next_id = self.num_nodes;
-            self.num_nodes += 1;
+            let next_id = self.nodes.len();
+            self.nodes.push(Node {
+                next: [0; NUM_COLORS],
+            });
+            // self.num_nodes += 1;
             self.nodes[node_id].next[pattern.colors[i] as usize] = next_id;
             node_id = next_id;
         }
