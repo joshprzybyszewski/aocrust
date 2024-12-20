@@ -78,20 +78,20 @@ impl Pattern {
         };
         loop {
             match input[*i] {
-                b'w' => {
-                    pattern.colors[pattern.len] = WHITE;
-                }
-                b'u' => {
-                    pattern.colors[pattern.len] = BLUE;
-                }
                 b'b' => {
                     pattern.colors[pattern.len] = BLACK;
+                }
+                b'g' => {
+                    pattern.colors[pattern.len] = GREEN;
                 }
                 b'r' => {
                     pattern.colors[pattern.len] = RED;
                 }
-                b'g' => {
-                    pattern.colors[pattern.len] = GREEN;
+                b'u' => {
+                    pattern.colors[pattern.len] = BLUE;
+                }
+                b'w' => {
+                    pattern.colors[pattern.len] = WHITE;
                 }
                 _ => {
                     // println!("input[{}] = {}", *i, input[*i]);
@@ -138,20 +138,20 @@ impl Design {
         };
         loop {
             match input[*i] {
-                b'w' => {
-                    design.colors[design.len] = WHITE;
-                }
-                b'u' => {
-                    design.colors[design.len] = BLUE;
-                }
                 b'b' => {
                     design.colors[design.len] = BLACK;
+                }
+                b'g' => {
+                    design.colors[design.len] = GREEN;
                 }
                 b'r' => {
                     design.colors[design.len] = RED;
                 }
-                b'g' => {
-                    design.colors[design.len] = GREEN;
+                b'u' => {
+                    design.colors[design.len] = BLUE;
+                }
+                b'w' => {
+                    design.colors[design.len] = WHITE;
                 }
                 _ => {
                     // println!("input[{}] = {}", *i, input[*i]);
