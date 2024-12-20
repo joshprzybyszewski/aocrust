@@ -37,10 +37,12 @@ impl AllPatterns {
         };
     }
 
+    #[inline(always)]
     fn is_available(&self, node_id: usize) -> bool {
         return self.nodes[node_id].next[0] == MAX_NODES;
     }
 
+    #[inline(always)]
     fn next_node_id(&self, node_id: usize, color: u8) -> usize {
         return self.nodes[node_id].next[color as usize];
     }
@@ -243,7 +245,7 @@ fn get_num_to_end(design: &Design, patterns: &AllPatterns) -> u64 {
 
             node_id = patterns.next_node_id(node_id, design.colors[design_index + offset]);
             if node_id == 0 {
-                // invalid
+                // no more matches.
                 break;
             }
         }
