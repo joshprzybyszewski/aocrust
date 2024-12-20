@@ -1,6 +1,3 @@
-use std::cmp::Ordering;
-use string_builder::Builder;
-
 // experientially, this is my longest pattern. Hopefully that's true.
 const MAX_PATTERN_LEN: usize = 8;
 // This is bound by the number of colors to the power of the max pattern len.
@@ -64,23 +61,6 @@ impl AllPatterns {
         // mark this as is_available
         self.nodes[node_id].next[0] = MAX_NODES;
     }
-
-    #[allow(dead_code)]
-    fn to_string(&self) -> String {
-        let mut builder = Builder::default();
-        for i in 1..=(GREEN as usize) {
-            builder.append("");
-            // builder.append(
-            //     self.patterns_by_start_color[i]
-            //         .iter()
-            //         .map(|pattern| pattern.to_string())
-            //         .collect::<Vec<String>>()
-            //         .join(","),
-            // );
-            builder.append(" ");
-        }
-        return builder.string().unwrap();
-    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -114,8 +94,8 @@ impl Pattern {
                     pattern.colors[pattern.len] = GREEN;
                 }
                 _ => {
-                    println!("input[{}] = {}", *i, input[*i]);
-                    unreachable!();
+                    // println!("input[{}] = {}", *i, input[*i]);
+                    // unreachable!();
                 }
             }
             pattern.len += 1;
@@ -137,32 +117,12 @@ impl Pattern {
                 BLACK => array[i] = b'b',
                 RED => array[i] = b'r',
                 GREEN => array[i] = b'g',
-                _ => unreachable!(),
+                _ => {} // unreachable!(),
             }
         }
         return String::from_utf8_lossy(&array[0..self.len]).to_string();
     }
 }
-
-impl Ord for Pattern {
-    fn cmp(&self, other: &Self) -> Ordering {
-        return self.colors.cmp(&other.colors);
-    }
-}
-
-impl PartialOrd for Pattern {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for Pattern {
-    fn eq(&self, other: &Self) -> bool {
-        (self.len, self.colors) == (other.len, other.colors)
-    }
-}
-
-impl Eq for Pattern {}
 
 #[derive(Copy, Clone, Debug)]
 struct Design {
@@ -194,8 +154,8 @@ impl Design {
                     design.colors[design.len] = GREEN;
                 }
                 _ => {
-                    println!("input[{}] = {}", *i, input[*i]);
-                    unreachable!();
+                    // println!("input[{}] = {}", *i, input[*i]);
+                    // unreachable!();
                 }
             }
             design.len += 1;
@@ -217,7 +177,7 @@ impl Design {
                 BLACK => array[i] = b'b',
                 RED => array[i] = b'r',
                 GREEN => array[i] = b'g',
-                _ => unreachable!(),
+                _ => {} // unreachable!(),
             }
         }
         return String::from_utf8_lossy(&array[0..self.len]).to_string();
@@ -225,11 +185,6 @@ impl Design {
 }
 
 fn solve<const PART1: bool>(input: &str) -> u64 {
-    // patterns: max len 8
-    // total patterns 446.
-    // total designs is 400
-    // longest string is 60 for a design
-
     let input = input.as_bytes();
     let mut i: usize = 0;
 
