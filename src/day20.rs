@@ -92,6 +92,20 @@ fn dfs<const PART1: bool>(
     grid[current.row][current.col] = pos;
 
     if current == *goal {
+        let mut total = 0;
+        for row in grid {
+            for col in row {
+                if *col == u32::MAX {
+                    unreachable!();
+                }
+                if *col > 0 {
+                    total += 1;
+                }
+            }
+        }
+        if total != pos {
+            unreachable!();
+        }
         return 0;
     }
 
