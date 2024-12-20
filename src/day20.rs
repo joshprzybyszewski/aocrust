@@ -46,7 +46,7 @@ impl Coord {
     }
 }
 
-fn solve(input: &str) -> u32 {
+fn solve<const PART1: bool>(input: &str) -> u32 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
     let mut goal: Option<Coord> = None;
@@ -79,10 +79,10 @@ fn solve(input: &str) -> u32 {
     let start = start.unwrap();
     let goal = goal.unwrap();
 
-    return dfs(&mut grid, 1, start, &goal);
+    return dfs::<PART1>(&mut grid, 1, start, &goal);
 }
 
-fn dfs(
+fn dfs<const PART1: bool>(
     grid: &mut [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     pos: u32,
     current: Coord,
@@ -109,15 +109,21 @@ fn dfs(
         unreachable!();
     }
     // do dfs first, then count cheats.
-    let prev = dfs(grid, pos + 1, next, goal);
+    let prev = dfs::<PART1>(grid, pos + 1, next, goal);
     if grid[current.row][current.col] + 100 > grid[goal.row][goal.col] {
-        // no reason to look at the 100 steps closest to the goal
+        // no reason to look at the 100 steps closest to the goal. There are
+        // no cheats greater than 100.
         return 0;
     }
-    return prev + count_cheats(grid, current);
+
+    if PART1 {
+        return prev + count_cheats_2(grid, current);
+    }
+
+    return prev + count_cheats_20(grid, current);
 }
 
-fn count_cheats(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
+fn count_cheats_2(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
     let mut cheats = 0;
     let min_val = grid[current.row][current.col] + 100;
     if grid[current.row - 2][current.col] > min_val {
@@ -135,14 +141,75 @@ fn count_cheats(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord
     return cheats;
 }
 
+fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
+    let mut cheats = 0;
+    let min_val = grid[current.row][current.col] + 100;
+
+    // in (0, 0) -> buf (20, 20)
+    // check:
+    //  buf                     (0, 20)
+    //  buf           (1, 19),  (1, 20),  (1, 21)
+    //  buf (2, 18),  (2, 19),  (2, 20),  (2, 21), (2, 22)
+    //  buf ...
+    //  buf          (39, 19), (39, 20), (39, 21)
+    //  buf                    (40, 20)
+    //
+    let mut row = current.row - 20;
+    let mut min_dc = current.col;
+    let mut max_dc = current.col + 1;
+    for _ in 0..20 {
+        for col in min_dc..max_dc {
+            if current.row - row + ((current.col - col) as i32).abs() as usize > 20 {
+                unreachable!();
+            }
+            if grid[row][col] > min_val {
+                cheats += 1;
+            }
+        }
+        row += 1;
+        min_dc -= 1;
+        max_dc += 1;
+    }
+
+    for col in min_dc..max_dc {
+        if ((current.col - col) as i32).abs() as usize > 20 {
+            unreachable!();
+        }
+
+        if grid[row][col] > min_val {
+            cheats += 1;
+        }
+    }
+    row += 1;
+    min_dc += 1;
+    max_dc -= 1;
+
+    for _ in 0..20 {
+        for col in min_dc..max_dc {
+            if row - current.row + ((current.col - col) as i32).abs() as usize > 20 {
+                unreachable!();
+            }
+
+            if grid[row][col] > min_val {
+                cheats += 1;
+            }
+        }
+        row += 1;
+        min_dc += 1;
+        max_dc -= 1;
+    }
+
+    return cheats;
+}
+
 #[aoc(day20, part1)]
 pub fn part1(input: &str) -> u32 {
-    return solve(input);
+    return solve::<true>(input);
 }
 
 #[aoc(day20, part2)]
 pub fn part2(input: &str) -> u32 {
-    return 0;
+    return solve::<false>(input);
 }
 
 #[cfg(test)]
@@ -191,6 +258,10 @@ mod test {
 
     #[test]
     fn part2_real_input() {
+        // 1058211 is not right.
+        // 1059628 is too high
+        // 1062395 is too high.
+        // 1122816
         assert_eq!(part2(&get_input()), 1)
     }
 }
