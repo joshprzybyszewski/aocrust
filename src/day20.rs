@@ -46,7 +46,7 @@ impl Coord {
     }
 }
 
-fn solve<const PART1: bool>(input: &str) -> u32 {
+fn solve<const SIZE: usize, const CHEAT: usize, const SAVE: u32>(input: &str) -> u32 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
     let mut goal: Option<Coord> = None;
@@ -55,8 +55,8 @@ fn solve<const PART1: bool>(input: &str) -> u32 {
 
     let mut i: usize = 0;
 
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
+    for r in 0..SIZE {
+        for c in 0..SIZE {
             match input[i] {
                 b'#' => {}
                 b'.' => {
@@ -79,10 +79,10 @@ fn solve<const PART1: bool>(input: &str) -> u32 {
     let start = start.unwrap();
     let goal = goal.unwrap();
 
-    return dfs::<PART1>(&mut grid, 1, start, &goal);
+    return dfs::<CHEAT, SAVE>(&mut grid, 1, start, &goal);
 }
 
-fn dfs<const PART1: bool>(
+fn dfs<const CHEAT: usize, const SAVE: u32>(
     grid: &mut [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     pos: u32,
     current: Coord,
@@ -121,8 +121,8 @@ fn dfs<const PART1: bool>(
         unreachable!();
     }
     // do dfs first, then count cheats.
-    let prev = dfs::<PART1>(grid, pos + 1, next, goal);
-    if grid[current.row][current.col] + 100 > grid[goal.row][goal.col] {
+    let prev = dfs::<CHEAT, SAVE>(grid, pos + 1, next, goal);
+    if grid[current.row][current.col] + SAVE > grid[goal.row][goal.col] {
         // no reason to look at the 100 steps closest to the goal. There are
         // no cheats greater than 100.
         return 0;
@@ -130,11 +130,11 @@ fn dfs<const PART1: bool>(
 
     // TODO there's some mad caching we could do if we know how to inspect only the
     // diff of the changed diamond.
-    if PART1 {
+    if CHEAT == 2 {
         return prev + count_cheats_2(grid, current);
     }
 
-    return prev + count_cheats_20(grid, current);
+    return prev + count_cheats::<CHEAT, SAVE>(grid, current);
 }
 
 fn count_cheats_2(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
@@ -183,26 +183,37 @@ fn print_grid(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE]) {
     }
 }
 
-fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Coord) -> u32 {
+fn count_cheats<const CHEAT: usize, const SAVE: u32>(
+    grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+    current: Coord,
+) -> u32 {
     let mut cheats = 0;
-    let min_val = grid[current.row][current.col] + 100;
+    let min_val = grid[current.row][current.col] + SAVE - 1;
 
-    let mut row = current.row - 20;
+    let mut row = current.row - CHEAT;
     let mut min_dc = current.col;
     let mut max_dc = current.col + 1;
 
-    for _ in 0..20 {
-        if current.row - row + (current.col - min_dc) != 20 {
+    for _ in 0..CHEAT {
+        if current.row - row + (current.col - min_dc) != CHEAT {
             unreachable!()
         }
-        if current.row - row + (max_dc - current.col) != 21 {
+        if current.row - row + (max_dc - current.col) != CHEAT + 1 {
             unreachable!()
         }
         for col in min_dc..max_dc {
-            if current.row - row + ((current.col - col) as i32).abs() as usize > 20 {
+            if current.row - row + (current.col as i32 - col as i32).abs() as usize > CHEAT {
                 unreachable!();
             }
-            if grid[row][col] > min_val {
+            if grid[row][col] > min_val + delta(current, row, col) {
+                // println!(
+                //     "from ({}, {}) to ({row}, {col}) saves {} ({} to {})",
+                //     current.row,
+                //     current.col,
+                //     grid[row][col] - grid[current.row][current.col],
+                //     grid[row][col],
+                //     grid[current.row][current.col]
+                // );
                 cheats += 1;
             }
         }
@@ -211,18 +222,26 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
         max_dc += 1;
     }
 
-    if min_dc != current.col - 20 {
+    if min_dc != current.col - CHEAT {
         unreachable!()
     }
-    if max_dc != current.col + 21 {
+    if max_dc != current.col + CHEAT + 1 {
         unreachable!()
     }
     for col in min_dc..max_dc {
-        if ((current.col - col) as i32).abs() as usize > 20 {
+        if (current.col as i32 - col as i32).abs() as usize > CHEAT {
             unreachable!();
         }
 
-        if grid[row][col] > min_val {
+        if grid[row][col] > min_val + delta(current, row, col) {
+            // println!(
+            //     "from ({}, {}) to ({row}, {col}) saves {} ({} to {})",
+            //     current.row,
+            //     current.col,
+            //     grid[row][col] - grid[current.row][current.col],
+            //     grid[row][col],
+            //     grid[current.row][current.col]
+            // );
             cheats += 1;
         }
     }
@@ -230,19 +249,29 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
     min_dc += 1;
     max_dc -= 1;
 
-    for _ in 0..20 {
-        if row - current.row + (current.col - min_dc) != 20 {
+    for _ in 0..CHEAT {
+        if row - current.row + (current.col - min_dc) != CHEAT {
             unreachable!()
         }
-        if row - current.row + (max_dc - current.col) != 21 {
+        if row - current.row + (max_dc - current.col) != CHEAT + 1 {
             unreachable!()
         }
         for col in min_dc..max_dc {
-            if row - current.row + ((current.col - col) as i32).abs() as usize > 20 {
+            if row - current.row + (current.col as i32 - col as i32).abs() as usize > CHEAT {
                 unreachable!();
             }
 
-            if grid[row][col] > min_val {
+            if grid[row][col] > min_val + delta(current, row, col) {
+                // println!(
+                //     "from ({}, {}) to ({}, {}) saves {} ({} to {})",
+                //     current.row - BUFFER,
+                //     current.col - BUFFER,
+                //     row - BUFFER,
+                //     col - BUFFER,
+                //     grid[row][col] - grid[current.row][current.col],
+                //     grid[row][col],
+                //     grid[current.row][current.col]
+                // );
                 cheats += 1;
             }
         }
@@ -260,14 +289,19 @@ fn count_cheats_20(grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE], current: Co
     return cheats;
 }
 
+fn delta(current: Coord, row: usize, col: usize) -> u32 {
+    return ((row as i32 - current.row as i32).abs() + (current.col as i32 - col as i32).abs())
+        as u32;
+}
+
 #[aoc(day20, part1)]
 pub fn part1(input: &str) -> u32 {
-    return solve::<true>(input);
+    return solve::<GRID_SIZE, 2, 100>(input);
 }
 
 #[aoc(day20, part2)]
 pub fn part2(input: &str) -> u32 {
-    return solve::<false>(input);
+    return solve::<GRID_SIZE, 20, 100>(input);
 }
 
 #[cfg(test)]
@@ -301,7 +335,7 @@ mod test {
 
     #[test]
     fn part1_example() {
-        assert_eq!(part1(get_example_input()), 0)
+        assert_eq!(solve::<15, 20, 75>(get_example_input()), 3)
     }
 
     #[test]
@@ -316,10 +350,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        // 1058211 is not right.
-        // 1059628 is too high
-        // 1062395 is too high.
-        // 1122816
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), 1014683)
     }
 }
