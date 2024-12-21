@@ -336,7 +336,8 @@ mod test {
 
     #[test]
     fn part1_example() {
-        assert_eq!(solve::<15, 20, 75>(get_example_input()), 3)
+        assert_eq!(solve::<15, 2, 39>(get_example_input()), 1 + 1);
+        assert_eq!(solve::<15, 2, 64>(get_example_input()), 1);
     }
 
     #[test]
@@ -346,7 +347,8 @@ mod test {
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(get_example_input()), 0)
+        assert_eq!(solve::<15, 20, 73>(get_example_input()), 4 + 3);
+        assert_eq!(solve::<15, 20, 75>(get_example_input()), 3);
     }
 
     #[test]
