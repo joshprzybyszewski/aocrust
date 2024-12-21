@@ -156,53 +156,81 @@ fn count_cheats<const CHEAT: usize, const SAVE: u32>(
 
     let mut row = current.row - CHEAT;
     let mut min_dc = current.col;
-    let mut max_dc = current.col + 1;
+    let mut max_dc = current.col;
 
-    let min_val = grid[current.row][current.col] + SAVE - 1;
+    let mut score_to_beat = grid[current.row][current.col] + SAVE + (CHEAT as u32);
 
     for _ in 0..CHEAT {
-        for col in min_dc..0 {
-            if grid[row][col] > min_val + delta(current, row, col) {
+        for col in min_dc..current.col {
+            if grid[row][col] >= score_to_beat {
                 cheats += 1;
             }
+            score_to_beat -= 1;
         }
 
-        for col in 0..max_dc {
-            if grid[row][col] > min_val + delta(current, row, col) {
+        for col in current.col..max_dc {
+            if grid[row][col] >= score_to_beat {
                 cheats += 1;
             }
+            score_to_beat += 1;
         }
+
+        if grid[row][max_dc] >= score_to_beat {
+            cheats += 1;
+        }
+
         row += 1;
         min_dc -= 1;
         max_dc += 1;
     }
 
-    for col in min_dc..max_dc {
-        if grid[row][col] > min_val + delta(current, row, col) {
+    for col in min_dc..current.col {
+        if grid[row][col] >= score_to_beat {
             cheats += 1;
         }
+        score_to_beat -= 1;
     }
+
+    for col in current.col..max_dc {
+        if grid[row][col] >= score_to_beat {
+            cheats += 1;
+        }
+        score_to_beat += 1;
+    }
+
+    if grid[row][max_dc] >= score_to_beat {
+        cheats += 1;
+    }
+
     row += 1;
     min_dc += 1;
     max_dc -= 1;
 
     for _ in 0..CHEAT {
-        for col in min_dc..max_dc {
-            if grid[row][col] > min_val + delta(current, row, col) {
+        for col in min_dc..current.col {
+            if grid[row][col] >= score_to_beat {
                 cheats += 1;
             }
+            score_to_beat -= 1;
         }
+
+        for col in current.col..max_dc {
+            if grid[row][col] >= score_to_beat {
+                cheats += 1;
+            }
+            score_to_beat += 1;
+        }
+
+        if grid[row][max_dc] >= score_to_beat {
+            cheats += 1;
+        }
+
         row += 1;
         min_dc += 1;
         max_dc -= 1;
     }
 
     return cheats;
-}
-
-fn delta(current: Coord, row: usize, col: usize) -> u32 {
-    return ((row as i32 - current.row as i32).abs() + (current.col as i32 - col as i32).abs())
-        as u32;
 }
 
 #[aoc(day20, part1)]
