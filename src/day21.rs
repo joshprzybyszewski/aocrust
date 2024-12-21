@@ -434,10 +434,6 @@ impl Positions {
 
     fn press_numeric_button(&mut self, target: usize) -> u64 {
         let path = SHORTEST_NUMERIC_PATHS[self.numeric][target];
-        // println!(
-        //     "press_numeric_button from {} to {target} = {:?}",
-        //     self.numeric, path
-        // );
         let mut output = 0;
         let mut i = 0;
         loop {
@@ -450,6 +446,8 @@ impl Positions {
             i += 1;
         }
         self.numeric = target;
+        print!("\n");
+
         return output;
     }
 
@@ -475,10 +473,23 @@ impl Positions {
         loop {
             if path[i] == ARROW_INVALID {
                 self.arrow_2 = target;
-                return i as u64;
+                // plus 1 for pushing A.
+                print!("A");
+                return i as u64 + 1;
             }
+            print!("{}", arrow_to_byte(path[i]));
             i += 1;
         }
+    }
+}
+
+fn arrow_to_byte(arrow: usize) -> &'static str {
+    match arrow {
+        ARROW_UP => return "A",
+        ARROW_DOWN => return "v",
+        ARROW_LEFT => return "<",
+        ARROW_RIGHT => return ">",
+        _ => unreachable!(),
     }
 }
 
@@ -501,7 +512,7 @@ pub fn part1(input: &str) -> u64 {
         total_sequence_length += positions.press_numeric_button(convert_to_number(input[i]));
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
-            // println!("total += {current_value} * {total_sequence_length}");
+            println!("total += {total_sequence_length} * {current_value}");
             total += current_value * total_sequence_length;
 
             if i >= input.len() {
@@ -510,7 +521,10 @@ pub fn part1(input: &str) -> u64 {
             // add to sum
             current_value = 0;
             total_sequence_length = 0;
-            i += 2;
+            if positions.numeric != NUMERIC_A {
+                unreachable!();
+            }
+            i += 1;
         }
     }
 
