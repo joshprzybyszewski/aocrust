@@ -433,8 +433,6 @@ struct Positions {
     numeric: usize,
     arrow_1: usize,
     arrow_2: usize,
-    // mine
-    arrow_3: usize,
 }
 
 impl Positions {
@@ -443,13 +441,12 @@ impl Positions {
             numeric: NUMERIC_A,
             arrow_1: ARROW_A,
             arrow_2: ARROW_A,
-            arrow_3: ARROW_A,
         };
     }
 
     fn press_numeric_button(&mut self, target: usize) -> u64 {
         println!(
-            "Moving from {} to {}",
+            "Pushing number {} -> {}",
             numeric_to_byte(self.numeric),
             numeric_to_byte(target)
         );
@@ -460,37 +457,46 @@ impl Positions {
             if path[i] == ARROW_INVALID {
                 break;
             }
-            output += self.navigate_first_robot(path[i]);
+            output += self.press_keypad1(path[i]);
             i += 1;
         }
         self.numeric = target;
-        // print!("\n");
+
+        output += self.press_keypad1(ARROW_A);
 
         return output;
     }
 
-    fn navigate_first_robot(&mut self, target: usize) -> u64 {
+    fn press_keypad1(&mut self, target: usize) -> u64 {
         println!(
-            " First robot from {} to {}",
+            " Keypad 1 {} -> {}",
             arrow_to_byte(self.arrow_1),
             arrow_to_byte(target)
         );
+        // move the robot over keypad 1 to the given target
+        // TODO find the shortest route for keypad 3 to accomplish this path for keypad 2.
         let path = SHORTEST_ARROW_PATHS[self.arrow_1][target];
         let mut output = 0;
         let mut i = 0;
         loop {
             if path[i] == ARROW_INVALID {
-                self.arrow_1 = target;
-                return output;
+                break;
             }
-            output += self.navigate_second_robot(path[i]);
+            output += self.press_keypad2(path[i]);
             i += 1;
         }
+
+        self.arrow_1 = target;
+
+        // push A from keypad 2, triggering keypad 1.
+        output += self.press_keypad2(ARROW_A);
+
+        return output;
     }
 
-    fn navigate_second_robot(&mut self, target: usize) -> u64 {
+    fn press_keypad2(&mut self, target: usize) -> u64 {
         println!(
-            "  Second robot from {} to {}",
+            "  Keypad 2 {} -> {}",
             arrow_to_byte(self.arrow_2),
             arrow_to_byte(target)
         );
@@ -499,35 +505,24 @@ impl Positions {
         let mut i = 0;
         loop {
             if path[i] == ARROW_INVALID {
-                // plus 1 for pushing A.
-                // print!("A");
-                self.arrow_2 = target;
-                return output;
+                break;
             }
-            // print!("{}", arrow_to_byte(path[i]));
-            output += self.navigate_third_robot(path[i]);
+            output += self.press_third_arrow_pad(path[i]);
             i += 1;
         }
+
+        self.arrow_2 = target;
+
+        // push A from the third arrow pad, triggering keypad 2.
+        output += self.press_third_arrow_pad(ARROW_A);
+        print!("\n");
+
+        return output;
     }
 
-    fn navigate_third_robot(&mut self, target: usize) -> u64 {
-        println!(
-            "   Third robot from {} to {}",
-            arrow_to_byte(self.arrow_3),
-            arrow_to_byte(target)
-        );
-        let path = SHORTEST_ARROW_PATHS[self.arrow_3][target];
-        let mut i = 0;
-        loop {
-            if path[i] == ARROW_INVALID {
-                // plus 1 for pushing A.
-                // print!("A");
-                self.arrow_3 = target;
-                return i as u64;
-            }
-            // print!("{}", arrow_to_byte(path[i]));
-            i += 1;
-        }
+    fn press_third_arrow_pad(&mut self, target: usize) -> u64 {
+        print!("{}", arrow_to_byte(target));
+        return 1;
     }
 }
 
@@ -591,6 +586,9 @@ pub fn part1(input: &str) -> u64 {
                 unreachable!();
             }
             i += 1;
+            if i >= input.len() {
+                break;
+            }
         }
     }
 
@@ -663,6 +661,8 @@ mod test {
     #[test]
     fn part1_real_input() {
         // 125252 is too low.
+        // 181357 is too high.
+        // 189206
         assert_eq!(part1(&get_input()), 1)
     }
 
