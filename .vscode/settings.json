@@ -1,5 +1,5 @@
 {
     "rust-analyzer.runnables.extraEnv": {
-        "RUST_MIN_STACK": "8388608",
+        "RUST_MIN_STACK": "16388608",
     }
 }

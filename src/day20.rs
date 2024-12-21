@@ -46,6 +46,7 @@ impl Coord {
     }
 }
 
+#[inline(always)]
 fn solve<const SIZE: usize, const CHEAT: usize, const SAVE: u32>(input: &str) -> u32 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
@@ -124,6 +125,7 @@ fn dfs<const CHEAT: usize, const SAVE: u32>(
     return prev + count_cheats::<CHEAT, SAVE>(grid, current);
 }
 
+#[inline(always)]
 fn count_cheats_2<const SAVE: u32>(
     grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     current: Coord,
@@ -145,6 +147,7 @@ fn count_cheats_2<const SAVE: u32>(
     return cheats;
 }
 
+#[inline(always)]
 fn count_cheats<const CHEAT: usize, const SAVE: u32>(
     grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     current: Coord,
