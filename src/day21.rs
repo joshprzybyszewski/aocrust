@@ -15,6 +15,18 @@
 | < | v | > |
 +---+---+---+
 
+    +---+---+
+    | ^ | A |
++---+---+---+
+| < | v | > |
++---+---+---+
+
+    +---+---+
+    | ^ | A |
++---+---+---+
+| < | v | > |
++---+---+---+
+
 */
 
 const SHORTEST_ARROW_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
@@ -421,6 +433,8 @@ struct Positions {
     numeric: usize,
     arrow_1: usize,
     arrow_2: usize,
+    // mine
+    arrow_3: usize,
 }
 
 impl Positions {
@@ -429,10 +443,16 @@ impl Positions {
             numeric: NUMERIC_A,
             arrow_1: ARROW_A,
             arrow_2: ARROW_A,
+            arrow_3: ARROW_A,
         };
     }
 
     fn press_numeric_button(&mut self, target: usize) -> u64 {
+        println!(
+            "Moving from {} to {}",
+            numeric_to_byte(self.numeric),
+            numeric_to_byte(target)
+        );
         let path = SHORTEST_NUMERIC_PATHS[self.numeric][target];
         let mut output = 0;
         let mut i = 0;
@@ -440,44 +460,72 @@ impl Positions {
             if path[i] == ARROW_INVALID {
                 break;
             }
-            // TODO I don't think we need the state of arrow_1 or arrow_2.
-            output += self.press_arrow_1(path[i]);
-            output += self.press_arrow_1(ARROW_A);
+            output += self.navigate_first_robot(path[i]);
             i += 1;
         }
         self.numeric = target;
-        print!("\n");
+        // print!("\n");
 
         return output;
     }
 
-    fn press_arrow_1(&mut self, target: usize) -> u64 {
+    fn navigate_first_robot(&mut self, target: usize) -> u64 {
+        println!(
+            " First robot from {} to {}",
+            arrow_to_byte(self.arrow_1),
+            arrow_to_byte(target)
+        );
         let path = SHORTEST_ARROW_PATHS[self.arrow_1][target];
         let mut output = 0;
         let mut i = 0;
         loop {
             if path[i] == ARROW_INVALID {
-                break;
+                self.arrow_1 = target;
+                return output;
             }
-            output += self.press_arrow_2(path[i]);
-            output += self.press_arrow_2(ARROW_A);
+            output += self.navigate_second_robot(path[i]);
             i += 1;
         }
-        self.arrow_1 = target;
-        return output;
     }
 
-    fn press_arrow_2(&mut self, target: usize) -> u64 {
+    fn navigate_second_robot(&mut self, target: usize) -> u64 {
+        println!(
+            "  Second robot from {} to {}",
+            arrow_to_byte(self.arrow_2),
+            arrow_to_byte(target)
+        );
         let path = SHORTEST_ARROW_PATHS[self.arrow_2][target];
+        let mut output = 0;
         let mut i = 0;
         loop {
             if path[i] == ARROW_INVALID {
-                self.arrow_2 = target;
                 // plus 1 for pushing A.
-                print!("A");
-                return i as u64 + 1;
+                // print!("A");
+                self.arrow_2 = target;
+                return output;
             }
-            print!("{}", arrow_to_byte(path[i]));
+            // print!("{}", arrow_to_byte(path[i]));
+            output += self.navigate_third_robot(path[i]);
+            i += 1;
+        }
+    }
+
+    fn navigate_third_robot(&mut self, target: usize) -> u64 {
+        println!(
+            "   Third robot from {} to {}",
+            arrow_to_byte(self.arrow_3),
+            arrow_to_byte(target)
+        );
+        let path = SHORTEST_ARROW_PATHS[self.arrow_3][target];
+        let mut i = 0;
+        loop {
+            if path[i] == ARROW_INVALID {
+                // plus 1 for pushing A.
+                // print!("A");
+                self.arrow_3 = target;
+                return i as u64;
+            }
+            // print!("{}", arrow_to_byte(path[i]));
             i += 1;
         }
     }
@@ -485,10 +533,28 @@ impl Positions {
 
 fn arrow_to_byte(arrow: usize) -> &'static str {
     match arrow {
-        ARROW_UP => return "A",
+        ARROW_UP => return "^",
         ARROW_DOWN => return "v",
         ARROW_LEFT => return "<",
         ARROW_RIGHT => return ">",
+        ARROW_A => return "A",
+        _ => unreachable!(),
+    }
+}
+
+fn numeric_to_byte(numeric: usize) -> &'static str {
+    match numeric {
+        NUMERIC_0 => return "0",
+        NUMERIC_1 => return "1",
+        NUMERIC_2 => return "2",
+        NUMERIC_3 => return "3",
+        NUMERIC_4 => return "4",
+        NUMERIC_5 => return "5",
+        NUMERIC_6 => return "6",
+        NUMERIC_7 => return "7",
+        NUMERIC_8 => return "8",
+        NUMERIC_9 => return "9",
+        NUMERIC_A => return "A",
         _ => unreachable!(),
     }
 }
