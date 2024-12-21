@@ -163,13 +163,13 @@ fn count_cheats<const CHEAT: i32, const SAVE: i32>(
     // Shoutout to maneatingape for this pro tip.
     // https://github.com/maneatingape/advent-of-code-rust/blob/5778c24f8881392cb5d4c64bc3f010a1a1bbc8af/src/year2024/day20.rs#L71-L77
 
-    let score_to_beat = SAVE;
+    let mut score_to_beat = SAVE + 1;
     // let score_to_beat = grid[current.row][current.col] + SAVE;
 
     for cheat_dist in 2..=CHEAT {
         let mut right = current.offset(0, cheat_dist);
         let mut down = current.offset(cheat_dist, 0);
-        let score_to_beat = score_to_beat + cheat_dist;
+        score_to_beat += 1;
         for _ in 0..cheat_dist {
             if grid[right.row][right.col] != 0
                 && (grid[right.row][right.col] - grid[current.row][current.col]).abs()
