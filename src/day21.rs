@@ -20,6 +20,9 @@
 const SHORTEST_KEYBOARD_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
     generate_shortest_keyboard_paths();
 
+const SHORTEST_NUMERIC_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] =
+    generate_shortest_numeric_paths();
+
 const MAX_PATH_LENGTH: usize = 6;
 
 const ARROW_INVALID: usize = 0;
@@ -350,13 +353,153 @@ const fn get_shortest_path_between_arrows(start: usize, end: usize) -> [usize; M
     }
 }
 
+const fn generate_shortest_numeric_paths(
+) -> [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] {
+    let mut answer: [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] =
+        [[[0; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS];
+
+    let mut start = 0;
+    loop {
+        let mut end = 0;
+        loop {
+            answer[start][end] = get_shortest_path_between_numbers(start, end);
+
+            end += 1;
+            if end == NUM_NUMERICS {
+                break;
+            }
+        }
+        start += 1;
+        if start == NUM_NUMERICS {
+            break;
+        }
+    }
+    return answer;
+}
+
+const fn get_shortest_path_between_numbers(start: usize, end: usize) -> [usize; MAX_PATH_LENGTH] {
+    if start == end || start == NUMERIC_INVALID || end == NUMERIC_INVALID {
+        return [NUMERIC_INVALID; MAX_PATH_LENGTH];
+    }
+
+    let keyboard = NumericKeypad::new();
+    let mut seen: [bool; NUM_NUMERICS] = [false; NUM_NUMERICS];
+    let mut pending: [Path; NUM_NUMERICS * NUM_NUMERICS] =
+        [Path::new(); NUM_NUMERICS * NUM_NUMERICS];
+    let mut index = 0;
+    let mut pending_index = 1;
+
+    pending[index].position = start;
+
+    loop {
+        let position = pending[index].last();
+        if position == end {
+            return pending[pending_index].directions;
+        }
+
+        if !seen[position] {
+            seen[position] = true;
+
+            let mut direction = 1;
+            loop {
+                if keyboard.states[position].next[direction] != ARROW_INVALID {
+                    pending[pending_index] =
+                        pending[index].add(direction, keyboard.states[position].next[direction]);
+                    pending_index += 1;
+                }
+                direction += 1;
+                if direction == ARROW_A {
+                    break;
+                }
+            }
+        }
+
+        index += 1;
+        if index >= pending_index || index >= pending.len() {
+            unreachable!();
+        }
+    }
+}
+
 #[aoc(day21, part1)]
 pub fn part1(input: &str) -> u64 {
-    let numeric = NumericKeypad::new();
-    let robot1 = ArrowKeypad::new();
-    let robot2 = ArrowKeypad::new();
-    // let robot2 = ArrowKeypad::new();
-    return 0;
+    let input = input.as_bytes();
+    let mut i: usize = 1;
+
+    let mut total = 0;
+    let mut total_sequence_length = 0;
+    let mut current_value = 0;
+
+    loop {
+        current_value *= 10;
+        current_value += (input[i - 1] - b'0') as u64;
+        let start = convert_to_number(input[i - 1]);
+        let end = convert_to_number(input[i]);
+
+        let robot1 = SHORTEST_NUMERIC_PATHS[start][end];
+        let mut j = 1;
+        loop {
+            if robot1[j] == ARROW_INVALID {
+                break;
+            }
+            let start = robot1[j - 1];
+            let end = robot1[j];
+            let robot2 = SHORTEST_KEYBOARD_PATHS[start][end];
+            let mut k = 1;
+            loop {
+                if robot2[k] == ARROW_INVALID {
+                    break;
+                }
+                let start = robot2[k - 1];
+                let end = robot2[k];
+                let me = SHORTEST_KEYBOARD_PATHS[start][end];
+                let mut l = 1;
+                loop {
+                    if me[l] == ARROW_INVALID {
+                        total_sequence_length += (l - 1) as u64;
+                        break;
+                    }
+                    l += 1;
+                }
+                k += 1;
+            }
+            j += 1;
+        }
+        i += 1;
+        if i >= input.len() || input[i] == b'\n' {
+            println!("total += {current_value} * {total_sequence_length}");
+            total += current_value * total_sequence_length;
+
+            if i >= input.len() {
+                break;
+            }
+            // add to sum
+            current_value = 0;
+            total_sequence_length = 0;
+            i += 2;
+        }
+    }
+
+    return total;
+}
+
+fn convert_to_number(byte: u8) -> usize {
+    match byte {
+        b'A' => return NUMERIC_A,
+        b'0' => return NUMERIC_0,
+        b'1' => return NUMERIC_1,
+        b'2' => return NUMERIC_2,
+        b'3' => return NUMERIC_3,
+        b'4' => return NUMERIC_4,
+        b'5' => return NUMERIC_5,
+        b'6' => return NUMERIC_6,
+        b'7' => return NUMERIC_7,
+        b'8' => return NUMERIC_8,
+        b'9' => return NUMERIC_9,
+        _ => {
+            unreachable!();
+        }
+    }
 }
 
 #[aoc(day21, part2)]
