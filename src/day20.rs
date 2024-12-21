@@ -46,12 +46,6 @@ impl Coord {
     }
 
     #[inline(always)]
-    fn dist(&self, other: Self) -> i32 {
-        return (self.row as i32 - other.row as i32).abs()
-            + (self.col as i32 - other.col as i32).abs();
-    }
-
-    #[inline(always)]
     fn offset(&self, dr: i32, dc: i32) -> Self {
         return Coord {
             row: (self.row as i32 + dr) as usize,
@@ -169,35 +163,36 @@ fn count_cheats<const CHEAT: i32, const SAVE: i32>(
     // Shoutout to maneatingape for this pro tip.
     // https://github.com/maneatingape/advent-of-code-rust/blob/5778c24f8881392cb5d4c64bc3f010a1a1bbc8af/src/year2024/day20.rs#L71-L77
 
-    for dc in 2..=CHEAT {
-        cheats += inspect_coords::<SAVE>(grid, current, current.offset(0, dc));
-    }
+    let score_to_beat = SAVE;
+    // let score_to_beat = grid[current.row][current.col] + SAVE;
 
-    for dr in 1..=CHEAT {
-        for dc in (dr - CHEAT)..(CHEAT + 1 - dr) {
-            cheats += inspect_coords::<SAVE>(grid, current, current.offset(dr, dc));
+    for cheat_dist in 2..=CHEAT {
+        let mut right = current.offset(0, cheat_dist);
+        let mut down = current.offset(cheat_dist, 0);
+        let score_to_beat = score_to_beat + cheat_dist;
+        for _ in 0..cheat_dist {
+            if grid[right.row][right.col] != 0
+                && (grid[right.row][right.col] - grid[current.row][current.col]).abs()
+                    >= score_to_beat
+            {
+                cheats += 1;
+            }
+            if grid[down.row][down.col] != 0
+                && (grid[down.row][down.col] - grid[current.row][current.col]).abs()
+                    >= score_to_beat
+            {
+                cheats += 1;
+            }
+
+            right.row += 1;
+            right.col -= 1;
+
+            down.row -= 1;
+            down.col -= 1;
         }
     }
 
     return cheats;
-}
-
-#[inline(always)]
-fn inspect_coords<const SAVE: i32>(
-    grid: &[[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
-    known: Coord,
-    second: Coord,
-) -> u32 {
-    if grid[second.row][second.col] == 0 {
-        // not a race track piece.
-        return 0;
-    }
-
-    if (grid[known.row][known.col] - grid[second.row][second.col]).abs() < SAVE + known.dist(second)
-    {
-        return 0;
-    }
-    return 1;
 }
 
 #[aoc(day20, part1)]
