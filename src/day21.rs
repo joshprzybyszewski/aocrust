@@ -17,12 +17,18 @@
 
 */
 
+const SHORTEST_KEYBOARD_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
+    generate_shortest_keyboard_paths();
+
+const MAX_PATH_LENGTH: usize = 6;
+
 const ARROW_INVALID: usize = 0;
 const ARROW_UP: usize = 1;
 const ARROW_LEFT: usize = 2;
 const ARROW_DOWN: usize = 3;
 const ARROW_RIGHT: usize = 4;
 const ARROW_A: usize = 5;
+const NUM_ARROWS: usize = 6;
 
 const NUMERIC_INVALID: usize = 0;
 const NUMERIC_A: usize = 1;
@@ -36,6 +42,7 @@ const NUMERIC_5: usize = 8;
 const NUMERIC_7: usize = 9;
 const NUMERIC_8: usize = 10;
 const NUMERIC_9: usize = 11;
+const NUM_NUMERICS: usize = 12;
 
 struct NumericKeypad {
     current: usize,
@@ -43,7 +50,7 @@ struct NumericKeypad {
 }
 
 impl NumericKeypad {
-    fn new() -> Self {
+    const fn new() -> Self {
         return NumericKeypad {
             current: NUMERIC_A,
             states: [
@@ -169,9 +176,186 @@ struct NumericState {
     next: [usize; 5],
 }
 
+struct ArrowKeypad {
+    current: usize,
+    states: [ArrowState; 6],
+}
+
+impl ArrowKeypad {
+    const fn new() -> Self {
+        return ArrowKeypad {
+            current: ARROW_A,
+            states: [
+                // Arrow_INVALID,
+                ArrowState {
+                    next: [ARROW_INVALID; 5],
+                },
+                // up -> down, a
+                ArrowState {
+                    // ARROW_INVALID, up, left, down, right
+                    next: [
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_DOWN,
+                        ARROW_A,
+                    ],
+                },
+                // left -> down
+                ArrowState {
+                    // ARROW_INVALID, up, left, down, right
+                    next: [
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_DOWN,
+                    ],
+                },
+                // down ->
+                ArrowState {
+                    // ARROW_INVALID, up, left, down, right
+                    next: [
+                        ARROW_INVALID,
+                        ARROW_UP,
+                        ARROW_LEFT,
+                        ARROW_INVALID,
+                        ARROW_RIGHT,
+                    ],
+                },
+                // right ->
+                ArrowState {
+                    // ARROW_INVALID, up, left, down, right
+                    next: [
+                        ARROW_INVALID,
+                        ARROW_A,
+                        ARROW_DOWN,
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                    ],
+                },
+                // a ->
+                ArrowState {
+                    // ARROW_INVALID, up, left, down, right
+                    next: [
+                        ARROW_INVALID,
+                        ARROW_INVALID,
+                        ARROW_UP,
+                        ARROW_RIGHT,
+                        ARROW_INVALID,
+                    ],
+                },
+            ],
+        };
+    }
+}
+
+struct ArrowState {
+    next: [usize; 5],
+}
+
+#[derive(Copy, Clone)]
+struct Path {
+    directions: [usize; MAX_PATH_LENGTH],
+    steps: usize,
+    position: usize,
+}
+
+impl Path {
+    const fn new() -> Self {
+        return Path {
+            directions: [0; MAX_PATH_LENGTH],
+            steps: 0,
+            position: ARROW_INVALID,
+        };
+    }
+
+    const fn add(&self, direction: usize, dest: usize) -> Self {
+        let mut copy = *self;
+        copy.directions[copy.steps] = direction;
+        copy.steps += 1;
+        copy.position = dest;
+        return copy;
+    }
+
+    const fn last(&self) -> usize {
+        self.position
+    }
+}
+
+const fn generate_shortest_keyboard_paths() -> [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS]
+{
+    let mut answer: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
+        [[[0; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS];
+
+    let mut start = 0;
+    loop {
+        let mut end = 0;
+        loop {
+            answer[start][end] = get_shortest_path_between_arrows(start, end);
+
+            end += 1;
+            if end == NUM_ARROWS {
+                break;
+            }
+        }
+        start += 1;
+        if start == NUM_ARROWS {
+            break;
+        }
+    }
+    return answer;
+}
+
+const fn get_shortest_path_between_arrows(start: usize, end: usize) -> [usize; MAX_PATH_LENGTH] {
+    if start == end || start == ARROW_INVALID || end == ARROW_INVALID {
+        return [ARROW_INVALID; MAX_PATH_LENGTH];
+    }
+
+    let keyboard = ArrowKeypad::new();
+    let mut seen: [bool; NUM_ARROWS] = [false; NUM_ARROWS];
+    let mut pending: [Path; NUM_ARROWS * NUM_ARROWS] = [Path::new(); NUM_ARROWS * NUM_ARROWS];
+    let mut index = 0;
+    let mut pending_index = 1;
+
+    pending[index].position = start;
+
+    loop {
+        let position = pending[index].last();
+        if position == end {
+            return pending[pending_index].directions;
+        }
+
+        if !seen[position] {
+            seen[position] = true;
+
+            let mut direction = 1;
+            loop {
+                if keyboard.states[position].next[direction] != ARROW_INVALID {
+                    pending[pending_index] =
+                        pending[index].add(direction, keyboard.states[position].next[direction]);
+                    pending_index += 1;
+                }
+                direction += 1;
+                if direction == ARROW_A {
+                    break;
+                }
+            }
+        }
+
+        index += 1;
+        if index >= pending_index || index >= pending.len() {
+            unreachable!();
+        }
+    }
+}
+
 #[aoc(day21, part1)]
 pub fn part1(input: &str) -> u64 {
     let numeric = NumericKeypad::new();
+    let robot1 = ArrowKeypad::new();
+    let robot2 = ArrowKeypad::new();
+    // let robot2 = ArrowKeypad::new();
     return 0;
 }
 
