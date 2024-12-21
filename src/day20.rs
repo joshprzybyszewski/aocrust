@@ -150,14 +150,21 @@ fn count_cheats<const CHEAT: usize, const SAVE: u32>(
     current: Coord,
 ) -> u32 {
     let mut cheats = 0;
-    let min_val = grid[current.row][current.col] + SAVE - 1;
 
     let mut row = current.row - CHEAT;
     let mut min_dc = current.col;
     let mut max_dc = current.col + 1;
 
+    let min_val = grid[current.row][current.col] + SAVE - 1;
+
     for _ in 0..CHEAT {
-        for col in min_dc..max_dc {
+        for col in min_dc..0 {
+            if grid[row][col] > min_val + delta(current, row, col) {
+                cheats += 1;
+            }
+        }
+
+        for col in 0..max_dc {
             if grid[row][col] > min_val + delta(current, row, col) {
                 cheats += 1;
             }
@@ -254,8 +261,10 @@ mod test {
 
     #[test]
     fn part2_example() {
-        assert_eq!(solve::<15, 20, 73>(get_example_input()), 4 + 3);
-        assert_eq!(solve::<15, 20, 75>(get_example_input()), 3);
+        assert_eq!(solve::<15, 20, 76>(get_example_input()), 3);
+        assert_eq!(solve::<15, 20, 74>(get_example_input()), 3 + 4);
+        assert_eq!(solve::<15, 20, 72>(get_example_input()), 3 + 4 + 22);
+        assert_eq!(solve::<15, 20, 70>(get_example_input()), 3 + 4 + 22 + 12);
     }
 
     #[test]
