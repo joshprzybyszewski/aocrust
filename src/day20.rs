@@ -44,14 +44,28 @@ impl Coord {
             col: self.col - 1,
         };
     }
+
+    #[inline(always)]
+    fn dist(&self, other: Self) -> i32 {
+        return (self.row as i32 - other.row as i32).abs()
+            + (self.col as i32 - other.col as i32).abs();
+    }
+
+    #[inline(always)]
+    fn offset(&self, dr: i32, dc: i32) -> Self {
+        return Coord {
+            row: (self.row as i32 + dr) as usize,
+            col: (self.col as i32 + dc) as usize,
+        };
+    }
 }
 
 #[inline(always)]
-fn solve<const SIZE: usize, const CHEAT: usize, const SAVE: u32>(input: &str) -> u32 {
+fn solve<const SIZE: usize, const CHEAT: i32, const SAVE: i32>(input: &str) -> u32 {
     let input = input.as_bytes();
     let mut start: Option<Coord> = None;
     let mut goal: Option<Coord> = None;
-    let mut grid: [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE] =
+    let mut grid: [[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE] =
         [[0; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE];
 
     let mut i: usize = 0;
@@ -61,14 +75,14 @@ fn solve<const SIZE: usize, const CHEAT: usize, const SAVE: u32>(input: &str) ->
             match input[i] {
                 b'#' => {}
                 b'.' => {
-                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
+                    grid[r + BUFFER][c + BUFFER] = i32::MAX;
                 }
                 b'S' => {
-                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
+                    grid[r + BUFFER][c + BUFFER] = i32::MAX;
                     start = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 b'E' => {
-                    grid[r + BUFFER][c + BUFFER] = u32::MAX;
+                    grid[r + BUFFER][c + BUFFER] = i32::MAX;
                     goal = Some(Coord::new(r + BUFFER, c + BUFFER));
                 }
                 _ => unreachable!(),
@@ -83,9 +97,9 @@ fn solve<const SIZE: usize, const CHEAT: usize, const SAVE: u32>(input: &str) ->
     return dfs::<CHEAT, SAVE>(&mut grid, 1, start, &goal);
 }
 
-fn dfs<const CHEAT: usize, const SAVE: u32>(
-    grid: &mut [[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
-    pos: u32,
+fn dfs<const CHEAT: i32, const SAVE: i32>(
+    grid: &mut [[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+    pos: i32,
     current: Coord,
     goal: &Coord,
 ) -> u32 {
@@ -93,28 +107,26 @@ fn dfs<const CHEAT: usize, const SAVE: u32>(
     grid[current.row][current.col] = pos;
 
     if current == *goal {
-        return 0;
+        if CHEAT == 2 {
+            return count_cheats_2::<SAVE>(grid, current);
+        }
+        return count_cheats::<CHEAT, SAVE>(grid, current);
     }
 
     let next: Coord;
-    if grid[current.row - 1][current.col] == u32::MAX {
+    if grid[current.row - 1][current.col] == i32::MAX {
         next = current.up();
-    } else if grid[current.row + 1][current.col] == u32::MAX {
+    } else if grid[current.row + 1][current.col] == i32::MAX {
         next = current.down();
-    } else if grid[current.row][current.col - 1] == u32::MAX {
+    } else if grid[current.row][current.col - 1] == i32::MAX {
         next = current.left();
     } else {
-        // assume (grid[current.row][current.col + 1] == u32::MAX)
+        // assume (grid[current.row][current.col + 1] == i32::MAX)
         next = current.right();
     }
 
     // do dfs first, then count cheats.
     let prev = dfs::<CHEAT, SAVE>(grid, pos + 1, next, goal);
-    if grid[current.row][current.col] + SAVE > grid[goal.row][goal.col] {
-        // no reason to look at the steps closest to the goal. There will be
-        // no cheats that beat the distance.
-        return 0;
-    }
 
     // TODO there's some mad caching we could do if we know how to inspect only the
     // diff of the changed diamond.
@@ -126,8 +138,8 @@ fn dfs<const CHEAT: usize, const SAVE: u32>(
 }
 
 #[inline(always)]
-fn count_cheats_2<const SAVE: u32>(
-    grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+fn count_cheats_2<const SAVE: i32>(
+    grid: &[[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     current: Coord,
 ) -> u32 {
     let mut cheats = 0;
@@ -148,89 +160,44 @@ fn count_cheats_2<const SAVE: u32>(
 }
 
 #[inline(always)]
-fn count_cheats<const CHEAT: usize, const SAVE: u32>(
-    grid: &[[u32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+fn count_cheats<const CHEAT: i32, const SAVE: i32>(
+    grid: &[[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
     current: Coord,
 ) -> u32 {
     let mut cheats = 0;
 
-    let mut row = current.row - CHEAT;
-    let mut min_dc = current.col;
-    let mut max_dc = current.col;
+    // Shoutout to maneatingape for this pro tip.
+    // https://github.com/maneatingape/advent-of-code-rust/blob/5778c24f8881392cb5d4c64bc3f010a1a1bbc8af/src/year2024/day20.rs#L71-L77
 
-    let mut score_to_beat = grid[current.row][current.col] + SAVE + (CHEAT as u32);
-
-    for _ in 0..CHEAT {
-        for col in min_dc..current.col {
-            if grid[row][col] >= score_to_beat {
-                cheats += 1;
-            }
-            score_to_beat -= 1;
-        }
-
-        for col in current.col..max_dc {
-            if grid[row][col] >= score_to_beat {
-                cheats += 1;
-            }
-            score_to_beat += 1;
-        }
-
-        if grid[row][max_dc] >= score_to_beat {
-            cheats += 1;
-        }
-
-        row += 1;
-        min_dc -= 1;
-        max_dc += 1;
+    for dc in 2..=CHEAT {
+        cheats += inspect_coords::<SAVE>(grid, current, current.offset(0, dc));
     }
 
-    for col in min_dc..current.col {
-        if grid[row][col] >= score_to_beat {
-            cheats += 1;
+    for dr in 1..=CHEAT {
+        for dc in (dr - CHEAT)..(CHEAT + 1 - dr) {
+            cheats += inspect_coords::<SAVE>(grid, current, current.offset(dr, dc));
         }
-        score_to_beat -= 1;
-    }
-
-    for col in current.col..max_dc {
-        if grid[row][col] >= score_to_beat {
-            cheats += 1;
-        }
-        score_to_beat += 1;
-    }
-
-    if grid[row][max_dc] >= score_to_beat {
-        cheats += 1;
-    }
-
-    row += 1;
-    min_dc += 1;
-    max_dc -= 1;
-
-    for _ in 0..CHEAT {
-        for col in min_dc..current.col {
-            if grid[row][col] >= score_to_beat {
-                cheats += 1;
-            }
-            score_to_beat -= 1;
-        }
-
-        for col in current.col..max_dc {
-            if grid[row][col] >= score_to_beat {
-                cheats += 1;
-            }
-            score_to_beat += 1;
-        }
-
-        if grid[row][max_dc] >= score_to_beat {
-            cheats += 1;
-        }
-
-        row += 1;
-        min_dc += 1;
-        max_dc -= 1;
     }
 
     return cheats;
+}
+
+#[inline(always)]
+fn inspect_coords<const SAVE: i32>(
+    grid: &[[i32; TOTAL_GRID_SIZE]; TOTAL_GRID_SIZE],
+    known: Coord,
+    second: Coord,
+) -> u32 {
+    if grid[second.row][second.col] == 0 {
+        // not a race track piece.
+        return 0;
+    }
+
+    if (grid[known.row][known.col] - grid[second.row][second.col]).abs() < SAVE + known.dist(second)
+    {
+        return 0;
+    }
+    return 1;
 }
 
 #[aoc(day20, part1)]
