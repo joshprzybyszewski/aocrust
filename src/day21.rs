@@ -361,8 +361,6 @@ const fn get_all_shortest_path_between_arrows(
         }
         let position = path.last();
         if position == end {
-            // TODO
-            // add to output
             output[output_index] = path;
             index += 1;
             output_index += 1;
@@ -371,9 +369,9 @@ const fn get_all_shortest_path_between_arrows(
 
         let mut direction = ARROW_UP;
         loop {
-            let pos = keyboard.states[position].next[direction];
-            if pos != ARROW_INVALID && !path.has_been_to(pos) {
-                pending[pending_index] = pending[index].add(direction, pos);
+            let next_pos = keyboard.states[position].next[direction];
+            if next_pos != ARROW_INVALID && !path.has_been_to(next_pos) {
+                pending[pending_index] = path.add(direction, next_pos);
                 pending_index += 1;
             }
             direction += 1;
@@ -418,7 +416,7 @@ const fn get_shortest_path_between_numbers(
     start: usize,
     end: usize,
 ) -> [Path; MAX_SHORTEST_NUMERIC_PATHS] {
-    let mut output = [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
+    let mut output: [Path; MAX_SHORTEST_NUMERIC_PATHS] = [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
     if start == end || start == NUMERIC_INVALID || end == NUMERIC_INVALID {
         return output;
     }
@@ -438,7 +436,8 @@ const fn get_shortest_path_between_numbers(
         }
         let path = pending[index];
         if output[0].steps > 0 && path.steps > output[0].steps {
-            break;
+            index += 1;
+            continue;
         }
 
         let position = path.last();
@@ -451,9 +450,9 @@ const fn get_shortest_path_between_numbers(
 
         let mut direction = ARROW_UP;
         loop {
-            let pos = keyboard.states[position].next[direction];
-            if pos != NUMERIC_INVALID && !path.has_been_to(pos) {
-                pending[pending_index] = pending[index].add(direction, pos);
+            let next_pos = keyboard.states[position].next[direction];
+            if next_pos != NUMERIC_INVALID && !path.has_been_to(next_pos) {
+                pending[pending_index] = path.add(direction, next_pos);
                 pending_index += 1;
             }
             direction += 1;
@@ -473,13 +472,13 @@ const fn get_shortest_path_between_numbers(
 const fn get_min_cost_of_numeric_path(path: Path) -> u64 {
     let mut i = 0;
     let mut best = 0;
-    let mut prev = ARROW_A;
+    let mut prev = NUMERIC_A;
     loop {
         let next_pos;
         if i > path.steps {
             break;
         } else if i == path.steps {
-            next_pos = ARROW_A;
+            next_pos = NUMERIC_A;
         } else {
             next_pos = path.directions[i];
         }
