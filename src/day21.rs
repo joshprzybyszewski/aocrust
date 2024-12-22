@@ -269,7 +269,7 @@ struct ArrowState {
 
 #[derive(Copy, Clone)]
 struct Path {
-    directions: [usize; MAX_PATH_LENGTH],
+    directions: [usize; MAX_PATH_LENGTH-1],
     positions: [usize; MAX_PATH_LENGTH],
     steps: usize,
 }
@@ -277,7 +277,7 @@ struct Path {
 impl Path {
     const fn new() -> Self {
         return Path {
-            directions: [0; MAX_PATH_LENGTH],
+            directions: [0; MAX_PATH_LENGTH-1],
             positions: [0; MAX_PATH_LENGTH],
             steps: 0,
         };
@@ -499,9 +499,9 @@ const fn generate_shortest_keyboard_paths_two_specific(
 }
 
 const fn generate_shortest_numeric_paths(
-) -> [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] {
-    let mut answer: [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] =
-        [[[0; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS];
+) -> [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] {
+    let mut answer: [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] =
+        [[[Path::new(); MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS];
 
     let mut start = 0;
     loop {
@@ -522,19 +522,19 @@ const fn generate_shortest_numeric_paths(
     return answer;
 }
 
-const fn get_shortest_path_between_numbers(start: usize, end: usize) -> [usize; MAX_PATH_LENGTH] {
+const fn get_shortest_path_between_numbers(start: usize, end: usize) -> [Path; MAX_SHORTEST_NUMERIC_PATHS] {
+    let mut output = [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
     if start == end || start == NUMERIC_INVALID || end == NUMERIC_INVALID {
-        return [NUMERIC_INVALID; MAX_PATH_LENGTH];
+        return output;
     }
 
     let keyboard = NumericKeypad::new();
-    let mut seen: [bool; NUM_NUMERICS] = [false; NUM_NUMERICS];
     let mut pending: [Path; NUM_NUMERICS * NUM_NUMERICS] =
         [Path::new(); NUM_NUMERICS * NUM_NUMERICS];
     let mut index = 0;
     let mut pending_index = 1;
 
-    pending[index].position = start;
+    pending[index].positions[0] = start;
 
     loop {
         let position = pending[index].last();
@@ -564,6 +564,8 @@ const fn get_shortest_path_between_numbers(start: usize, end: usize) -> [usize; 
             unreachable!();
         }
     }
+        return output;
+
 }
 
 struct Positions {
