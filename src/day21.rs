@@ -29,13 +29,15 @@
 
 */
 
-const SHORTEST_ARROW_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
+const SHORTEST_ARROW_PATHS: [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS] =
     generate_shortest_keyboard_paths();
 
-const SHORTEST_NUMERIC_PATHS: [[[usize; MAX_PATH_LENGTH]; NUM_NUMERICS]; NUM_NUMERICS] =
+const SHORTEST_NUMERIC_PATHS: [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] =
     generate_shortest_numeric_paths();
 
 const MAX_PATH_LENGTH: usize = 6;
+const MAX_SHORTEST_ARROW_PATHS: usize = 2;
+const MAX_SHORTEST_NUMERIC_PATHS: usize = 10;
 
 const ARROW_INVALID: usize = 0;
 const ARROW_UP: usize = 1;
@@ -268,16 +270,16 @@ struct ArrowState {
 #[derive(Copy, Clone)]
 struct Path {
     directions: [usize; MAX_PATH_LENGTH],
+    positions: [usize; MAX_PATH_LENGTH],
     steps: usize,
-    position: usize,
 }
 
 impl Path {
     const fn new() -> Self {
         return Path {
             directions: [0; MAX_PATH_LENGTH],
+            positions: [0; MAX_PATH_LENGTH],
             steps: 0,
-            position: ARROW_INVALID,
         };
     }
 
@@ -285,25 +287,39 @@ impl Path {
         let mut copy = *self;
         copy.directions[copy.steps] = direction;
         copy.steps += 1;
-        copy.position = dest;
+        copy.positions[copy.steps] = dest;
         return copy;
     }
 
+    const fn has_been_to(&self,pos: usize) -> bool {
+        let mut i = self.steps;
+        loop {
+            
+            if self.positions[i] == pos {
+                return true;
+            }
+            if i == 0 {
+                return false
+            }
+            i -= 1;
+        }
+    }
+
     const fn last(&self) -> usize {
-        self.position
+        self.positions[self.steps]
     }
 }
 
-const fn generate_shortest_keyboard_paths() -> [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS]
+const fn generate_shortest_keyboard_paths() -> [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS]
 {
-    let mut answer: [[[usize; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
-        [[[0; MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS];
+    let mut answer: [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS] =
+        [[[Path::new(); MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS];
 
     let mut start = 0;
     loop {
         let mut end = 0;
         loop {
-            answer[start][end] = get_shortest_path_between_arrows(start, end);
+            answer[start][end] = get_all_shortest_path_between_arrows(start, end);
 
             end += 1;
             if end == NUM_ARROWS {
@@ -318,23 +334,109 @@ const fn generate_shortest_keyboard_paths() -> [[[usize; MAX_PATH_LENGTH]; NUM_A
     return answer;
 }
 
-const fn get_shortest_path_between_arrows(start: usize, end: usize) -> [usize; MAX_PATH_LENGTH] {
+const fn get_shortest_paths_between_arrows(start: usize, end: usize) -> [usize; MAX_PATH_LENGTH] {
     if start == end || start == ARROW_INVALID || end == ARROW_INVALID {
         return [ARROW_INVALID; MAX_PATH_LENGTH];
     }
 
     let keyboard = ArrowKeypad::new();
+    let mut pending: [Path; NUM_ARROWS * NUM_ARROWS] = [Path::new(); NUM_ARROWS * NUM_ARROWS];
+    let mut index = 0;
+    let mut pending_index = 1;
+
+    pending[index].positions[0] = start;
+
+    loop {
+        let path = pending[index];
+        let position = path.last();
+        if position == end {
+            // TODO
+            // add to output
+            return pending[index].directions;
+        }
+
+            let mut direction = ARROW_UP;
+            loop {
+                let pos = keyboard.states[position].next[direction];
+                if pos != ARROW_INVALID && !path.has_been_to(pos) {
+                    pending[pending_index] =
+                        pending[index].add(direction, pos);
+                    pending_index += 1;
+                }
+                direction += 1;
+                if direction == ARROW_A {
+                    break;
+                }
+            }
+
+        index += 1;
+        if index >= pending_index || index >= pending.len() {
+            unreachable!();
+        }
+    }
+}
+
+const fn generate_all_shortest_keyboard_paths(
+) -> [[[[usize; MAX_PATH_LENGTH]; 100]; NUM_ARROWS]; NUM_ARROWS] {
+    let mut answer: [[[[usize; MAX_PATH_LENGTH]; 100]; NUM_ARROWS]; NUM_ARROWS] =
+        [[[[0; MAX_PATH_LENGTH]; 100]; NUM_ARROWS]; NUM_ARROWS];
+
+    let mut start = 0;
+    loop {
+        let mut end = 0;
+        loop {
+            answer[start][end] = get_all_shortest_path_between_arrows(start, end);
+
+            end += 1;
+            if end == NUM_ARROWS {
+                break;
+            }
+        }
+        start += 1;
+        if start == NUM_ARROWS {
+            break;
+        }
+    }
+    return answer;
+}
+
+const fn get_all_shortest_path_between_arrows(
+    start: usize,
+    end: usize,
+) -> [[usize; MAX_PATH_LENGTH]; 100] {
+    if start == end || start == ARROW_INVALID || end == ARROW_INVALID {
+        return [[ARROW_INVALID; MAX_PATH_LENGTH]; 100];
+    }
+
+    let keyboard = ArrowKeypad::new();
+    let mut output: [[usize; MAX_PATH_LENGTH]; 100] = [[ARROW_INVALID; MAX_PATH_LENGTH]; 100];
+    let mut output_index = 0;
+    let mut best_len: usize = MAX_PATH_LENGTH + 1;
+
     let mut seen: [bool; NUM_ARROWS] = [false; NUM_ARROWS];
     let mut pending: [Path; NUM_ARROWS * NUM_ARROWS] = [Path::new(); NUM_ARROWS * NUM_ARROWS];
     let mut index = 0;
     let mut pending_index = 1;
 
-    pending[index].position = start;
+    pending[index].positions[0] = start;
 
     loop {
+        if index == pending_index {
+            break;
+        }
         let position = pending[index].last();
         if position == end {
-            return pending[index].directions;
+            if best_len == MAX_PATH_LENGTH + 1 {
+                best_len = pending[index].steps;
+            }
+            if best_len < pending[index].steps {
+                index += 1;
+                continue;
+            }
+            output[output_index] = pending[index].directions;
+            output_index += 1;
+            index += 1;
+            continue;
         }
 
         if !seen[position] {
@@ -355,10 +457,45 @@ const fn get_shortest_path_between_arrows(start: usize, end: usize) -> [usize; M
         }
 
         index += 1;
-        if index >= pending_index || index >= pending.len() {
+        if index >= pending.len() {
             unreachable!();
         }
     }
+    return output;
+}
+
+const fn generate_shortest_keyboard_paths_two(
+) -> [[[usize; MAX_PATH_LENGTH * MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] {
+    let mut answer: [[[usize; MAX_PATH_LENGTH * MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS] =
+        [[[0; MAX_PATH_LENGTH * MAX_PATH_LENGTH]; NUM_ARROWS]; NUM_ARROWS];
+
+    let mut start = 0;
+    loop {
+        let mut end = 0;
+        loop {
+            answer[start][end] = generate_shortest_keyboard_paths_two_specific(start, end);
+
+            end += 1;
+            if end == NUM_ARROWS {
+                break;
+            }
+        }
+        start += 1;
+        if start == NUM_ARROWS {
+            break;
+        }
+    }
+    return answer;
+}
+
+const fn generate_shortest_keyboard_paths_two_specific(
+    start: usize,
+    end: usize,
+) -> [usize; MAX_PATH_LENGTH * MAX_PATH_LENGTH] {
+    let mut output = [0; MAX_PATH_LENGTH * MAX_PATH_LENGTH];
+
+    //
+    return output;
 }
 
 const fn generate_shortest_numeric_paths(
@@ -471,27 +608,29 @@ impl Positions {
         println!(
             " Keypad 1 {} -> {}",
             arrow_to_byte(self.arrow_1),
-            arrow_to_byte(target)
-        );
+            arrow_to_byte(target),
+        )
+
         // move the robot over keypad 1 to the given target
         // TODO find the shortest route for keypad 3 to accomplish this path for keypad 2.
-        let path = SHORTEST_ARROW_PATHS[self.arrow_1][target];
-        let mut output = 0;
+        // let path = SHORTEST_ARROW_PATHS_TWO[self.arrow_1][target];
+        // // let path = SHORTEST_ARROW_PATHS[self.arrow_1][target];
+        // let mut output = 0;
         let mut i = 0;
-        loop {
-            if path[i] == ARROW_INVALID {
-                break;
-            }
-            output += self.press_keypad2(path[i]);
-            i += 1;
-        }
+        // loop {
+        //     if path[i] == ARROW_INVALID {
+        //         break;
+        //     }
+        //     // output += self.press_keypad2(path[i]);
+        //     i += 1;
+        // }
 
-        self.arrow_1 = target;
+        // self.arrow_1 = target;
 
         // push A from keypad 2, triggering keypad 1.
-        output += self.press_keypad2(ARROW_A);
+        // output += self.press_keypad2(ARROW_A);
 
-        return output;
+        return i;
     }
 
     fn press_keypad2(&mut self, target: usize) -> u64 {
