@@ -389,30 +389,6 @@ const fn get_all_shortest_path_between_arrows(
     return output;
 }
 
-// const fn generate_shortest_numeric_paths(
-// ) -> [[[[Path; MAX_SHORTEST_NUMERIC_PATHS]; 100]; NUM_NUMERICS]; NUM_NUMERICS] {
-//     let mut answer: [[[[Path; MAX_SHORTEST_NUMERIC_PATHS]; 100]; NUM_NUMERICS]; NUM_NUMERICS] =
-//         [[[[Path::new(); MAX_SHORTEST_NUMERIC_PATHS]; 100]; NUM_NUMERICS]; NUM_NUMERICS];
-
-//     let mut start = 0;
-//     loop {
-//         let mut end = 0;
-//         loop {
-//             answer[start][end] = get_all_shortest_path_between_numbers(start, end);
-
-//             end += 1;
-//             if end == NUM_ARROWS {
-//                 break;
-//             }
-//         }
-//         start += 1;
-//         if start == NUM_ARROWS {
-//             break;
-//         }
-//     }
-//     return answer;
-// }
-
 const fn get_all_shortest_path_between_numbers(
     start: usize,
     end: usize,
@@ -614,11 +590,11 @@ impl Positions {
     fn press_numeric_button(&mut self, target: usize) -> u64 {
         return 0;
     }
-    //     println!(
-    //         "Pushing number {} -> {}",
-    //         numeric_to_byte(self.numeric),
-    //         numeric_to_byte(target)
-    //     );
+    //     // println!(
+    //     //     "Pushing number {} -> {}",
+    //     //     numeric_to_byte(self.numeric),
+    //     //     numeric_to_byte(target)
+    //     // );
     //     let path = SHORTEST_NUMERIC_PATHS[self.numeric][target];
     //     let mut output = 0;
     //     let mut i = 0;
@@ -697,6 +673,93 @@ impl Positions {
     // }
 }
 
+const fn get_min_cost_of_numeric_path(
+    path: Path,
+) -> u64 {
+        let mut i = 0;
+        let mut best = 0;
+        let mut prev = ARROW_A;
+        loop {
+            let next_pos;
+            if i > path.steps {
+                break;
+            } else if i == path.steps {
+                next_pos = ARROW_A;
+            } else {
+                next_pos = path.directions[i];
+            }
+            if next_pos == ARROW_INVALID{
+                unreachable!();
+            }
+            let options = SHORTEST_ARROW_PATHS[prev][next_pos];
+
+            let mut option_index = 0;
+            let mut best_step = u64::MAX;
+            loop {
+                if option_index >= options.len() || options[option_index].steps == 0 {
+                    break;
+                }
+
+                let cost = get_min_cost_of_key_pad_1_path(options[option_index]);
+                if cost < best_step {
+                    best_step = cost;
+                }
+                option_index += 1;  
+
+                
+            }
+            if best_step != u64::MAX {
+                best += best_step;
+            }
+            prev = next_pos;
+            i += 1;
+        
+        }
+    //
+    return best;
+}
+
+const fn get_min_cost_of_key_pad_1_path(
+    path: Path,
+) -> u64 {
+        let mut i = 0;
+        let mut total = 0;
+        let mut prev = ARROW_A;
+        loop {
+            let next_pos;
+            if i > path.steps {
+                break;
+            } else if i == path.steps {
+                next_pos = ARROW_A;
+            } else {
+                next_pos = path.directions[i];
+            }
+            let options = SHORTEST_ARROW_PATHS[prev][next_pos];
+
+            let mut option_index = 0;
+            loop {
+                if option_index >= options.len() || options[option_index].steps == 0 {
+                    break;
+                }
+                total += get_min_cost_of_key_pad_2_path(options[option_index]);
+                option_index += 1;  
+                
+            }
+            prev = next_pos;
+            i += 1;
+        
+        }
+    //
+    return total;
+}
+
+const fn get_min_cost_of_key_pad_2_path(
+    path: Path,
+) -> u64 {
+    // all of the third keypad steps to get there + 1 for the A.
+    return path.steps as u64 ;
+}
+
 fn arrow_to_byte(arrow: usize) -> &'static str {
     match arrow {
         ARROW_UP => return "^",
@@ -734,14 +797,31 @@ pub fn part1(input: &str) -> u64 {
     let mut total_sequence_length = 0;
     let mut current_value = 0;
 
-    let mut positions = Positions::new();
+    let mut prev = NUMERIC_A;
 
     loop {
         if input[i] < b'A' {
             current_value *= 10;
             current_value += (input[i] - b'0') as u64;
         }
-        total_sequence_length += positions.press_numeric_button(convert_to_number(input[i]));
+        
+        let next_step = convert_to_number(input[i]);
+        let mut best = u64::MAX;
+        let mut numeric_path_index = 0;
+        let all_numeric_paths = SHORTEST_NUMERIC_PATHS[prev][next_step];
+        loop {
+            if all_numeric_paths[numeric_path_index].steps == 0 {
+                break;
+            }
+            let path = all_numeric_paths[numeric_path_index];
+            let cost = get_min_cost_of_numeric_path(path);
+            if cost < best {
+                best = cost;
+            }
+            numeric_path_index+= 1;
+        }
+        total_sequence_length += best;
+        prev = next_step;
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
             println!("total += {total_sequence_length} * {current_value}");
@@ -753,9 +833,6 @@ pub fn part1(input: &str) -> u64 {
             // add to sum
             current_value = 0;
             total_sequence_length = 0;
-            if positions.numeric != NUMERIC_A {
-                unreachable!();
-            }
             i += 1;
             if i >= input.len() {
                 break;
