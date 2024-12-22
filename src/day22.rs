@@ -1,6 +1,6 @@
-// 0x1000000
+// decimal: 16777216
+// hex:     0x1000000
 // 25 binary digits = 0b1000000000000000000000000
-const MODULO: i32 = 16777216;
 const MODULO_MASK: i32 = 0xFFFFFF;
 
 fn generate_times(secret: i32, num_times: usize) -> i32 {
@@ -15,18 +15,12 @@ fn generate(secret: i32) -> i32 {
     // multiplying the secret number by 64
     // mix this result, then prune
     let secret = (secret ^ (secret << 6)) & MODULO_MASK;
-    // let secret = (secret ^ (secret << 6)) % MODULO;
     // dividing the secret number by 32
     // mix, then prune
-    // 0d32 = 0x20
-    // 0d01 = 0x01
     let secret = (secret ^ (secret >> 5)) & MODULO_MASK;
-    // let secret = (secret ^ (secret >> 5)) % MODULO;
     // multiplying the secret number by 2048
     // mix, then prune
-    let secret = (secret ^ (secret << 12)) & MODULO_MASK;
-    // let secret = (secret ^ (secret << 12)) % MODULO;
-    return secret;
+    return (secret ^ (secret << 11)) & MODULO_MASK;
 }
 
 #[aoc(day22, part1)]
@@ -45,6 +39,7 @@ pub fn part1(input: &str) -> u64 {
         val += (input[i] - b'0') as i32;
         i += 1;
         if i >= input.len() {
+            total += generate_times(val, 2000) as u64;
             break;
         }
     }
@@ -86,7 +81,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 16299144133)
     }
 
     #[test]
