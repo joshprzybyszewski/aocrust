@@ -54,10 +54,15 @@ impl Graph {
     }
 
     fn solve_part2(&self) -> String {
-        let num_connected = 10;
-        let mut array: [u8; 3 * 1000] = [b','; 3 * 1000];
+        let mut best: Vec<usize> = Vec::new();
+        // hehe TODO
+        best.push(0);
+
+        let num_connected = best.len();
+        let mut array: [u8; 3 * 5000] = [b','; 3 * 5000];
         for i in 0..num_connected {
-            let node_id = self.nodes[i].id;
+            let node_index = best[i];
+            let node_id = self.nodes[node_index].id;
             array[i * 3] = b'a' + (node_id / 26) as u8;
             array[i * 3 + 1] = b'a' + (node_id % 26) as u8;
         }
@@ -225,10 +230,6 @@ td-yn
 ";
     }
 
-    fn get_example_input_2() -> &'static str {
-        return "";
-    }
-
     #[test]
     fn part1_example() {
         let g = Graph::new(&get_example_input());
@@ -244,7 +245,7 @@ td-yn
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input_2()), "co,de,ka,ta");
+        assert_eq!(part2(&get_example_input()), "co,de,ka,ta");
     }
 
     #[test]
