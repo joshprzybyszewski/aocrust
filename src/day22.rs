@@ -6,6 +6,7 @@ use std::collections::HashMap;
 const MODULO_MASK: i32 = 0xFFFFFF;
 const NUM_ITERATIONS: usize = 2000;
 
+#[inline(always)]
 const fn generate_times(secret: i32) -> i32 {
     let mut val = secret;
     let mut i = 0;
@@ -19,6 +20,7 @@ const fn generate_times(secret: i32) -> i32 {
     return val;
 }
 
+#[inline(always)]
 const fn generate(secret: i32) -> i32 {
     // multiplying the secret number by 64
     // mix this result, then prune
@@ -58,6 +60,7 @@ pub fn part1(input: &str) -> u64 {
 }
 
 // pair is the value, and the diff.
+#[inline(always)]
 fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
     let mut val = secret;
     let mut i = 0;
