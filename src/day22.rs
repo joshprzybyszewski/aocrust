@@ -41,6 +41,9 @@ pub fn part1(input: &str) -> u64 {
         if input[i] == b'\n' {
             total += generate_times(val) as u64;
             i += 1;
+            if i >= input.len() {
+                break;
+            }
             val = 0;
         }
         val *= 10;
@@ -76,7 +79,7 @@ fn inspect_all(cache: &mut HashMap<i32, u64>, iterations: &[(i32, i32); NUM_ITER
     for i in 3..iterations.len() {
         running_total <<= 8;
         let (value, diff) = iterations[i];
-        running_total |= diff;
+        running_total |= diff & 0xFF;
         // only the first one!
         cache.entry(running_total).or_insert(value as u64);
     }
@@ -100,6 +103,9 @@ pub fn part2(input: &str) -> u64 {
                 *val += v;
             });
             i += 1;
+            if i >= input.len() {
+                break;
+            }
             val = 0;
         }
         val *= 10;
@@ -175,6 +181,6 @@ mod test {
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), 1896)
     }
 }
