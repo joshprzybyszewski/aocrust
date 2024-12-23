@@ -64,6 +64,21 @@ fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
     let mut running_total: i32 = 0;
     let mut prev_ones = val % 10;
     loop {
+        if i == 3 {
+            // the first three don't add to the hash map.
+            break;
+        }
+        let next = generate(val);
+        let ones = next % 10;
+        let diff = prev_ones - ones;
+        running_total <<= 8;
+        running_total |= diff & 0xFF;
+        prev_ones = ones;
+        val = next;
+        i += 1;
+    }
+
+    loop {
         if i == NUM_ITERATIONS {
             break;
         }
