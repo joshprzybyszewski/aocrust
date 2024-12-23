@@ -5,6 +5,10 @@ use std::collections::HashMap;
 // 25 binary digits = 0b1000000000000000000000000
 const MODULO_MASK: i32 = 0xFFFFFF;
 const NUM_ITERATIONS: usize = 2000;
+const DIFF_SPACE: u32 = 19; // -9 through 9
+const DIFF_SPACE_CUBED_U32: u32 = DIFF_SPACE * DIFF_SPACE * DIFF_SPACE;
+const DIFF_SPACE_CUBED: usize = DIFF_SPACE_CUBED_U32 as usize;
+const DIFF_SPACE_QUAD: usize = DIFF_SPACE_CUBED * (DIFF_SPACE as usize);
 
 #[inline(always)]
 const fn generate_times(secret: i32) -> i32 {
@@ -61,10 +65,15 @@ pub fn part1(input: &str) -> u64 {
 
 // pair is the value, and the diff.
 #[inline(always)]
-fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
+fn consider_part2(
+    secret: i32,
+    totals: &mut [u32; DIFF_SPACE_QUAD],
+    has_seen: &mut [u32; DIFF_SPACE_CUBED],
+) -> u32 {
     let mut val = secret;
     let mut i = 0;
-    let mut running_total: i32 = 0;
+    let mut last_3_diffs: u32 = 0;
+    let mut best: u32 = 0;
     let mut prev_ones = val % 10;
     loop {
         if i == 3 {
@@ -73,12 +82,15 @@ fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
         }
         let next = generate(val);
         let ones = next % 10;
-        let diff = prev_ones - ones;
-        running_total <<= 8;
-        running_total |= diff & 0xFF;
+        let diff = ((9 + ones) - prev_ones) as u32;
+        last_3_diffs *= DIFF_SPACE;
+        last_3_diffs += diff;
         prev_ones = ones;
         val = next;
         i += 1;
+    }
+    if last_3_diffs > DIFF_SPACE_CUBED_U32 {
+        unreachable!();
     }
 
     loop {
@@ -87,32 +99,49 @@ fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
         }
         let next = generate(val);
         let ones = next % 10;
-        let diff = prev_ones - ones;
-        running_total <<= 8;
-        running_total |= diff & 0xFF;
-        cache.entry(running_total).or_insert(ones as u64);
+        let diff = ((9 + ones) - prev_ones) as u32;
+
+        //
+        if has_seen[last_3_diffs as usize] & (1 << diff) == 0 {
+            has_seen[last_3_diffs as usize] |= 1 << diff;
+
+            last_3_diffs *= DIFF_SPACE;
+            last_3_diffs += diff;
+            // use the last four diffs to group.
+            totals[last_3_diffs as usize] += ones as u32;
+            if totals[last_3_diffs as usize] > best {
+                best = totals[last_3_diffs as usize];
+            }
+        } else {
+            last_3_diffs *= DIFF_SPACE;
+            last_3_diffs += diff;
+        }
+
+        last_3_diffs %= DIFF_SPACE_CUBED_U32;
         prev_ones = ones;
         val = next;
         i += 1;
     }
+
+    return best;
 }
 
 #[aoc(day22, part2)]
-pub fn part2(input: &str) -> u64 {
+pub fn part2(input: &str) -> u32 {
     let input = input.as_bytes();
 
-    let mut all_lookups: HashMap<i32, u64> = HashMap::with_capacity(NUM_ITERATIONS);
+    let mut sums: [u32; DIFF_SPACE_QUAD] = [0; DIFF_SPACE_QUAD];
+    let mut has_seen: [u32; DIFF_SPACE_CUBED];
+    let mut best: u32 = 0;
     let mut i: usize = 0;
     let mut val = 0;
     loop {
         if input[i] == b'\n' {
-            let mut lookup: HashMap<i32, u64> = HashMap::with_capacity(NUM_ITERATIONS);
-            consider_part2(val, &mut lookup);
-            // all_lookups.extend(lookup);
-            lookup.into_iter().for_each(|(k, v)| {
-                let val = all_lookups.entry(k).or_insert(0);
-                *val += v;
-            });
+            has_seen = [0; DIFF_SPACE_CUBED];
+            let my_best = consider_part2(val, &mut sums, &mut has_seen);
+            if my_best > best {
+                best = my_best;
+            }
             i += 1;
             if i >= input.len() {
                 break;
@@ -123,22 +152,16 @@ pub fn part2(input: &str) -> u64 {
         val += (input[i] - b'0') as i32;
         i += 1;
         if i >= input.len() {
-            let mut lookup: HashMap<i32, u64> = HashMap::with_capacity(NUM_ITERATIONS);
-            consider_part2(val, &mut lookup);
-            lookup.into_iter().for_each(|(k, v)| {
-                let val = all_lookups.entry(k).or_insert(0);
-                *val += v;
-            });
+            has_seen = [0; DIFF_SPACE_CUBED];
+            let my_best = consider_part2(val, &mut sums, &mut has_seen);
+            if my_best > best {
+                best = my_best;
+            }
+
             break;
         }
     }
-    let mut max = 0;
-    for value in all_lookups.values() {
-        if *value > max {
-            max = *value;
-        }
-    }
-    return max;
+    return best;
 }
 
 #[cfg(test)]
