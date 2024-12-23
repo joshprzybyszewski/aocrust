@@ -131,7 +131,82 @@ impl Graph {
                 p_intersection_v_neighbors,
                 x_intersection_v_neighbors,
             );
-            p.remove(v);
+            if !p.remove(v) {
+                unreachable!();
+            }
+            x.insert(*v);
+            if answer.is_empty() {
+                continue;
+            }
+            if best.len() < answer.len() {
+                best = answer;
+            }
+        }
+
+        return best;
+    }
+
+    // https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm
+    // algorithm BronKerbosch2(R, P, X) is
+    // if P and X are both empty then
+    //     report R as a maximal clique
+    // choose a pivot vertex u in P ⋃ X
+    // for each vertex v in P \ N(u) do
+    //     BronKerbosch2(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v))
+    //     P := P \ {v}
+    //     X := X ⋃ {v}
+    fn bron_keybosch2(
+        &self,
+        r: HashSet<usize>,
+        p: HashSet<usize>,
+        x: HashSet<usize>,
+    ) -> HashSet<usize> {
+        if p.is_empty() {
+            if x.is_empty() {
+                return r.clone();
+            }
+            return HashSet::new();
+        }
+
+        let u_neighbors: HashSet<usize>;
+        let all_v: Vec<&usize>;
+
+        let u = p.union(&x).into_iter().take(1).collect::<Vec<&usize>>();
+        if u.len() > 0 {
+            let u = u[0];
+            u_neighbors = HashSet::from_iter(self.nodes[*u].others.iter().map(|e| *e));
+
+            let mut p_intersection_u_neighbors = p
+                .intersection(&u_neighbors)
+                .into_iter()
+                .collect::<Vec<&usize>>();
+            p_intersection_u_neighbors.push(u);
+            all_v = p_intersection_u_neighbors;
+        } else {
+            all_v = p.iter().collect::<Vec<&usize>>();
+        }
+
+        let mut p = p.clone();
+        let mut x = x.clone();
+        let mut best: HashSet<usize> = HashSet::new();
+
+        for v in all_v {
+            let r_union_v =
+                HashSet::from_iter(r.union(&HashSet::from([*v])).into_iter().map(|e| *e));
+            let v_neighbors: HashSet<usize> =
+                HashSet::from_iter(self.nodes[*v].others.iter().map(|e| *e));
+            let p_intersection_v_neighbors =
+                HashSet::from_iter(p.intersection(&v_neighbors).into_iter().map(|e| *e));
+            let x_intersection_v_neighbors =
+                HashSet::from_iter(x.intersection(&v_neighbors).into_iter().map(|e| *e));
+            let answer = self.bron_keybosch2(
+                r_union_v,
+                p_intersection_v_neighbors,
+                x_intersection_v_neighbors,
+            );
+            if !p.remove(v) {
+                unreachable!();
+            }
             x.insert(*v);
             if answer.is_empty() {
                 continue;
