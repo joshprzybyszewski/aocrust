@@ -58,30 +58,24 @@ pub fn part1(input: &str) -> u64 {
 }
 
 // pair is the value, and the diff.
-fn consider_part2(secret: i32) -> [(i32, i32); NUM_ITERATIONS] {
-    let mut output: [(i32, i32); NUM_ITERATIONS] = [(0, 0); NUM_ITERATIONS];
+fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
     let mut val = secret;
     let mut i = 0;
+    let mut running_total: i32 = 0;
+    let mut prev_ones = val % 10;
     loop {
         if i == NUM_ITERATIONS {
             break;
         }
         let next = generate(val);
-        output[i] = (next % 10, ((val % 10) - (next % 10)));
+        let ones = next % 10;
+        let diff = prev_ones - ones;
+        running_total <<= 8;
+        running_total |= diff & 0xFF;
+        cache.entry(running_total).or_insert(ones as u64);
+        prev_ones = ones;
         val = next;
         i += 1;
-    }
-    return output;
-}
-
-fn inspect_all(cache: &mut HashMap<i32, u64>, iterations: &[(i32, i32); NUM_ITERATIONS]) {
-    let mut running_total = iterations[0].1 << 16 | iterations[1].1 << 8 | iterations[2].1 << 0;
-    for i in 3..iterations.len() {
-        running_total <<= 8;
-        let (value, diff) = iterations[i];
-        running_total |= diff & 0xFF;
-        // only the first one!
-        cache.entry(running_total).or_insert(value as u64);
     }
 }
 
@@ -95,8 +89,7 @@ pub fn part2(input: &str) -> u64 {
     loop {
         if input[i] == b'\n' {
             let mut lookup: HashMap<i32, u64> = HashMap::new();
-            let iterations = consider_part2(val);
-            inspect_all(&mut lookup, &iterations);
+            consider_part2(val, &mut lookup);
             // all_lookups.extend(lookup);
             lookup.into_iter().for_each(|(k, v)| {
                 let val = all_lookups.entry(k).or_insert(0);
@@ -113,8 +106,7 @@ pub fn part2(input: &str) -> u64 {
         i += 1;
         if i >= input.len() {
             let mut lookup: HashMap<i32, u64> = HashMap::new();
-            let iterations = consider_part2(val);
-            inspect_all(&mut lookup, &iterations);
+            consider_part2(val, &mut lookup);
             lookup.into_iter().for_each(|(k, v)| {
                 let val = all_lookups.entry(k).or_insert(0);
                 *val += v;
