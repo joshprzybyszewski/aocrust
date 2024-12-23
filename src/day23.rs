@@ -106,10 +106,12 @@ impl Graph {
             return HashSet::new();
         }
 
+        let all_v = p.iter();
+        let mut p = p.clone();
         let mut x = x.clone();
         let mut best: HashSet<usize> = HashSet::new();
 
-        for v in p.iter() {
+        for v in all_v {
             // For each vertex v chosen from P, it makes a recursive call
             // in which v is added to R and in which P and X are restricted
             // to the neighbor set N(v) of v, which finds and reports all
@@ -129,6 +131,7 @@ impl Graph {
                 p_intersection_v_neighbors,
                 x_intersection_v_neighbors,
             );
+            p.remove(v);
             x.insert(*v);
             if answer.is_empty() {
                 continue;
@@ -327,6 +330,9 @@ td-yn
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), "")
+        assert_eq!(
+            part2(&get_input()),
+            "bc,bf,do,dw,dx,ll,ol,qd,sc,ua,xc,yu,zt"
+        )
     }
 }
