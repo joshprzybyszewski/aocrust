@@ -621,7 +621,7 @@ pub fn part1(input: &str) -> u64 {
         prev = next_step;
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
-            println!("total += {total_sequence_length} * {current_value}");
+            // println!("total += {total_sequence_length} * {current_value}");
             total += current_value * total_sequence_length;
 
             if i >= input.len() {
