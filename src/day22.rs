@@ -98,12 +98,12 @@ fn consider_part2(secret: i32, cache: &mut HashMap<i32, u64>) {
 pub fn part2(input: &str) -> u64 {
     let input = input.as_bytes();
 
-    let mut all_lookups: HashMap<i32, u64> = HashMap::new();
+    let mut all_lookups: HashMap<i32, u64> = HashMap::with_capacity(2000);
     let mut i: usize = 0;
     let mut val = 0;
     loop {
         if input[i] == b'\n' {
-            let mut lookup: HashMap<i32, u64> = HashMap::new();
+            let mut lookup: HashMap<i32, u64> = HashMap::with_capacity(2000);
             consider_part2(val, &mut lookup);
             // all_lookups.extend(lookup);
             lookup.into_iter().for_each(|(k, v)| {
@@ -120,7 +120,7 @@ pub fn part2(input: &str) -> u64 {
         val += (input[i] - b'0') as i32;
         i += 1;
         if i >= input.len() {
-            let mut lookup: HashMap<i32, u64> = HashMap::new();
+            let mut lookup: HashMap<i32, u64> = HashMap::with_capacity(2000);
             consider_part2(val, &mut lookup);
             lookup.into_iter().for_each(|(k, v)| {
                 let val = all_lookups.entry(k).or_insert(0);
