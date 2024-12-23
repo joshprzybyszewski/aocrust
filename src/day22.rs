@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 // decimal: 16777216
 // hex:     0x1000000
 // 25 binary digits = 0b1000000000000000000000000
@@ -88,9 +86,6 @@ fn consider_part2(
         prev_ones = ones;
         val = next;
         i += 1;
-    }
-    if last_3_diffs > DIFF_SPACE_CUBED_U32 {
-        unreachable!();
     }
 
     loop {
