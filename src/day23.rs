@@ -23,10 +23,9 @@ impl Graph {
             }
         }
 
-        // TODO consider sorting in the others, then updating the pt1 solution.
-        // for i in 0..g.nodes.len() {
-        //     g.nodes[i].others.sort();
-        // }
+        for i in 0..g.nodes.len() {
+            g.nodes[i].sort();
+        }
 
         return g;
     }
@@ -87,15 +86,15 @@ impl Graph {
     fn num_incrementing_3_cycles_containing_t(&self, start: usize) -> u16 {
         let mut output = 0;
 
-        for i in 0..self.nodes[start].others.len() {
+        for i in (0..self.nodes[start].others.len()).rev() {
             let one_step = self.nodes[start].others[i];
             if one_step <= start {
-                continue;
+                break;
             }
-            for j in 0..self.nodes[one_step].others.len() {
+            for j in (0..self.nodes[one_step].others.len()).rev() {
                 let two_step = self.nodes[one_step].others[j];
                 if two_step <= one_step {
-                    continue;
+                    break;
                 }
                 if !self.is_edge(start, two_step) {
                     continue;
@@ -156,6 +155,7 @@ impl Node {
     }
 
     fn is_edge(&self, check_index: usize) -> bool {
+        // TODO position could be improved if we assume that the others are sorted.
         return !self
             .others
             .iter()
@@ -168,6 +168,10 @@ impl Node {
             return;
         }
         self.others.push(other_index);
+    }
+
+    fn sort(&mut self) {
+        self.others.sort();
     }
 }
 
