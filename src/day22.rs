@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 // decimal: 16777216
 // hex:     0x1000000
 // 25 binary digits = 0b1000000000000000000000000
@@ -52,28 +54,51 @@ pub fn part1(input: &str) -> u64 {
     return total;
 }
 
-fn consider_part2(secret: i32) -> i32 {
+// pair is the value, and the diff.
+fn consider_part2(secret: i32) -> [(i32, i32); NUM_ITERATIONS] {
+    let mut output: [(i32, i32); NUM_ITERATIONS] = [(0, 0); NUM_ITERATIONS];
     let mut val = secret;
     let mut i = 0;
     loop {
         if i == NUM_ITERATIONS {
             break;
         }
-        val = generate(val);
+        let next = generate(val);
+        output[i] = (next % 10, ((val % 10) - (next % 10)));
+        val = next;
         i += 1;
     }
-    return val;
+    return output;
+}
+
+fn inspect_all(cache: &mut HashMap<i32, u64>, iterations: &[(i32, i32); NUM_ITERATIONS]) {
+    let mut running_total = iterations[0].1 << 16 | iterations[1].1 << 8 | iterations[2].1 << 0;
+    for i in 3..iterations.len() {
+        running_total <<= 8;
+        let (value, diff) = iterations[i];
+        running_total |= diff;
+        // only the first one!
+        cache.entry(running_total).or_insert(value as u64);
+    }
 }
 
 #[aoc(day22, part2)]
-pub fn part2(input: &str) -> i32 {
+pub fn part2(input: &str) -> u64 {
     let input = input.as_bytes();
+
+    let mut all_lookups: HashMap<i32, u64> = HashMap::new();
     let mut i: usize = 0;
     let mut val = 0;
-    let mut total = 0;
     loop {
         if input[i] == b'\n' {
-            total += consider_part2(val);
+            let mut lookup: HashMap<i32, u64> = HashMap::new();
+            let iterations = consider_part2(val);
+            inspect_all(&mut lookup, &iterations);
+            // all_lookups.extend(lookup);
+            lookup.into_iter().for_each(|(k, v)| {
+                let val = all_lookups.entry(k).or_insert(0);
+                *val += v;
+            });
             i += 1;
             val = 0;
         }
@@ -81,11 +106,23 @@ pub fn part2(input: &str) -> i32 {
         val += (input[i] - b'0') as i32;
         i += 1;
         if i >= input.len() {
-            total += consider_part2(val);
+            let mut lookup: HashMap<i32, u64> = HashMap::new();
+            let iterations = consider_part2(val);
+            inspect_all(&mut lookup, &iterations);
+            lookup.into_iter().for_each(|(k, v)| {
+                let val = all_lookups.entry(k).or_insert(0);
+                *val += v;
+            });
             break;
         }
     }
-    return total;
+    let mut max = 0;
+    for value in all_lookups.values() {
+        if *value > max {
+            max = *value;
+        }
+    }
+    return max;
 }
 
 #[cfg(test)]
@@ -119,6 +156,10 @@ mod test {
         assert_eq!(generate(generate(123)), 16495136);
         assert_eq!(generate(generate(generate(123))), 527345);
         assert_eq!(generate(generate(generate(generate(123)))), 704524);
+        assert_eq!(generate_times(1), 8685429);
+        assert_eq!(generate_times(10), 4700978);
+        assert_eq!(generate_times(100), 15273692);
+        assert_eq!(generate_times(2024), 8667524);
         assert_eq!(part1(&get_example_input()), 37327623);
     }
 
