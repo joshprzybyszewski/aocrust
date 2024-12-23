@@ -1,3 +1,6 @@
+const MIN_T_ID: u16 = (b't' - b'a') as u16 * 26;
+const MAX_T_ID: u16 = (b'u' - b'a') as u16 * 26;
+
 struct Graph {
     nodes: Vec<Node>,
 }
@@ -10,8 +13,8 @@ impl Graph {
         let mut g = Graph { nodes: Vec::new() };
 
         loop {
-            let a = (input[0] - b'a') as u16 * 26 + (input[1] - b'a') as u16;
-            let b = (input[3] - b'a') as u16 * 26 + (input[4] - b'a') as u16;
+            let a = (input[i] - b'a') as u16 * 26 + (input[i + 1] - b'a') as u16;
+            let b = (input[i + 3] - b'a') as u16 * 26 + (input[i + 4] - b'a') as u16;
 
             g.add_edge(a, b);
             i += 6;
@@ -42,24 +45,25 @@ impl Graph {
     }
 
     fn is_edge(&self, a_index: usize, b_index: usize) -> bool {
-        return !self.nodes[a_index]
-            .others
-            .iter()
-            .position(|n| *n == b_index)
-            .is_none();
+        return self.nodes[a_index].is_edge(b_index);
     }
 
-    fn num_3_cycles(&self) -> u16 {
+    fn solve_part1(&self) -> u16 {
         let mut output = 0;
 
         for index in 0..self.nodes.len() {
-            output += self.num_incrementing_3_cycles(index);
+            output += self.num_incrementing_3_cycles_containing_t(index);
         }
 
         return output;
     }
 
-    fn num_incrementing_3_cycles(&self, start: usize) -> u16 {
+    fn starts_with_t(&self, node_index: usize) -> bool {
+        let id = self.nodes[node_index].id;
+        return MIN_T_ID <= id && id < MAX_T_ID;
+    }
+
+    fn num_incrementing_3_cycles_containing_t(&self, start: usize) -> u16 {
         let mut output = 0;
 
         for i in 0..self.nodes[start].others.len() {
@@ -72,7 +76,20 @@ impl Graph {
                 if two_step <= one_step {
                     continue;
                 }
-                if self.is_edge(start, two_step) {
+                if !self.is_edge(start, two_step) {
+                    continue;
+                }
+                if self.starts_with_t(start)
+                    || self.starts_with_t(one_step)
+                    || self.starts_with_t(two_step)
+                {
+                    // println!("Found {} -> {} -> {}", start, one_step, two_step);
+                    // println!(
+                    //     "Found {} -> {} -> {}",
+                    //     convert_id_to_string(self.nodes[start].id),
+                    //     convert_id_to_string(self.nodes[one_step].id),
+                    //     convert_id_to_string(self.nodes[two_step].id)
+                    // );
                     output += 1;
                 }
             }
@@ -80,6 +97,36 @@ impl Graph {
 
         return output;
     }
+
+    fn print_me(&self) {
+        println!("Graph");
+        println!(" Nodes: {}", self.nodes.len());
+        println!("");
+        for index in 0..self.nodes.len() {
+            let node = &self.nodes[index];
+            println!(
+                " nodes[{index}] = {} = {}. Connected to {} others",
+                node.id,
+                convert_id_to_string(node.id),
+                node.others.len()
+            );
+            print!("   -> ");
+            for i in 0..node.others.len() {
+                if i > 0 {
+                    print!(", ")
+                }
+                let other_index = node.others[i];
+                let other_node = &self.nodes[other_index];
+                print!("{}", other_node.id);
+            }
+            println!("");
+        }
+    }
+}
+
+fn convert_id_to_string(id: u16) -> String {
+    String::from_utf8_lossy(&[(id / 26) as u8 + b'a', (id % 26) as u8 + b'a']).to_string()
+    // return format!("{}{}", (id / 26) as u8 + b'a', (id % 26) as u8 + b'a');
 }
 
 struct Node {
@@ -95,7 +142,18 @@ impl Node {
         }
     }
 
+    fn is_edge(&self, check_index: usize) -> bool {
+        return !self
+            .others
+            .iter()
+            .position(|other_index| *other_index == check_index)
+            .is_none();
+    }
+
     fn add_edge_to(&mut self, other_index: usize) {
+        if self.is_edge(other_index) {
+            return;
+        }
         self.others.push(other_index);
     }
 }
@@ -103,7 +161,7 @@ impl Node {
 #[aoc(day23, part1)]
 pub fn part1(input: &str) -> u16 {
     let g = Graph::new(input);
-    return g.num_3_cycles();
+    return g.solve_part1();
 }
 
 #[aoc(day23, part2)]
@@ -164,12 +222,15 @@ td-yn
 
     #[test]
     fn part1_example() {
+        let g = Graph::new(&get_example_input());
+        g.print_me();
+        assert_eq!(g.solve_part1(), 7);
         assert_eq!(part1(&get_example_input()), 7);
     }
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 1077)
     }
 
     #[test]
