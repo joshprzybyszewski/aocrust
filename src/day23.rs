@@ -23,6 +23,11 @@ impl Graph {
             }
         }
 
+        // TODO consider sorting in the others, then updating the pt1 solution.
+        // for i in 0..g.nodes.len() {
+        //     g.nodes[i].others.sort();
+        // }
+
         return g;
     }
 
@@ -46,6 +51,17 @@ impl Graph {
 
     fn is_edge(&self, a_index: usize, b_index: usize) -> bool {
         return self.nodes[a_index].is_edge(b_index);
+    }
+
+    fn solve_part2(&self) -> String {
+        let num_connected = 10;
+        let mut array: [u8; 3 * 1000] = [b','; 3 * 1000];
+        for i in 0..num_connected {
+            let node_id = self.nodes[i].id;
+            array[i * 3] = b'a' + (node_id / 26) as u8;
+            array[i * 3 + 1] = b'a' + (node_id % 26) as u8;
+        }
+        return String::from_utf8_lossy(&array[0..(num_connected * 3) - 1]).to_string();
     }
 
     fn solve_part1(&self) -> u16 {
@@ -83,13 +99,6 @@ impl Graph {
                     || self.starts_with_t(one_step)
                     || self.starts_with_t(two_step)
                 {
-                    // println!("Found {} -> {} -> {}", start, one_step, two_step);
-                    // println!(
-                    //     "Found {} -> {} -> {}",
-                    //     convert_id_to_string(self.nodes[start].id),
-                    //     convert_id_to_string(self.nodes[one_step].id),
-                    //     convert_id_to_string(self.nodes[two_step].id)
-                    // );
                     output += 1;
                 }
             }
@@ -126,7 +135,6 @@ impl Graph {
 
 fn convert_id_to_string(id: u16) -> String {
     String::from_utf8_lossy(&[(id / 26) as u8 + b'a', (id % 26) as u8 + b'a']).to_string()
-    // return format!("{}{}", (id / 26) as u8 + b'a', (id % 26) as u8 + b'a');
 }
 
 struct Node {
@@ -165,8 +173,9 @@ pub fn part1(input: &str) -> u16 {
 }
 
 #[aoc(day23, part2)]
-pub fn part2(input: &str) -> u32 {
-    return 0;
+pub fn part2(input: &str) -> String {
+    let g = Graph::new(input);
+    return g.solve_part2();
 }
 
 #[cfg(test)]
@@ -235,11 +244,11 @@ td-yn
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input_2()), 1);
+        assert_eq!(part2(&get_example_input_2()), "co,de,ka,ta");
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), "")
     }
 }
