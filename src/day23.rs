@@ -75,7 +75,7 @@ impl Graph {
 
     fn get_maximal_complete_subgraph(&self) -> Vec<usize> {
         return self
-            .bron_keybosch2(
+            .bron_kerbosch2(
                 &mut HashSet::new(),
                 HashSet::from_iter(0..self.nodes.len()),
                 HashSet::new(),
@@ -93,7 +93,7 @@ impl Graph {
     //     BronKerbosch1(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v))
     //     P := P \ {v}
     //     X := X ⋃ {v}
-    fn bron_keybosch1(
+    fn bron_kerbosch1(
         &self,
         r: HashSet<usize>,
         p: HashSet<usize>,
@@ -126,7 +126,7 @@ impl Graph {
                 HashSet::from_iter(p.intersection(&v_neighbors).into_iter().map(|e| *e));
             let x_intersection_v_neighbors =
                 HashSet::from_iter(x.intersection(&v_neighbors).into_iter().map(|e| *e));
-            let answer = self.bron_keybosch1(
+            let answer = self.bron_kerbosch1(
                 r_union_v,
                 p_intersection_v_neighbors,
                 x_intersection_v_neighbors,
@@ -155,7 +155,7 @@ impl Graph {
     //     BronKerbosch2(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v))
     //     P := P \ {v}
     //     X := X ⋃ {v}
-    fn bron_keybosch2(
+    fn bron_kerbosch2(
         &self,
         r: &mut HashSet<usize>,
         p: HashSet<usize>,
@@ -181,7 +181,7 @@ impl Graph {
             r.insert(v);
             let p1: HashSet<usize> = p_clone.intersection(&self.nodes[v].set).cloned().collect();
             let x1: HashSet<usize> = x.intersection(&self.nodes[v].set).cloned().collect();
-            let answer = self.bron_keybosch2(r, p1, x1);
+            let answer = self.bron_kerbosch2(r, p1, x1);
             if best.len() < answer.len() {
                 best = answer;
             }
