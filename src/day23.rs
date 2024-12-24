@@ -1,4 +1,4 @@
-use std::collections::{hash_set::Union, HashSet};
+use std::collections::HashSet;
 
 const MIN_T_ID: u16 = (b't' - b'a') as u16 * 26;
 const MAX_T_ID: u16 = (b'u' - b'a') as u16 * 26;
@@ -8,6 +8,7 @@ struct Graph1 {
 }
 
 impl Graph1 {
+    #[inline(always)]
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
         let mut i: usize = 0;
@@ -32,6 +33,7 @@ impl Graph1 {
         return g;
     }
 
+    #[inline(always)]
     fn add_edge(&mut self, a: u16, b: u16) {
         let mut a_index = self.nodes.iter().position(|n| n.id == a);
         let mut b_index = self.nodes.iter().position(|n| n.id == b);
@@ -50,10 +52,12 @@ impl Graph1 {
         self.nodes[b_index].add_edge_to(a_index);
     }
 
+    #[inline(always)]
     fn is_edge(&self, a_index: usize, b_index: usize) -> bool {
         return self.nodes[a_index].is_edge(b_index);
     }
 
+    #[inline(always)]
     fn solve_part1(&self) -> u16 {
         let mut output = 0;
 
@@ -64,11 +68,13 @@ impl Graph1 {
         return output;
     }
 
+    #[inline(always)]
     fn starts_with_t(&self, node_index: usize) -> bool {
         let id = self.nodes[node_index].id;
         return MIN_T_ID <= id && id < MAX_T_ID;
     }
 
+    #[inline(always)]
     fn num_incrementing_3_cycles_containing_t(&self, start: usize) -> u16 {
         let mut output = 0;
 
@@ -104,13 +110,15 @@ struct Node1 {
 }
 
 impl Node1 {
+    #[inline(always)]
     fn new(id: u16) -> Self {
         Node1 {
             id,
-            others: Vec::new(),
+            others: Vec::with_capacity(13),
         }
     }
 
+    #[inline(always)]
     fn is_edge(&self, check_index: usize) -> bool {
         return !self
             .others
@@ -119,6 +127,7 @@ impl Node1 {
             .is_none();
     }
 
+    #[inline(always)]
     fn add_edge_to(&mut self, other_index: usize) {
         if self.is_edge(other_index) {
             return;
@@ -126,6 +135,7 @@ impl Node1 {
         self.others.push(other_index);
     }
 
+    #[inline(always)]
     fn sort(&mut self) {
         self.others.sort();
     }
@@ -136,6 +146,7 @@ struct Graph {
 }
 
 impl Graph {
+    #[inline(always)]
     fn new(input: &str) -> Self {
         let input = input.as_bytes();
         let mut i: usize = 0;
@@ -156,6 +167,7 @@ impl Graph {
         return g;
     }
 
+    #[inline(always)]
     fn add_edge(&mut self, a: u16, b: u16) {
         let mut a_index = self.nodes.iter().position(|n| n.id == a);
         let mut b_index = self.nodes.iter().position(|n| n.id == b);
@@ -174,6 +186,7 @@ impl Graph {
         self.nodes[b_index].add_edge_to(a_index);
     }
 
+    #[inline(always)]
     fn solve_part2(&self) -> String {
         let mut ids = self.get_ids_of_maximal_complete_subgraph();
         ids.sort();
@@ -189,6 +202,7 @@ impl Graph {
         return String::from_utf8_lossy(&array[0..(num_connected * 3) - 1]).to_string();
     }
 
+    #[inline(always)]
     fn get_ids_of_maximal_complete_subgraph(&self) -> Vec<u16> {
         let mut best = HashSet::new();
         self.bron_kerbosch2(
@@ -255,13 +269,15 @@ struct Node {
 }
 
 impl Node {
+    #[inline(always)]
     fn new(id: u16) -> Self {
         Node {
             id,
-            set: HashSet::new(),
+            set: HashSet::with_capacity(13),
         }
     }
 
+    #[inline(always)]
     fn add_edge_to(&mut self, other_index: usize) {
         self.set.insert(other_index);
     }
