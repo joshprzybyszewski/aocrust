@@ -24,6 +24,10 @@ impl Gate {
             op: 0,
         }
     }
+
+    fn new(left: usize, right: usize, op: u8) -> Self {
+        Gate { left, right, op }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -37,7 +41,7 @@ impl Logic {
         let input = input.as_bytes();
         let mut i = 0;
 
-        let output = Logic {
+        let mut output = Logic {
             values: [0; NUM_GATES],
             gates: [Gate::empty(); NUM_GATES],
         };
@@ -47,19 +51,10 @@ impl Logic {
             if input[i] == b'\n' {
                 break;
             }
-            let offset;
-            if input[i] == b'x' {
-                offset = X_OFFSET;
-            } else if input[i] == b'y' {
-                offset = Y_OFFSET;
-            } else {
-                unreachable!();
-            }
-            i += 1;
-            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
-            i += 4;
-            output.values[offset + index] = VALUE_SET_MASK | (input[i] - b'0');
-            i += 1;
+            let index = output.parse_index(input, i);
+            i += 5;
+            output.values[index] = VALUE_SET_MASK | (input[i] - b'0');
+            i += 2;
         }
         i += 1;
 
@@ -69,32 +64,83 @@ impl Logic {
                 break;
             }
 
-            if input[i] == b'x' {
-                i += 1;
-                let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            let left = output.parse_index(input, i);
+            i += 4;
+            let op: u8;
+            if input[i] == b'X' {
                 i += 4;
-                xs[index] = input[i] - b'0';
-                i += 1;
-                continue;
-            }
-            if input[i] != b'y' {
+                op = OPERATION_XOR;
+            } else if input[i] == b'A' {
+                i += 4;
+                op = OPERATION_AND;
+            } else if input[i] == b'O' {
+                i += 3;
+                op = OPERATION_OR;
+            } else {
                 unreachable!();
             }
-            i += 1;
-            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            let right = output.parse_index(input, i);
+            i += 7;
+
+            let dest = output.parse_index(input, i);
             i += 4;
-            ys[index] = input[i] - b'0';
-            i += 1;
+            output.gates[dest] = Gate::new(left, right, op);
         }
         return output;
     }
 
-    fn get_index(&self, input: &[u8], i: usize) -> usize {}
+    fn parse_index(&self, input: &[u8], i: usize) -> usize {
+        if input[i] == b'x' {
+            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            return X_OFFSET + index;
+        }
+        if input[i] == b'y' {
+            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            return index + Y_OFFSET;
+        }
+
+        return (input[i] - b'0') as usize * 26 * 26
+            + (input[i + 1] - b'0') as usize * 26
+            + (input[i + 2] - b'0') as usize;
+    }
+
+    fn get_value(&self, index: usize) -> u8 {
+        if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
+            return self.values[index] & 1;
+        }
+
+        if self.gates[index].op == 0 {
+            return 0;
+        }
+
+        let left_val = self.get_value(self.gates[index].left);
+        let right_val = self.get_value(self.gates[index].right);
+        match self.gates[index].op {
+            OPERATION_AND => return left_val & right_val,
+            OPERATION_XOR => return left_val ^ right_val,
+            OPERATION_OR => return left_val | right_val,
+            _ => unreachable!(),
+        }
+    }
+
+    fn solve_part1(&self) -> u64 {
+        let mut output: u64 = 0;
+
+        let mut offset: usize = 0;
+        for _ in 0..64 {
+            output |= (self.get_value(X_OFFSET + offset) as u64) << offset;
+            offset += 1;
+        }
+
+        return output;
+    }
 }
 
 #[aoc(day24, part1)]
 pub fn part1(input: &str) -> u64 {
-    return 0;
+    let logic = Logic::new(input);
+
+    return logic.solve_part1();
 }
 
 #[aoc(day24, part2)]
