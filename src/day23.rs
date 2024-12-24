@@ -236,6 +236,8 @@ impl Graph {
             return;
         }
         if r.len() + p.len() < best.len() {
+            // if our current set (r) plus the rest available to us in the population (p)
+            // can't beat what we know is the best, then there's no reason to try.
             return;
         }
         // thanks to https://github.com/bertptrs/adventofcode/blob/48824288b04bf25c88d2c11a3f9575b74bbe37ed/2018/src/day23.rs#L12-L63
