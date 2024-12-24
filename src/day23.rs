@@ -26,10 +26,6 @@ impl Graph1 {
             }
         }
 
-        for i in 0..g.nodes.len() {
-            g.nodes[i].sort();
-        }
-
         return g;
     }
 
@@ -48,13 +44,8 @@ impl Graph1 {
         let a_index = a_index.unwrap();
         let b_index = b_index.unwrap();
 
-        self.nodes[a_index].add_edge_to(b_index);
-        self.nodes[b_index].add_edge_to(a_index);
-    }
-
-    #[inline(always)]
-    fn is_edge(&self, a_index: usize, b_index: usize) -> bool {
-        return self.nodes[a_index].is_edge(&b_index);
+        self.nodes[a_index].add_edge_to(&b_index);
+        self.nodes[b_index].add_edge_to(&a_index);
     }
 
     #[inline(always)]
@@ -69,32 +60,27 @@ impl Graph1 {
     }
 
     #[inline(always)]
-    fn starts_with_t(&self, node_index: usize) -> bool {
-        return self.nodes[node_index].starts_with_t;
-    }
-
-    #[inline(always)]
     fn num_incrementing_3_cycles_containing_t(&self, start: usize) -> u16 {
         let mut output = 0;
-        let is_t = self.starts_with_t(start);
+        let is_t = self.starts_with_t(&start);
 
         for i in (0..self.nodes[start].others.len()).rev() {
             let one_step = self.nodes[start].others[i];
             if one_step <= start {
                 break;
             }
-            let is_t = is_t || self.starts_with_t(one_step);
+            let is_t = is_t || self.starts_with_t(&one_step);
 
             for j in (0..self.nodes[one_step].others.len()).rev() {
                 let two_step = self.nodes[one_step].others[j];
                 if two_step <= one_step {
                     break;
                 }
-                if !self.is_edge(start, two_step) {
+                if !self.is_edge(&start, &two_step) {
                     continue;
                 }
 
-                if is_t || self.starts_with_t(two_step) {
+                if is_t || self.starts_with_t(&two_step) {
                     output += 1;
                 }
             }
@@ -102,11 +88,22 @@ impl Graph1 {
 
         return output;
     }
+
+    #[inline(always)]
+    fn is_edge(&self, a_index: &usize, b_index: &usize) -> bool {
+        return self.nodes[*a_index].is_edge(b_index);
+    }
+
+    #[inline(always)]
+    fn starts_with_t(&self, node_index: &usize) -> bool {
+        return self.nodes[*node_index].starts_with_t;
+    }
 }
 
 struct Node1 {
     id: u16,
     starts_with_t: bool,
+    // a sorted vector of other Node1 "ids" (indexes into the graph's vector)
     others: Vec<usize>,
 }
 
@@ -123,24 +120,19 @@ impl Node1 {
     #[inline(always)]
     fn is_edge(&self, check_index: &usize) -> bool {
         return self.others.binary_search(check_index).is_ok();
-        // return !self
-        //     .others
-        //     .iter()
-        //     .position(|other_index| *other_index == check_index)
-        //     .is_none();
     }
 
     #[inline(always)]
-    fn add_edge_to(&mut self, other_index: usize) {
-        if self.is_edge(&other_index) {
+    fn add_edge_to(&mut self, other_index: &usize) {
+        if self.is_edge(other_index) {
             return;
         }
-        self.others.push(other_index);
-    }
-
-    #[inline(always)]
-    fn sort(&mut self) {
-        self.others.sort();
+        self.others.push(*other_index);
+        if self.others.len() > 1
+            && self.others[self.others.len() - 1] < self.others[self.others.len() - 2]
+        {
+            self.others.sort();
+        }
     }
 }
 
