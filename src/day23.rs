@@ -175,17 +175,13 @@ impl Graph {
     }
 
     fn solve_part2(&self) -> String {
-        let best = self.get_maximal_complete_subgraph();
-        let mut ids = best
-            .iter()
-            .map(|index| self.nodes[*index].id)
-            .collect::<Vec<u16>>();
+        let mut ids = self.get_ids_of_maximal_complete_subgraph();
         ids.sort();
 
-        let num_connected = best.len();
-        let mut array: [u8; 3 * 5000] = [b','; 3 * 5000];
+        let num_connected = ids.len();
+        // betting on there being less than 100 nodes in the clique
+        let mut array: [u8; 300] = [b','; 300];
         for i in 0..num_connected {
-            // let node_index = best[i];
             let node_id = ids[i];
             array[i * 3] = b'a' + (node_id / 26) as u8;
             array[i * 3 + 1] = b'a' + (node_id % 26) as u8;
@@ -193,16 +189,18 @@ impl Graph {
         return String::from_utf8_lossy(&array[0..(num_connected * 3) - 1]).to_string();
     }
 
-    fn get_maximal_complete_subgraph(&self) -> Vec<usize> {
-        return self
-            .bron_kerbosch2(
-                &mut HashSet::new(),
-                HashSet::from_iter(0..self.nodes.len()),
-                HashSet::new(),
-            )
+    fn get_ids_of_maximal_complete_subgraph(&self) -> Vec<u16> {
+        let mut best = HashSet::new();
+        self.bron_kerbosch2(
+            &mut best,
+            &mut HashSet::new(),
+            HashSet::from_iter(0..self.nodes.len()),
+            HashSet::new(),
+        );
+        return best
             .iter()
-            .map(|index| *index)
-            .collect::<Vec<usize>>();
+            .map(|index| self.nodes[*index].id)
+            .collect::<Vec<u16>>();
     }
 
     // https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm
@@ -216,20 +214,21 @@ impl Graph {
     //     X := X ⋃ {v}
     fn bron_kerbosch2(
         &self,
+        best: &mut HashSet<usize>,
         r: &mut HashSet<usize>,
         p: HashSet<usize>,
         mut x: HashSet<usize>,
-    ) -> HashSet<usize> {
+    ) {
         if p.is_empty() {
-            if x.is_empty() {
-                return r.clone();
+            if x.is_empty() && best.len() < r.len() {
+                // found a better clique!
+                *best = r.clone();
             }
-            return HashSet::new();
+            return;
         }
         // thanks to https://github.com/bertptrs/adventofcode/blob/48824288b04bf25c88d2c11a3f9575b74bbe37ed/2018/src/day23.rs#L12-L63
         // now i understand a little bit more what is happening.
 
-        let mut best: HashSet<usize> = HashSet::new();
         let mut p_clone = p.clone();
         let pivot = *p
             .union(&x)
@@ -240,17 +239,13 @@ impl Graph {
             r.insert(v);
             let p1: HashSet<usize> = p_clone.intersection(&self.nodes[v].set).cloned().collect();
             let x1: HashSet<usize> = x.intersection(&self.nodes[v].set).cloned().collect();
-            let answer = self.bron_kerbosch2(r, p1, x1);
-            if best.len() < answer.len() {
-                best = answer;
-            }
+            self.bron_kerbosch2(best, r, p1, x1);
+
             r.remove(&v);
 
             p_clone.remove(&v);
             x.insert(v);
         }
-
-        return best;
     }
 }
 
