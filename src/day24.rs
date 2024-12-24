@@ -91,17 +91,21 @@ impl Logic {
 
     fn parse_index(&self, input: &[u8], i: usize) -> usize {
         if input[i] == b'x' {
-            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
             return X_OFFSET + index;
         }
         if input[i] == b'y' {
-            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
             return index + Y_OFFSET;
         }
+        if input[i] == b'z' {
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
+            return index + Z_OFFSET;
+        }
 
-        return (input[i] - b'0') as usize * 26 * 26
-            + (input[i + 1] - b'0') as usize * 26
-            + (input[i + 2] - b'0') as usize;
+        return (input[i] - b'a') as usize * 26 * 26
+            + (input[i + 1] - b'a') as usize * 26
+            + (input[i + 2] - b'a') as usize;
     }
 
     fn get_value(&self, index: usize) -> u8 {
