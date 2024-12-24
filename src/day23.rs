@@ -75,8 +75,8 @@ impl Graph {
 
     fn get_maximal_complete_subgraph(&self) -> Vec<usize> {
         return self
-            .bron_keybosch1(
-                HashSet::new(),
+            .bron_keybosch2(
+                &mut HashSet::new(),
                 HashSet::from_iter(0..self.nodes.len()),
                 HashSet::new(),
             )
@@ -157,9 +157,9 @@ impl Graph {
     //     X := X ⋃ {v}
     fn bron_keybosch2(
         &self,
-        r: HashSet<usize>,
+        r: &mut HashSet<usize>,
         p: HashSet<usize>,
-        x: HashSet<usize>,
+        mut x: HashSet<usize>,
     ) -> HashSet<usize> {
         if p.is_empty() {
             if x.is_empty() {
@@ -167,53 +167,28 @@ impl Graph {
             }
             return HashSet::new();
         }
+        // thanks to https://github.com/bertptrs/adventofcode/blob/48824288b04bf25c88d2c11a3f9575b74bbe37ed/2018/src/day23.rs#L12-L63
+        // now i understand a little bit more what is happening.
 
-        let u_neighbors: HashSet<usize>;
-        let all_v: Vec<&usize>;
-
-        let u = p.union(&x).into_iter().take(1).collect::<Vec<&usize>>();
-        if u.len() > 0 {
-            let u = u[0];
-            u_neighbors = HashSet::from_iter(self.nodes[*u].others.iter().map(|e| *e));
-
-            let mut p_intersection_u_neighbors = p
-                .intersection(&u_neighbors)
-                .into_iter()
-                .collect::<Vec<&usize>>();
-            p_intersection_u_neighbors.push(u);
-            all_v = p_intersection_u_neighbors;
-        } else {
-            all_v = p.iter().collect::<Vec<&usize>>();
-        }
-
-        let mut p = p.clone();
-        let mut x = x.clone();
         let mut best: HashSet<usize> = HashSet::new();
+        let mut p_clone = p.clone();
+        let pivot = *p
+            .union(&x)
+            .max_by_key(|&&v| self.nodes[v].others.len())
+            .unwrap();
 
-        for v in all_v {
-            let r_union_v =
-                HashSet::from_iter(r.union(&HashSet::from([*v])).into_iter().map(|e| *e));
-            let v_neighbors: HashSet<usize> =
-                HashSet::from_iter(self.nodes[*v].others.iter().map(|e| *e));
-            let p_intersection_v_neighbors =
-                HashSet::from_iter(p.intersection(&v_neighbors).into_iter().map(|e| *e));
-            let x_intersection_v_neighbors =
-                HashSet::from_iter(x.intersection(&v_neighbors).into_iter().map(|e| *e));
-            let answer = self.bron_keybosch2(
-                r_union_v,
-                p_intersection_v_neighbors,
-                x_intersection_v_neighbors,
-            );
-            if !p.remove(v) {
-                unreachable!();
-            }
-            x.insert(*v);
-            if answer.is_empty() {
-                continue;
-            }
+        for &v in p.difference(&self.nodes[pivot].set) {
+            r.insert(v);
+            let p1: HashSet<usize> = p_clone.intersection(&self.nodes[v].set).cloned().collect();
+            let x1: HashSet<usize> = x.intersection(&self.nodes[v].set).cloned().collect();
+            let answer = self.bron_keybosch2(r, p1, x1);
             if best.len() < answer.len() {
                 best = answer;
             }
+            r.remove(&v);
+
+            p_clone.remove(&v);
+            x.insert(v);
         }
 
         return best;
@@ -295,6 +270,7 @@ fn convert_id_to_string(id: u16) -> String {
 struct Node {
     id: u16,
     others: Vec<usize>,
+    set: HashSet<usize>,
 }
 
 impl Node {
@@ -302,16 +278,12 @@ impl Node {
         Node {
             id,
             others: Vec::new(),
+            set: HashSet::new(),
         }
     }
 
     fn is_edge(&self, check_index: usize) -> bool {
-        // TODO position could be improved if we assume that the others are sorted.
-        return !self
-            .others
-            .iter()
-            .position(|other_index| *other_index == check_index)
-            .is_none();
+        return self.set.contains(&check_index);
     }
 
     fn add_edge_to(&mut self, other_index: usize) {
@@ -319,6 +291,7 @@ impl Node {
             return;
         }
         self.others.push(other_index);
+        self.set.insert(other_index);
     }
 
     fn sort(&mut self) {
