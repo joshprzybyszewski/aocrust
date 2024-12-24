@@ -1,3 +1,97 @@
+const NUM_GATES: usize = 26 * 26 * 26;
+const X_OFFSET: usize = (b'x' - b'a') as usize * 26 * 26;
+const Y_OFFSET: usize = (b'y' - b'a') as usize * 26 * 26;
+const Z_OFFSET: usize = (b'z' - b'a') as usize * 26 * 26;
+
+const OPERATION_OR: u8 = 1;
+const OPERATION_XOR: u8 = 2;
+const OPERATION_AND: u8 = 3;
+
+const VALUE_SET_MASK: u8 = 0x80;
+
+#[derive(Copy, Clone)]
+struct Gate {
+    left: usize,
+    right: usize,
+    op: u8,
+}
+
+impl Gate {
+    fn empty() -> Self {
+        Gate {
+            left: NUM_GATES + 1,
+            right: NUM_GATES + 1,
+            op: 0,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Logic {
+    values: [u8; NUM_GATES],
+    gates: [Gate; NUM_GATES],
+}
+
+impl Logic {
+    fn new(input: &str) -> Self {
+        let input = input.as_bytes();
+        let mut i = 0;
+
+        let output = Logic {
+            values: [0; NUM_GATES],
+            gates: [Gate::empty(); NUM_GATES],
+        };
+
+        // iterate through starting
+        loop {
+            if input[i] == b'\n' {
+                break;
+            }
+            let offset;
+            if input[i] == b'x' {
+                offset = X_OFFSET;
+            } else if input[i] == b'y' {
+                offset = Y_OFFSET;
+            } else {
+                unreachable!();
+            }
+            i += 1;
+            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            i += 4;
+            output.values[offset + index] = VALUE_SET_MASK | (input[i] - b'0');
+            i += 1;
+        }
+        i += 1;
+
+        // iterate through gates
+        loop {
+            if i >= input.len() || input[i] == b'\n' {
+                break;
+            }
+
+            if input[i] == b'x' {
+                i += 1;
+                let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+                i += 4;
+                xs[index] = input[i] - b'0';
+                i += 1;
+                continue;
+            }
+            if input[i] != b'y' {
+                unreachable!();
+            }
+            i += 1;
+            let index = (input[i] - b'0') as usize * 10 + (input[i + 1] - b'0') as usize;
+            i += 4;
+            ys[index] = input[i] - b'0';
+            i += 1;
+        }
+        return output;
+    }
+
+    fn get_index(&self, input: &[u8], i: usize) -> usize {}
+}
+
 #[aoc(day24, part1)]
 pub fn part1(input: &str) -> u64 {
     return 0;
