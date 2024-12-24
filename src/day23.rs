@@ -70,19 +70,21 @@ impl Graph1 {
 
     #[inline(always)]
     fn starts_with_t(&self, node_index: usize) -> bool {
-        let id = self.nodes[node_index].id;
-        return MIN_T_ID <= id && id < MAX_T_ID;
+        return self.nodes[node_index].starts_with_t;
     }
 
     #[inline(always)]
     fn num_incrementing_3_cycles_containing_t(&self, start: usize) -> u16 {
         let mut output = 0;
+        let is_t = self.starts_with_t(start);
 
         for i in (0..self.nodes[start].others.len()).rev() {
             let one_step = self.nodes[start].others[i];
             if one_step <= start {
                 break;
             }
+            let is_t = is_t || self.starts_with_t(one_step);
+
             for j in (0..self.nodes[one_step].others.len()).rev() {
                 let two_step = self.nodes[one_step].others[j];
                 if two_step <= one_step {
@@ -91,10 +93,8 @@ impl Graph1 {
                 if !self.is_edge(start, two_step) {
                     continue;
                 }
-                if self.starts_with_t(start)
-                    || self.starts_with_t(one_step)
-                    || self.starts_with_t(two_step)
-                {
+
+                if is_t || self.starts_with_t(two_step) {
                     output += 1;
                 }
             }
@@ -106,6 +106,7 @@ impl Graph1 {
 
 struct Node1 {
     id: u16,
+    starts_with_t: bool,
     others: Vec<usize>,
 }
 
@@ -114,6 +115,7 @@ impl Node1 {
     fn new(id: u16) -> Self {
         Node1 {
             id,
+            starts_with_t: MIN_T_ID <= id && id < MAX_T_ID,
             others: Vec::with_capacity(13),
         }
     }
