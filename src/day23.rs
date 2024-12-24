@@ -244,9 +244,13 @@ impl Graph {
         // now i understand a little bit more what is happening.
 
         let mut p_clone: HashSet<usize> = p.clone();
-        let pivot = *p
+        // in my input, all nodes have the same number of neighbors.
+        // it doesn't matter what the pivot point is, so don't look
+        // up anything; just take a random one.
+        let pivot: usize = *p
             .union(&x)
-            .max_by_key(|&&v| self.nodes[v].set.len())
+            .max_by_key(|_| 0)
+            // .max_by_key(|&&v| self.nodes[v].set.len())
             .unwrap();
 
         // assume pivot is not neighbor to itself.
