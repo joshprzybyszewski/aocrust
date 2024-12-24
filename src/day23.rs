@@ -186,15 +186,19 @@ impl Graph {
         let mut ids = self.get_ids_of_maximal_complete_subgraph();
         ids.sort();
 
-        let num_connected = ids.len();
         // betting on there being less than 100 nodes in the clique
-        let mut array: [u8; 300] = [b','; 300];
-        for i in 0..num_connected {
+        let mut array: [u8; 300] = [0; 300];
+        let mut arr_i = 0;
+        for i in 0..ids.len() {
             let node_id = ids[i];
-            array[i * 3] = b'a' + (node_id / 26) as u8;
-            array[i * 3 + 1] = b'a' + (node_id % 26) as u8;
+            array[arr_i] = b'a' + (node_id / 26) as u8;
+            arr_i += 1;
+            array[arr_i] = b'a' + (node_id % 26) as u8;
+            arr_i += 1;
+            array[arr_i] = b',';
+            arr_i += 1;
         }
-        return String::from_utf8_lossy(&array[0..(num_connected * 3) - 1]).to_string();
+        return String::from_utf8_lossy(&array[0..arr_i - 1]).to_string();
     }
 
     #[inline(always)]
@@ -202,9 +206,9 @@ impl Graph {
         let mut best = HashSet::new();
         self.bron_kerbosch2(
             &mut best,
-            &mut HashSet::new(),
+            &mut HashSet::with_capacity(self.nodes.len()),
             HashSet::from_iter(0..self.nodes.len()),
-            HashSet::new(),
+            HashSet::with_capacity(self.nodes.len()),
         );
         return best
             .iter()
