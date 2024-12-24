@@ -235,15 +235,19 @@ impl Graph {
             }
             return;
         }
+        if r.len() + p.len() < best.len() {
+            return;
+        }
         // thanks to https://github.com/bertptrs/adventofcode/blob/48824288b04bf25c88d2c11a3f9575b74bbe37ed/2018/src/day23.rs#L12-L63
         // now i understand a little bit more what is happening.
 
-        let mut p_clone = p.clone();
+        let mut p_clone: HashSet<usize> = p.clone();
         let pivot = *p
             .union(&x)
             .max_by_key(|&&v| self.nodes[v].set.len())
             .unwrap();
 
+        // assume pivot is not neighbor to itself.
         for &v in p.difference(&self.nodes[pivot].set) {
             r.insert(v);
             let p1: HashSet<usize> = p_clone.intersection(&self.nodes[v].set).cloned().collect();
