@@ -54,7 +54,7 @@ impl Graph1 {
 
     #[inline(always)]
     fn is_edge(&self, a_index: usize, b_index: usize) -> bool {
-        return self.nodes[a_index].is_edge(b_index);
+        return self.nodes[a_index].is_edge(&b_index);
     }
 
     #[inline(always)]
@@ -119,17 +119,18 @@ impl Node1 {
     }
 
     #[inline(always)]
-    fn is_edge(&self, check_index: usize) -> bool {
-        return !self
-            .others
-            .iter()
-            .position(|other_index| *other_index == check_index)
-            .is_none();
+    fn is_edge(&self, check_index: &usize) -> bool {
+        return self.others.binary_search(check_index).is_ok();
+        // return !self
+        //     .others
+        //     .iter()
+        //     .position(|other_index| *other_index == check_index)
+        //     .is_none();
     }
 
     #[inline(always)]
     fn add_edge_to(&mut self, other_index: usize) {
-        if self.is_edge(other_index) {
+        if self.is_edge(&other_index) {
             return;
         }
         self.others.push(other_index);
