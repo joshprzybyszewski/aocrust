@@ -114,7 +114,18 @@ impl Logic {
         }
 
         if self.gates[index].op == 0 {
-            return 0;
+            if index >= Z_OFFSET {
+                return 0;
+            }
+            if index >= Y_OFFSET {
+                println!("not set y: {}", index - Y_OFFSET);
+                return 0;
+            }
+            if index >= X_OFFSET {
+                println!("not set x: {}", index - X_OFFSET);
+                return 0;
+            }
+            unreachable!();
         }
 
         let left_val = self.get_value(self.gates[index].left);
@@ -132,7 +143,7 @@ impl Logic {
 
         let mut offset: usize = 0;
         for _ in 0..64 {
-            output |= (self.get_value(X_OFFSET + offset) as u64) << offset;
+            output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
             offset += 1;
         }
 
@@ -220,7 +231,7 @@ tnw OR pbm -> gnj";
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 49574189473968)
     }
 
     #[test]
