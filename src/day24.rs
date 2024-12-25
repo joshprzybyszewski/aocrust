@@ -9,6 +9,14 @@ const OPERATION_AND: u8 = 3;
 
 const VALUE_SET_MASK: u8 = 0x80;
 
+const X: u8 = 1;
+const Y: u8 = 2;
+const C_OUT: u8 = 3;
+const XOR_1: u8 = 4;
+const XOR_2: u8 = 5;
+const AND_1: u8 = 6;
+const AND_2: u8 = 7;
+
 #[derive(Copy, Clone)]
 struct Gate {
     left: usize,
@@ -151,7 +159,38 @@ impl Logic {
     }
 
     fn solve_part2(&self) -> String {
-        let mut ids: Vec<usize> = Vec::new();
+        let mut ids: Vec<usize> = Vec::with_capacity(8);
+
+        let mut z = Z_OFFSET + 63;
+        loop {
+            if self.gates[z].op == 0 {
+                z -= 1;
+                continue;
+            }
+
+            let mine = self.check_gate(&mut ids, z);
+            if mine != C_OUT {
+                println!("mine = {mine}");
+                // unreachable!();
+                ids.push(z);
+            }
+            z -= 1;
+            break;
+        }
+        loop {
+            let mine = self.check_gate(&mut ids, z);
+            if mine != XOR_2 {
+                println!("mine = {mine}");
+                // unreachable!();
+                ids.push(z);
+            }
+
+            if z == Z_OFFSET || ids.len() == 8 {
+                break;
+            }
+            z -= 1;
+        }
+
         ids.sort();
         return ids
             .iter()
@@ -159,22 +198,85 @@ impl Logic {
             .collect::<Vec<String>>()
             .join(",");
     }
+
+    fn check_gate(&self, bad: &mut Vec<usize>, index: usize) -> u8 {
+        if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
+            if index >= Z_OFFSET {
+                unreachable!();
+            }
+            if index >= Y_OFFSET {
+                return Y;
+            }
+            if index >= X_OFFSET {
+                return X;
+            }
+            unreachable!();
+        }
+
+        let left_is = self.check_gate(bad, self.gates[index].left);
+        let right_is = self.check_gate(bad, self.gates[index].right);
+
+        let my_op = self.gates[index].op;
+
+        if left_is == X && right_is != Y {
+            bad.push(index);
+        }
+        if left_is == Y && right_is != X {
+            bad.push(index);
+        }
+        if left_is == X || right_is == Y {
+            match my_op {
+                OPERATION_XOR => return XOR_1,
+                OPERATION_AND => return AND_1,
+                _ => unreachable!(),
+            }
+        }
+
+        if left_is == XOR_1 && right_is != C_OUT {
+            bad.push(index);
+        }
+        if right_is == XOR_1 && left_is != C_OUT {
+            bad.push(index);
+        }
+        if left_is == XOR_1 || right_is == XOR_1 {
+            match my_op {
+                OPERATION_XOR => return XOR_2,
+                OPERATION_AND => return AND_2,
+                _ => unreachable!(),
+            }
+        }
+
+        if left_is == AND_2 && right_is != AND_1 {
+            bad.push(index);
+        }
+        if right_is == AND_2 && left_is != AND_1 {
+            bad.push(index);
+        }
+        if left_is == AND_2 || right_is == AND_2 {
+            match my_op {
+                OPERATION_OR => return C_OUT,
+                _ => unreachable!(),
+            }
+        }
+
+        unreachable!();
+    }
 }
 
 fn convert_to_string(node_id: usize) -> String {
     let mut array: [u8; 3] = [0; 3];
-    if node_id > Z_OFFSET {
+    if node_id >= Z_OFFSET {
         array[0] = b'z';
-        array[1] = ((node_id - Z_OFFSET) / 10) as u8;
-        array[2] = ((node_id - Z_OFFSET) % 10) as u8;
-    } else if node_id > Y_OFFSET {
+        array[1] = b'0' + ((node_id - Z_OFFSET) / 10) as u8;
+        array[2] = b'0' + ((node_id - Z_OFFSET) % 10) as u8;
+    } else if node_id >= Y_OFFSET {
         array[0] = b'y';
-        array[1] = ((node_id - Y_OFFSET) / 10) as u8;
-        array[2] = ((node_id - Y_OFFSET) % 10) as u8;
-    } else if node_id > X_OFFSET {
+        array[1] = b'0' + ((node_id - Y_OFFSET) / 10) as u8;
+        array[2] = b'0' + ((node_id - Y_OFFSET) % 10) as u8;
+    } else if node_id >= X_OFFSET {
         array[0] = b'x';
-        array[1] = ((node_id - X_OFFSET) / 10) as u8;
-        array[2] = ((node_id - X_OFFSET) % 10) as u8;
+        array[1] = b'0' + ((node_id - X_OFFSET) / 10) as u8;
+        array[2] = b'0' + ((node_id - X_OFFSET) % 10) as u8;
     } else {
         array[0] = b'a' + (node_id / 676) as u8;
         array[1] = b'a' + ((node_id / 26) % 26) as u8;
@@ -259,6 +361,28 @@ tgd XOR rvg -> z12
 tnw OR pbm -> gnj";
     }
 
+    fn get_example_input_2() -> &'static str {
+        return "x00: 0
+x01: 1
+x02: 0
+x03: 1
+x04: 0
+x05: 1
+y00: 0
+y01: 0
+y02: 1
+y03: 1
+y04: 0
+y05: 1
+
+x00 AND y00 -> z05
+x01 AND y01 -> z02
+x02 AND y02 -> z01
+x03 AND y03 -> z03
+x04 AND y04 -> z04
+x05 AND y05 -> z00";
+    }
+
     #[test]
     fn part1_example() {
         assert_eq!(part1(&get_example_input()), 2024);
@@ -271,11 +395,11 @@ tnw OR pbm -> gnj";
 
     #[test]
     fn part2_example() {
-        assert_eq!(part2(&get_example_input()), 1);
+        assert_eq!(part2(&get_example_input_2()), "z00,z01,z02,z05");
     }
 
     #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), "");
     }
 }
