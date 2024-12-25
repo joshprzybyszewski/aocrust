@@ -11,8 +11,7 @@ const OPERATION_AND: u8 = 3;
 
 const VALUE_SET_MASK: u8 = 0x80;
 
-const X: u8 = 1;
-const Y: u8 = 2;
+const INPUT: u8 = 2;
 const SUM: u8 = 5;
 const C_OUT: u8 = 3;
 const XOR_1: u8 = 4;
@@ -171,20 +170,19 @@ impl Logic {
                 continue;
             }
 
-            let mine = self.check_gate(&mut bad, z);
-            if mine != SUM && mine != C_OUT {
-                println!("z {} mismatched = {mine}", z - Z_OFFSET);
-                bad.insert(z);
+            if !self.check_gate(&mut bad, z, C_OUT) {
+                println!("z {} should be C_OUT", z - Z_OFFSET);
+                // bad.insert(z);
             }
             z -= 1;
             break;
         }
 
         loop {
-            let mine = self.check_gate(&mut bad, z);
-            if mine != SUM && mine != C_OUT {
-                println!("z {} mismatched = {mine}", z - Z_OFFSET);
-                bad.insert(z);
+            if !self.check_gate(&mut bad, z, SUM)  {
+                // if !self.check_gate(&mut bad, z, SUM) && !self.check_gate(&mut bad, z, C_OUT) {
+                println!("z {} bad", z - Z_OFFSET);
+                // bad.insert(z);
             }
 
             z -= 1;
@@ -192,9 +190,9 @@ impl Logic {
                 break;
             }
         }
-        let mine = self.check_gate(&mut bad, z);
-        if mine != SUM {
-            bad.insert(z);
+        if !self.check_gate(&mut bad, z, SUM)  {
+            println!("z {} should be USM", z - Z_OFFSET);
+            // bad.insert(z);
         }
 
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
@@ -207,135 +205,64 @@ impl Logic {
             .join(",");
     }
 
-    fn check_gate(&self, bad: &mut HashSet<usize>, index: usize) -> u8 {
-        if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
-            if index >= Z_OFFSET {
-                unreachable!();
+    fn check_gate(&self, bad: &mut HashSet<usize>, index: usize, expect: u8) -> bool {
+        if index >= X_OFFSET && index < Z_OFFSET {
+            //self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
+            if expect == INPUT {
+                return true;
             }
-            if index >= Y_OFFSET {
-                return Y;
-            }
-            if index >= X_OFFSET {
-                return X;
-            }
-            unreachable!();
+            return false;
         }
-
-        let left_is = self.check_gate(bad, self.gates[index].left);
-        let right_is = self.check_gate(bad, self.gates[index].right);
 
         let my_op = self.gates[index].op;
 
-        if left_is == X || left_is == Y || right_is == X || right_is == Y {
-            if right_is == BAD || left_is == BAD {
-                match my_op {
-                    OPERATION_XOR => return XOR_1,
-                    OPERATION_AND => return AND_1,
-                    _ => unreachable!(),
-                }
+        let left: u8;
+        let right: u8;
+        let exp_op: u8;
+        if expect == SUM {
+            exp_op = OPERATION_XOR;
+            if index == Z_OFFSET {
+                left = INPUT;
+                right = INPUT;
+            } else {
+                left = XOR_1;
+                right = C_OUT;
             }
-            if left_is == X && right_is != Y {
-                unreachable!();
-            }
-            if left_is == Y && right_is != X {
-                unreachable!();
-            }
-
-            if index >= Z_OFFSET {
-                let my_z = index - Z_OFFSET;
-                let x: usize;
-                let y: usize;
-                if self.gates[index].left < Y_OFFSET {
-                    x = self.gates[index].left - X_OFFSET;
-                    if self.gates[index].right < Y_OFFSET {
-                        unreachable!();
-                    }
-                    y = self.gates[index].right - Y_OFFSET;
-                } else {
-                    y = self.gates[index].left - Y_OFFSET;
-                    if self.gates[index].right >= Y_OFFSET {
-                        unreachable!();
-                    }
-                    x = self.gates[index].right - X_OFFSET;
-                }
-                if x != y {
-                    unreachable!();
-                }
-                if OPERATION_XOR == my_op && x == my_z {
-                    return SUM;
-                }
-                if OPERATION_AND == my_op && x == 0 {
-                    // if my_z != x + 1 {
-                    //     bad.insert(index);
-                    //     return BAD;
-                    // }
-                    return C_OUT;
-                }
-                // bad.insert(index);
-                // return BAD;
-            }
-
-            match my_op {
-                OPERATION_XOR => return XOR_1,
-                OPERATION_AND => return AND_1,
-                _ => {}
-            }
-            bad.insert(index);
-            return BAD;
+        } else if expect == C_OUT {
+            exp_op = OPERATION_OR;
+            left = AND_2;
+            right = AND_1;
+        } else if expect == AND_2 {
+            exp_op = OPERATION_AND;
+            left = XOR_1;
+            right = C_OUT;
+        } else if expect == AND_1 {
+            exp_op = OPERATION_AND;
+            left = INPUT;
+            right = INPUT;
+        } else if expect == XOR_1 {
+            exp_op = OPERATION_AND;
+            left = INPUT;
+            right = INPUT;
+        } else if expect == INPUT {
+            return false;
+        } else {
+            println!(" exp {}", expect);
+            unreachable!()
         }
 
-        if left_is == XOR_1 || left_is == C_OUT || right_is == XOR_1 || right_is == C_OUT {
-            if left_is == BAD || right_is == BAD {
-                match my_op {
-                    OPERATION_XOR => return SUM,
-                    OPERATION_AND => return AND_2,
-                    _ => unreachable!(),
-                }
-            }
-            if left_is == XOR_1 && right_is != C_OUT {
-                bad.insert(index);
-                // return BAD;
-            }
-            if right_is == XOR_1 && left_is != C_OUT {
-                bad.insert(index);
-                // return BAD;
-            }
-            match my_op {
-                OPERATION_XOR => return SUM,
-                OPERATION_AND => return AND_2,
-                _ => {}
+        if (self.check_gate(bad, self.gates[index].left, left)
+            && self.check_gate(bad, self.gates[index].right, right))
+            || (self.check_gate(bad, self.gates[index].left, right)
+                && self.check_gate(bad, self.gates[index].right, left))
+        {
+            if exp_op == my_op {
+                return true;
             }
             bad.insert(index);
-            return BAD;
+            return true;
         }
-
-        if left_is == AND_2 || left_is == AND_1 || right_is == AND_2 || right_is == AND_1 {
-            if right_is == BAD || left_is == BAD {
-                match my_op {
-                    OPERATION_OR => return C_OUT,
-
-                    _ => unreachable!(),
-                }
-            }
-            if left_is == AND_2 && right_is != AND_1 {
-                bad.insert(index);
-                // return BAD;
-            }
-            if right_is == AND_2 && left_is != AND_1 {
-                bad.insert(index);
-                // return BAD;
-            }
-            match my_op {
-                OPERATION_OR => return C_OUT,
-                _ => {} // _ => unreachable!(),
-            }
-            bad.insert(index);
-            return BAD;
-        }
-
-        println!("left_is = {left_is}");
-        println!("right_is = {right_is}");
-        unreachable!();
+        return false;
     }
 }
 
@@ -479,6 +406,6 @@ x05 AND y05 -> z00";
         // not "ffk,jsv,qjs,rrw,z00,z01,z21,z39"
         // not "ffk,jsv,rrw,z06,z21,z39"
         // not "ffk,jsv,qjs,rrw,z01,z06,z21,z39"
-        assert_eq!(part2(&get_input()), "");
+        assert_eq!(part2(&get_input()), "not known");
     }
 }
