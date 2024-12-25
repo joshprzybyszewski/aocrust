@@ -13,9 +13,9 @@ const VALUE_SET_MASK: u8 = 0x80;
 
 const X: u8 = 1;
 const Y: u8 = 2;
+const SUM: u8 = 5;
 const C_OUT: u8 = 3;
 const XOR_1: u8 = 4;
-const XOR_2: u8 = 5;
 const AND_1: u8 = 6;
 const AND_2: u8 = 7;
 const BAD: u8 = 8;
@@ -172,30 +172,30 @@ impl Logic {
             }
 
             let mine = self.check_gate(&mut bad, z);
-            if mine != C_OUT {
-                println!("mine = {mine}");
-                // unreachable!();
+            if mine != SUM && mine != C_OUT {
+                println!("z {} mismatched = {mine}", z - Z_OFFSET);
                 bad.insert(z);
             }
             z -= 1;
             break;
         }
+
         loop {
             let mine = self.check_gate(&mut bad, z);
-            if mine != XOR_2 {
-                println!("mine = {mine}");
-                // unreachable!();
+            if mine != SUM && mine != C_OUT {
+                println!("z {} mismatched = {mine}", z - Z_OFFSET);
                 bad.insert(z);
             }
 
-            if z == Z_OFFSET  {
+            z -= 1;
+            if z == Z_OFFSET {
                 break;
             }
-            z -= 1;
         }
-        // if ids.len() != 8 {
-        //     unreachable!();
-        // }
+        let mine = self.check_gate(&mut bad, z);
+        if mine != SUM {
+            bad.insert(z);
+        }
 
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
@@ -235,13 +235,46 @@ impl Logic {
                 }
             }
             if left_is == X && right_is != Y {
-                bad.insert(index);
-                // return BAD;
+                unreachable!();
             }
             if left_is == Y && right_is != X {
-                bad.insert(index);
+                unreachable!();
+            }
+
+            if index >= Z_OFFSET {
+                let my_z = index - Z_OFFSET;
+                let x: usize;
+                let y: usize;
+                if self.gates[index].left < Y_OFFSET {
+                    x = self.gates[index].left - X_OFFSET;
+                    if self.gates[index].right < Y_OFFSET {
+                        unreachable!();
+                    }
+                    y = self.gates[index].right - Y_OFFSET;
+                } else {
+                    y = self.gates[index].left - Y_OFFSET;
+                    if self.gates[index].right >= Y_OFFSET {
+                        unreachable!();
+                    }
+                    x = self.gates[index].right - X_OFFSET;
+                }
+                if x != y {
+                    unreachable!();
+                }
+                if OPERATION_XOR == my_op && x == my_z {
+                    return SUM;
+                }
+                if OPERATION_AND == my_op && x == 0 {
+                    // if my_z != x + 1 {
+                    //     bad.insert(index);
+                    //     return BAD;
+                    // }
+                    return C_OUT;
+                }
+                // bad.insert(index);
                 // return BAD;
             }
+
             match my_op {
                 OPERATION_XOR => return XOR_1,
                 OPERATION_AND => return AND_1,
@@ -252,9 +285,9 @@ impl Logic {
         }
 
         if left_is == XOR_1 || left_is == C_OUT || right_is == XOR_1 || right_is == C_OUT {
-            if right_is == BAD || left_is == BAD {
+            if left_is == BAD || right_is == BAD {
                 match my_op {
-                    OPERATION_XOR => return XOR_2,
+                    OPERATION_XOR => return SUM,
                     OPERATION_AND => return AND_2,
                     _ => unreachable!(),
                 }
@@ -268,7 +301,7 @@ impl Logic {
                 // return BAD;
             }
             match my_op {
-                OPERATION_XOR => return XOR_2,
+                OPERATION_XOR => return SUM,
                 OPERATION_AND => return AND_2,
                 _ => {}
             }
@@ -294,8 +327,7 @@ impl Logic {
             }
             match my_op {
                 OPERATION_OR => return C_OUT,
-                _ => {}
-                // _ => unreachable!(),
+                _ => {} // _ => unreachable!(),
             }
             bad.insert(index);
             return BAD;
@@ -444,6 +476,9 @@ x05 AND y05 -> z00";
 
     #[test]
     fn part2_real_input() {
+        // not "ffk,jsv,qjs,rrw,z00,z01,z21,z39"
+        // not "ffk,jsv,rrw,z06,z21,z39"
+        // not "ffk,jsv,qjs,rrw,z01,z06,z21,z39"
         assert_eq!(part2(&get_input()), "");
     }
 }
