@@ -219,8 +219,8 @@ impl Logic {
 
         let my_op = self.gates[index].op;
 
-        if left_is == X || left_is == Y {
-            if right_is == BAD {
+        if left_is == X || left_is == Y || right_is == X || right_is == Y {
+            if right_is == BAD || left_is == BAD {
                 match my_op {
                     OPERATION_XOR => return XOR_1,
                     OPERATION_AND => return AND_1,
@@ -244,8 +244,8 @@ impl Logic {
             return BAD;
         }
 
-        if left_is == XOR_1 || left_is == C_OUT {
-            if right_is == BAD {
+        if left_is == XOR_1 || left_is == C_OUT || right_is == XOR_1 || right_is == C_OUT {
+            if right_is == BAD || left_is == BAD {
                 match my_op {
                     OPERATION_XOR => return XOR_2,
                     OPERATION_AND => return AND_2,
@@ -269,8 +269,8 @@ impl Logic {
             return BAD;
         }
 
-        if left_is == AND_2 || left_is == AND_1 {
-            if right_is == BAD {
+        if left_is == AND_2 || left_is == AND_1 || right_is == AND_2 || right_is == AND_1 {
+            if right_is == BAD || left_is == BAD {
                 match my_op {
                     OPERATION_OR => return C_OUT,
 
