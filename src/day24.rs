@@ -108,6 +108,18 @@ impl Logic {
             + (input[i + 2] - b'a') as usize;
     }
 
+    fn solve_part1(&self) -> u64 {
+        let mut output: u64 = 0;
+
+        let mut offset: usize = 0;
+        for _ in 0..64 {
+            output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
+            offset += 1;
+        }
+
+        return output;
+    }
+
     fn get_value(&self, index: usize) -> u8 {
         if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
             return self.values[index] & 1;
@@ -138,17 +150,38 @@ impl Logic {
         }
     }
 
-    fn solve_part1(&self) -> u64 {
-        let mut output: u64 = 0;
-
-        let mut offset: usize = 0;
-        for _ in 0..64 {
-            output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
-            offset += 1;
-        }
-
-        return output;
+    fn solve_part2(&self) -> String {
+        let mut ids: Vec<usize> = Vec::new();
+        ids.sort();
+        return ids
+            .iter()
+            .map(|&id| convert_to_string(id))
+            .collect::<Vec<String>>()
+            .join(",");
     }
+}
+
+fn convert_to_string(node_id: usize) -> String {
+    let mut array: [u8; 3] = [0; 3];
+    if node_id > Z_OFFSET {
+        array[0] = b'z';
+        array[1] = ((node_id - Z_OFFSET) / 10) as u8;
+        array[2] = ((node_id - Z_OFFSET) % 10) as u8;
+    } else if node_id > Y_OFFSET {
+        array[0] = b'y';
+        array[1] = ((node_id - Y_OFFSET) / 10) as u8;
+        array[2] = ((node_id - Y_OFFSET) % 10) as u8;
+    } else if node_id > X_OFFSET {
+        array[0] = b'x';
+        array[1] = ((node_id - X_OFFSET) / 10) as u8;
+        array[2] = ((node_id - X_OFFSET) % 10) as u8;
+    } else {
+        array[0] = b'a' + (node_id / 676) as u8;
+        array[1] = b'a' + ((node_id / 26) % 26) as u8;
+        array[2] = b'a' + (node_id % 26) as u8;
+    }
+
+    return String::from_utf8_lossy(&array).to_string();
 }
 
 #[aoc(day24, part1)]
@@ -159,8 +192,10 @@ pub fn part1(input: &str) -> u64 {
 }
 
 #[aoc(day24, part2)]
-pub fn part2(input: &str) -> u64 {
-    return 0;
+pub fn part2(input: &str) -> String {
+    let logic = Logic::new(input);
+
+    return logic.solve_part2();
 }
 
 #[cfg(test)]
