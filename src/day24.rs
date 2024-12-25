@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 const NUM_GATES: usize = 26 * 26 * 26;
 const X_OFFSET: usize = (b'x' - b'a') as usize * 26 * 26;
 const Y_OFFSET: usize = (b'y' - b'a') as usize * 26 * 26;
@@ -160,7 +162,7 @@ impl Logic {
     }
 
     fn solve_part2(&self) -> String {
-        let mut ids: Vec<usize> = Vec::with_capacity(8);
+        let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
         let mut z = Z_OFFSET + 63;
         loop {
@@ -169,28 +171,33 @@ impl Logic {
                 continue;
             }
 
-            let mine = self.check_gate(&mut ids, z);
+            let mine = self.check_gate(&mut bad, z);
             if mine != C_OUT {
                 println!("mine = {mine}");
                 // unreachable!();
-                ids.push(z);
+                bad.insert(z);
             }
             z -= 1;
             break;
         }
         loop {
-            let mine = self.check_gate(&mut ids, z);
+            let mine = self.check_gate(&mut bad, z);
             if mine != XOR_2 {
                 println!("mine = {mine}");
                 // unreachable!();
-                ids.push(z);
+                bad.insert(z);
             }
 
-            if z == Z_OFFSET || ids.len() == 8 {
+            if z == Z_OFFSET  {
                 break;
             }
             z -= 1;
         }
+        // if ids.len() != 8 {
+        //     unreachable!();
+        // }
+
+        let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
         ids.sort();
         return ids
@@ -200,7 +207,7 @@ impl Logic {
             .join(",");
     }
 
-    fn check_gate(&self, bad: &mut Vec<usize>, index: usize) -> u8 {
+    fn check_gate(&self, bad: &mut HashSet<usize>, index: usize) -> u8 {
         if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
             if index >= Z_OFFSET {
                 unreachable!();
@@ -228,19 +235,19 @@ impl Logic {
                 }
             }
             if left_is == X && right_is != Y {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             if left_is == Y && right_is != X {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             match my_op {
                 OPERATION_XOR => return XOR_1,
                 OPERATION_AND => return AND_1,
                 _ => {}
             }
-            bad.push(index);
+            bad.insert(index);
             return BAD;
         }
 
@@ -253,19 +260,19 @@ impl Logic {
                 }
             }
             if left_is == XOR_1 && right_is != C_OUT {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             if right_is == XOR_1 && left_is != C_OUT {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             match my_op {
                 OPERATION_XOR => return XOR_2,
                 OPERATION_AND => return AND_2,
                 _ => {}
             }
-            bad.push(index);
+            bad.insert(index);
             return BAD;
         }
 
@@ -278,19 +285,19 @@ impl Logic {
                 }
             }
             if left_is == AND_2 && right_is != AND_1 {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             if right_is == AND_2 && left_is != AND_1 {
-                bad.push(index);
-                return BAD;
+                bad.insert(index);
+                // return BAD;
             }
             match my_op {
                 OPERATION_OR => return C_OUT,
                 _ => {}
                 // _ => unreachable!(),
             }
-            bad.push(index);
+            bad.insert(index);
             return BAD;
         }
 
