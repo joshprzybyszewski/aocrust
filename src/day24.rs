@@ -1,6 +1,161 @@
+const NUM_GATES: usize = 26 * 26 * 26;
+const X_OFFSET: usize = (b'x' - b'a') as usize * 26 * 26;
+const Y_OFFSET: usize = (b'y' - b'a') as usize * 26 * 26;
+const Z_OFFSET: usize = (b'z' - b'a') as usize * 26 * 26;
+
+const OPERATION_OR: u8 = 1;
+const OPERATION_XOR: u8 = 2;
+const OPERATION_AND: u8 = 3;
+
+const VALUE_SET_MASK: u8 = 0x80;
+
+#[derive(Copy, Clone)]
+struct Gate {
+    left: usize,
+    right: usize,
+    op: u8,
+}
+
+impl Gate {
+    fn empty() -> Self {
+        Gate {
+            left: NUM_GATES + 1,
+            right: NUM_GATES + 1,
+            op: 0,
+        }
+    }
+
+    fn new(left: usize, right: usize, op: u8) -> Self {
+        Gate { left, right, op }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Logic {
+    values: [u8; NUM_GATES],
+    gates: [Gate; NUM_GATES],
+}
+
+impl Logic {
+    fn new(input: &str) -> Self {
+        let input = input.as_bytes();
+        let mut i = 0;
+
+        let mut output = Logic {
+            values: [0; NUM_GATES],
+            gates: [Gate::empty(); NUM_GATES],
+        };
+
+        // iterate through starting
+        loop {
+            if input[i] == b'\n' {
+                break;
+            }
+            let index = output.parse_index(input, i);
+            i += 5;
+            output.values[index] = VALUE_SET_MASK | (input[i] - b'0');
+            i += 2;
+        }
+        i += 1;
+
+        // iterate through gates
+        loop {
+            if i >= input.len() || input[i] == b'\n' {
+                break;
+            }
+
+            let left = output.parse_index(input, i);
+            i += 4;
+            let op: u8;
+            if input[i] == b'X' {
+                i += 4;
+                op = OPERATION_XOR;
+            } else if input[i] == b'A' {
+                i += 4;
+                op = OPERATION_AND;
+            } else if input[i] == b'O' {
+                i += 3;
+                op = OPERATION_OR;
+            } else {
+                unreachable!();
+            }
+            let right = output.parse_index(input, i);
+            i += 7;
+
+            let dest = output.parse_index(input, i);
+            i += 4;
+            output.gates[dest] = Gate::new(left, right, op);
+        }
+        return output;
+    }
+
+    fn parse_index(&self, input: &[u8], i: usize) -> usize {
+        if input[i] == b'x' {
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
+            return X_OFFSET + index;
+        }
+        if input[i] == b'y' {
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
+            return index + Y_OFFSET;
+        }
+        if input[i] == b'z' {
+            let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
+            return index + Z_OFFSET;
+        }
+
+        return (input[i] - b'a') as usize * 26 * 26
+            + (input[i + 1] - b'a') as usize * 26
+            + (input[i + 2] - b'a') as usize;
+    }
+
+    fn get_value(&self, index: usize) -> u8 {
+        if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
+            return self.values[index] & 1;
+        }
+
+        if self.gates[index].op == 0 {
+            if index >= Z_OFFSET {
+                return 0;
+            }
+            if index >= Y_OFFSET {
+                println!("not set y: {}", index - Y_OFFSET);
+                return 0;
+            }
+            if index >= X_OFFSET {
+                println!("not set x: {}", index - X_OFFSET);
+                return 0;
+            }
+            unreachable!();
+        }
+
+        let left_val = self.get_value(self.gates[index].left);
+        let right_val = self.get_value(self.gates[index].right);
+        match self.gates[index].op {
+            OPERATION_AND => return left_val & right_val,
+            OPERATION_XOR => return left_val ^ right_val,
+            OPERATION_OR => return left_val | right_val,
+            _ => unreachable!(),
+        }
+    }
+
+    fn solve_part1(&self) -> u64 {
+        let mut output: u64 = 0;
+
+        let mut offset: usize = 0;
+        for _ in 0..64 {
+            output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
+            offset += 1;
+        }
+
+        return output;
+    }
+}
+
 #[aoc(day24, part1)]
 pub fn part1(input: &str) -> u64 {
-    return 0;
+    let logic = Logic::new(input);
+
+    return logic.solve_part1();
 }
 
 #[aoc(day24, part2)]
@@ -76,7 +231,7 @@ tnw OR pbm -> gnj";
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 49574189473968)
     }
 
     #[test]
