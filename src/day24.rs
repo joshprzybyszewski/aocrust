@@ -11,13 +11,79 @@ const OPERATION_AND: u8 = 3;
 
 const VALUE_SET_MASK: u8 = 0x80;
 
-const INPUT: u8 = 2;
-const SUM: u8 = 5;
+const INPUT: u8 = 1;
+const SUM: u8 = 2;
 const C_OUT: u8 = 3;
 const XOR_1: u8 = 4;
-const AND_1: u8 = 6;
-const AND_2: u8 = 7;
-const BAD: u8 = 8;
+const AND_1: u8 = 5;
+const AND_2: u8 = 6;
+const UNKNOWN: u8 = 7;
+
+#[derive(PartialEq, Eq)]
+struct GateType {
+    bit_index: usize,
+    gate_type: u8,
+}
+
+impl GateType {
+    fn xor1(index: usize) -> Self {
+        return Self {
+            bit_index: index,
+            gate_type: XOR_1,
+        };
+    }
+
+    fn and1(index: usize) -> Self {
+        if index == 0 {
+            return Self {
+                bit_index: index,
+                gate_type: C_OUT,
+            };
+        }
+        return Self {
+            bit_index: index,
+            gate_type: AND_1,
+        };
+    }
+
+    fn xor2(index: usize) -> Self {
+        return Self {
+            bit_index: index,
+            gate_type: SUM,
+        };
+    }
+
+    fn sum(index: usize) -> Self {
+        return Self {
+            bit_index: index,
+            gate_type: SUM,
+        };
+    }
+
+    fn and2(index: usize) -> Self {
+        if index == 0 {
+            unreachable!();
+        }
+        return Self {
+            bit_index: index,
+            gate_type: AND_2,
+        };
+    }
+
+    fn c_out(index: usize) -> Self {
+        return Self {
+            bit_index: index,
+            gate_type: C_OUT,
+        };
+    }
+
+    fn unknown() -> Self {
+        return Self {
+            bit_index: 65,
+            gate_type: UNKNOWN,
+        };
+    }
+}
 
 #[derive(Copy, Clone)]
 struct Gate {
@@ -170,17 +236,18 @@ impl Logic {
                 continue;
             }
 
-            if !self.check_gate(&mut bad, z, C_OUT) {
+            let gate_type = self.get_gate_type(&mut bad, z);
+            z -= 1;
+            if gate_type != GateType::c_out(z) {
                 println!("z {} should be C_OUT", z - Z_OFFSET);
                 // bad.insert(z);
             }
-            z -= 1;
             break;
         }
 
         loop {
-            if !self.check_gate(&mut bad, z, SUM)  {
-                // if !self.check_gate(&mut bad, z, SUM) && !self.check_gate(&mut bad, z, C_OUT) {
+            let gate_type = self.get_gate_type(&mut bad, z);
+            if gate_type != GateType::sum(z) {
                 println!("z {} bad", z - Z_OFFSET);
                 // bad.insert(z);
             }
@@ -190,7 +257,9 @@ impl Logic {
                 break;
             }
         }
-        if !self.check_gate(&mut bad, z, SUM)  {
+        let gate_type = self.get_gate_type(&mut bad, z);
+        if gate_type != GateType::sum(z) {
+            // if !self.check_gate(&mut bad, z, SUM) {
             println!("z {} should be USM", z - Z_OFFSET);
             // bad.insert(z);
         }
@@ -205,64 +274,124 @@ impl Logic {
             .join(",");
     }
 
-    fn check_gate(&self, bad: &mut HashSet<usize>, index: usize, expect: u8) -> bool {
-        if index >= X_OFFSET && index < Z_OFFSET {
-            //self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
-            if expect == INPUT {
-                return true;
+    fn get_gate_type(&self, bad: &mut HashSet<usize>, index: usize) -> GateType {
+        let actual = &self.gates[index];
+        let my_op = actual.op;
+
+        if actual.left >= X_OFFSET || actual.right >= X_OFFSET {
+            if actual.right < X_OFFSET {
+                unreachable!();
             }
-            return false;
-        }
-
-        let my_op = self.gates[index].op;
-
-        let left: u8;
-        let right: u8;
-        let exp_op: u8;
-        if expect == SUM {
-            exp_op = OPERATION_XOR;
-            if index == Z_OFFSET {
-                left = INPUT;
-                right = INPUT;
+            let left_index: usize;
+            let right_index: usize;
+            if actual.left >= Y_OFFSET {
+                left_index = actual.left - Y_OFFSET;
+                right_index = actual.right - X_OFFSET;
             } else {
-                left = XOR_1;
-                right = C_OUT;
+                left_index = actual.left - X_OFFSET;
+                right_index = actual.right - Y_OFFSET;
             }
-        } else if expect == C_OUT {
-            exp_op = OPERATION_OR;
-            left = AND_2;
-            right = AND_1;
-        } else if expect == AND_2 {
-            exp_op = OPERATION_AND;
-            left = XOR_1;
-            right = C_OUT;
-        } else if expect == AND_1 {
-            exp_op = OPERATION_AND;
-            left = INPUT;
-            right = INPUT;
-        } else if expect == XOR_1 {
-            exp_op = OPERATION_AND;
-            left = INPUT;
-            right = INPUT;
-        } else if expect == INPUT {
-            return false;
-        } else {
-            println!(" exp {}", expect);
-            unreachable!()
+
+            if left_index != right_index {
+                unreachable!();
+            }
+            if my_op == OPERATION_AND {
+                return GateType::and1(left_index);
+            } else if my_op == OPERATION_XOR {
+                return GateType::xor1(left_index);
+            }
+            unreachable!();
         }
 
-        if (self.check_gate(bad, self.gates[index].left, left)
-            && self.check_gate(bad, self.gates[index].right, right))
-            || (self.check_gate(bad, self.gates[index].left, right)
-                && self.check_gate(bad, self.gates[index].right, left))
+        let left_gate_type = self.get_gate_type(bad, actual.left);
+        let right_gate_type = self.get_gate_type(bad, actual.right);
+
+        if left_gate_type.gate_type == AND_1
+            || right_gate_type.gate_type == AND_1
+            || left_gate_type.gate_type == AND_2
+            || right_gate_type.gate_type == AND_2
         {
-            if exp_op == my_op {
-                return true;
+            if left_gate_type.gate_type == AND_1 {
+                if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != AND_2 {
+                    bad.insert(index);
+                    // unreachable!();
+                }
             }
-            bad.insert(index);
-            return true;
+            if left_gate_type.gate_type == AND_2 {
+                if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != AND_1 {
+                    bad.insert(index);
+                    // unreachable!();
+                }
+            }
+            if right_gate_type.gate_type == AND_1 {
+                if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != AND_2 {
+                    bad.insert(index);
+                    // unreachable!();
+                }
+            }
+            if right_gate_type.gate_type == AND_2 {
+                if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != AND_1 {
+                    bad.insert(index);
+                    // unreachable!();
+                }
+            }
+
+            let act_index: usize;
+            if left_gate_type.gate_type != UNKNOWN {
+                act_index = left_gate_type.bit_index;
+            } else if right_gate_type.gate_type != UNKNOWN {
+                act_index = right_gate_type.bit_index;
+            } else {
+                unreachable!();
+            }
+
+            if my_op != OPERATION_OR {
+                bad.insert(index);
+            }
+
+            return GateType::c_out(act_index);
         }
-        return false;
+
+        let expected_index;
+        if left_gate_type.gate_type == XOR_1 {
+            if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != C_OUT {
+                bad.insert(index);
+                // unreachable!();
+            }
+            expected_index = left_gate_type.bit_index;
+        } else if left_gate_type.gate_type == C_OUT {
+            if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != C_OUT {
+                bad.insert(index);
+                // unreachable!();
+            }
+            expected_index = left_gate_type.bit_index + 1;
+        } else if right_gate_type.gate_type == XOR_1 {
+            if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != C_OUT {
+                bad.insert(index);
+                // unreachable!();
+            }
+            expected_index = right_gate_type.bit_index;
+        } else if right_gate_type.gate_type == C_OUT {
+            if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != C_OUT {
+                bad.insert(index);
+                // unreachable!();
+            }
+            expected_index = right_gate_type.bit_index + 1;
+        } else {
+            unreachable!();
+        }
+
+        if my_op == OPERATION_AND {
+            return GateType::and2(expected_index);
+        }
+        if my_op == OPERATION_XOR {
+            return GateType::xor2(expected_index);
+        }
+        bad.insert(index);
+
+        return GateType::unknown();
+
+        //
     }
 }
 
