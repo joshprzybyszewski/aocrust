@@ -409,8 +409,7 @@ const fn get_shortest_path_between_numerics(start: usize, end: usize) -> u64 {
     loop {
         shortest_index -= 1;
 
-        let mine =
-            get_numeric_path_min_cost(shortest[shortest_index].add(ARROW_A, NUMERIC_INVALID));
+        let mine = get_numeric_path_min_cost(shortest[shortest_index]);
         if mine < best {
             best = mine;
         }
@@ -433,8 +432,6 @@ const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
         return path.steps as u64 + 1;
     }
 
-    // let shortest_arrow_paths = generate_shortest_arrow_costs();
-
     let mut total = 0;
     let mut my_state = ARROW_A;
     let mut i = 0;
@@ -449,10 +446,7 @@ const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
         }
         i += 1;
 
-        // let (paths, num_paths) = shortest_arrow_paths[my_state][next];
         let (paths, num_paths) = get_shortest_paths_between_arrows(my_state, next);
-
-        // let (paths, num_paths) = SHORTEST_ARROW_PATHS[my_state][next];
         let mut path_index = 0;
         if num_paths == 0 {
             unreachable!();
@@ -460,14 +454,13 @@ const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
 
         let mut best_to_next = u64::MAX;
         loop {
-            if path_index == num_paths {
-                break;
-            }
-
             let path_cost = get_arrow_path_min_cost(depth - 1, paths[path_index]);
             path_index += 1;
             if path_cost < best_to_next {
                 best_to_next = path_cost;
+            }
+            if path_index == num_paths {
+                break;
             }
         }
         if best_to_next == u64::MAX {
@@ -478,7 +471,6 @@ const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
         my_state = next;
     }
 
-    // TODO account for getting there and back.
     return total;
 }
 
