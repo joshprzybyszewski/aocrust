@@ -43,7 +43,7 @@ pub fn part1(input: &str) -> u32 {
     for k in 0..key_index {
         for l in 0..lock_index {
             if keys[k] & locks[l] == 0 {
-                total+=1;
+                total += 1;
             }
         }
     }
@@ -120,7 +120,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 3301    )
+        assert_eq!(part1(&get_input()), 3301)
     }
 
     #[test]
