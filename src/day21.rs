@@ -260,7 +260,11 @@ struct ArrowState {
 }
 
 const SHORTEST_NUMERIC_PATHS: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
-    generate_shortest_keyboard_costs();
+    generate_shortest_keyboard_costs::<2>();
+
+// #[allow(long_running_const_eval)]
+// const SHORTEST_NUMERIC_PATHS_PART_2: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
+//     generate_shortest_keyboard_costs::<25>();
 
 const MAX_PATH_LENGTH: usize = 10;
 const MAX_SHORTEST_ARROW_PATHS: usize = 2;
@@ -308,14 +312,15 @@ impl Path {
     }
 }
 
-const fn generate_shortest_keyboard_costs() -> [[u64; NUM_NUMERICS]; NUM_NUMERICS] {
+const fn generate_shortest_keyboard_costs<const DEPTH: usize>(
+) -> [[u64; NUM_NUMERICS]; NUM_NUMERICS] {
     let mut answer: [[u64; NUM_NUMERICS]; NUM_NUMERICS] = [[u64::MAX; NUM_NUMERICS]; NUM_NUMERICS];
 
     let mut start = NUMERIC_A;
     loop {
         let mut end = NUMERIC_A;
         loop {
-            answer[start][end] = get_shortest_path_between_numerics(start, end);
+            answer[start][end] = get_shortest_path_between_numerics::<DEPTH>(start, end);
 
             end += 1;
             if end == NUM_NUMERICS {
@@ -330,7 +335,7 @@ const fn generate_shortest_keyboard_costs() -> [[u64; NUM_NUMERICS]; NUM_NUMERIC
     return answer;
 }
 
-const fn get_shortest_path_between_numerics(start: usize, end: usize) -> u64 {
+const fn get_shortest_path_between_numerics<const DEPTH: usize>(start: usize, end: usize) -> u64 {
     if start == end {
         // press A -> press A -> press A -> press end
         return 1;
@@ -409,7 +414,7 @@ const fn get_shortest_path_between_numerics(start: usize, end: usize) -> u64 {
     loop {
         shortest_index -= 1;
 
-        let mine = get_numeric_path_min_cost(shortest[shortest_index]);
+        let mine = get_numeric_path_min_cost::<DEPTH>(shortest[shortest_index]);
         if mine < best {
             best = mine;
         }
@@ -422,8 +427,8 @@ const fn get_shortest_path_between_numerics(start: usize, end: usize) -> u64 {
     return best;
 }
 
-const fn get_numeric_path_min_cost(numeric_path: Path) -> u64 {
-    return get_arrow_path_min_cost(2, numeric_path);
+const fn get_numeric_path_min_cost<const DEPTH: usize>(numeric_path: Path) -> u64 {
+    return get_arrow_path_min_cost(DEPTH, numeric_path);
 }
 
 const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
@@ -472,33 +477,6 @@ const fn get_arrow_path_min_cost(depth: usize, path: Path) -> u64 {
     }
 
     return total;
-}
-
-// const SHORTEST_ARROW_PATHS: [[([Path; MAX_SHORTEST_ARROW_PATHS], usize); NUM_ARROWS]; NUM_ARROWS] =
-//     generate_shortest_arrow_costs();
-
-const fn generate_shortest_arrow_costs(
-) -> [[([Path; MAX_SHORTEST_ARROW_PATHS], usize); NUM_ARROWS]; NUM_ARROWS] {
-    let mut answer: [[([Path; MAX_SHORTEST_ARROW_PATHS], usize); NUM_ARROWS]; NUM_ARROWS] =
-        [[([Path::new(); MAX_SHORTEST_ARROW_PATHS], 0); NUM_ARROWS]; NUM_ARROWS];
-
-    let mut start = ARROW_UP;
-    loop {
-        let mut end = ARROW_UP;
-        loop {
-            answer[start][end] = get_shortest_paths_between_arrows(start, end);
-
-            end += 1;
-            if end == NUM_ARROWS {
-                break;
-            }
-        }
-        start += 1;
-        if start == NUM_ARROWS {
-            break;
-        }
-    }
-    return answer;
 }
 
 const fn get_shortest_paths_between_arrows(
@@ -669,7 +647,64 @@ fn convert_to_number(byte: u8) -> usize {
 
 #[aoc(day21, part2)]
 pub fn part2(input: &str) -> u64 {
-    return 0;
+    // println!("const SHORTEST_NUMERIC_PATHS_PART_2: [[u64; NUM_NUMERICS]; NUM_NUMERICS] = [");
+    // for start in 0..NUM_NUMERICS {
+    //     print!("[");
+    //     for end in 0..NUM_NUMERICS {
+    //         let shortest: u64;
+    //         if start < NUMERIC_A || end < NUMERIC_A {
+    //             shortest = u64::MAX;
+    //         } else {
+    //             shortest = get_shortest_path_between_numerics::<25>(start, end);
+    //         }
+    //         print!("{}", shortest); // SHORTEST_NUMERIC_PATHS_PART_2[start][end]);
+    //         if end < NUM_NUMERICS -1 {
+    //             print!(", ");
+    //         }
+    //     }
+    //     println!("], ");
+    // }
+    // println!("];");
+
+    let input = input.as_bytes();
+    let mut i: usize = 0;
+
+    let mut total = 0;
+    let mut total_sequence_length = 0;
+    let mut current_value = 0;
+
+    let mut prev = NUMERIC_A;
+
+    loop {
+        if input[i] < b'A' {
+            current_value *= 10;
+            current_value += (input[i] - b'0') as u64;
+        }
+
+        let next_step = convert_to_number(input[i]);
+        total_sequence_length += get_shortest_path_between_numerics::<25>(prev, next_step);
+        // total_sequence_length += SHORTEST_NUMERIC_PATHS_PART_2[prev][next_step];
+
+        prev = next_step;
+        i += 1;
+        if i >= input.len() || input[i] == b'\n' {
+            // println!("total += {total_sequence_length} * {current_value}");
+            total += current_value * total_sequence_length;
+
+            if i >= input.len() {
+                break;
+            }
+            // add to sum
+            current_value = 0;
+            total_sequence_length = 0;
+            i += 1;
+            if i >= input.len() {
+                break;
+            }
+        }
+    }
+
+    return total;
 }
 
 #[cfg(test)]
@@ -698,9 +733,7 @@ mod test {
 
     #[test]
     fn part1_real_input() {
-        // 171095 is too low
-        // 181357 is too high.
-        assert_eq!(part1(&get_input()), 1)
+        assert_eq!(part1(&get_input()), 176650)
     }
 
     #[test]
