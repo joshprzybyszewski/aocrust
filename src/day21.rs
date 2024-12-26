@@ -29,23 +29,7 @@
 
 */
 
-const SHORTEST_ARROW_PATHS: [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS] =
-    generate_shortest_keyboard_paths();
-
-const SHORTEST_NUMERIC_PATHS: [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] =
-    generate_shortest_numeric_paths();
-
-const MAX_PATH_LENGTH: usize = 10;
-const MAX_SHORTEST_ARROW_PATHS: usize = 2;
-const MAX_SHORTEST_NUMERIC_PATHS: usize = 10;
-
-const ARROW_INVALID: usize = 0;
-const ARROW_UP: usize = 1;
-const ARROW_LEFT: usize = 2;
-const ARROW_DOWN: usize = 3;
-const ARROW_RIGHT: usize = 4;
-const ARROW_A: usize = 5;
-const NUM_ARROWS: usize = 6;
+use std::u64;
 
 const NUMERIC_INVALID: usize = 0;
 const NUMERIC_A: usize = 1;
@@ -191,6 +175,14 @@ struct NumericState {
     next: [usize; 5],
 }
 
+const ARROW_INVALID: usize = 0;
+const ARROW_UP: usize = 1;
+const ARROW_LEFT: usize = 2;
+const ARROW_DOWN: usize = 3;
+const ARROW_RIGHT: usize = 4;
+const ARROW_A: usize = 5;
+const NUM_ARROWS: usize = 6;
+
 struct ArrowKeypad {
     states: [ArrowState; 6],
 }
@@ -267,6 +259,13 @@ struct ArrowState {
     next: [usize; 5],
 }
 
+const SHORTEST_NUMERIC_PATHS: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
+    generate_shortest_keyboard_costs();
+
+const MAX_PATH_LENGTH: usize = 10;
+const MAX_SHORTEST_ARROW_PATHS: usize = 2;
+const MAX_SHORTEST_NUMERIC_PATHS: usize = 10;
+
 #[derive(Copy, Clone)]
 struct Path {
     directions: [usize; MAX_PATH_LENGTH - 1],
@@ -309,95 +308,14 @@ impl Path {
     }
 }
 
-const fn generate_shortest_keyboard_paths(
-) -> [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS] {
-    let mut answer: [[[Path; MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS] =
-        [[[Path::new(); MAX_SHORTEST_ARROW_PATHS]; NUM_ARROWS]; NUM_ARROWS];
+const fn generate_shortest_keyboard_costs() -> [[u64; NUM_NUMERICS]; NUM_NUMERICS] {
+    let mut answer: [[u64; NUM_NUMERICS]; NUM_NUMERICS] = [[u64::MAX; NUM_NUMERICS]; NUM_NUMERICS];
 
-    let mut start = 0;
+    let mut start = NUMERIC_A;
     loop {
-        let mut end = 0;
+        let mut end = NUMERIC_A;
         loop {
-            answer[start][end] = get_all_shortest_path_between_arrows(start, end);
-
-            end += 1;
-            if end == NUM_ARROWS {
-                break;
-            }
-        }
-        start += 1;
-        if start == NUM_ARROWS {
-            break;
-        }
-    }
-    return answer;
-}
-
-const fn get_all_shortest_path_between_arrows(
-    start: usize,
-    end: usize,
-) -> [Path; MAX_SHORTEST_ARROW_PATHS] {
-    let mut output: [Path; MAX_SHORTEST_ARROW_PATHS] = [Path::new(); MAX_SHORTEST_ARROW_PATHS];
-    if start == end || start == ARROW_INVALID || end == ARROW_INVALID {
-        return output;
-    }
-
-    let keyboard = ArrowKeypad::new();
-    let mut pending: [Path; NUM_ARROWS * NUM_ARROWS] = [Path::new(); NUM_ARROWS * NUM_ARROWS];
-    let mut index = 0;
-    let mut pending_index = 1;
-    let mut output_index = 0;
-
-    pending[index].positions[0] = start;
-
-    loop {
-        if index == pending_index {
-            break;
-        }
-        let path = pending[index];
-        if output[0].steps > 0 && path.steps > output[0].steps {
-            index += 1;
-            continue;
-        }
-        let position = path.last();
-        if position == end {
-            output[output_index] = path;
-            index += 1;
-            output_index += 1;
-            continue;
-        }
-
-        let mut direction = ARROW_UP;
-        loop {
-            let next_pos = keyboard.states[position].next[direction];
-            if next_pos != ARROW_INVALID && !path.has_been_to(next_pos) {
-                pending[pending_index] = path.add(direction, next_pos);
-                pending_index += 1;
-            }
-            direction += 1;
-            if direction == ARROW_A {
-                break;
-            }
-        }
-
-        index += 1;
-        if index > pending_index || index >= pending.len() {
-            unreachable!();
-        }
-    }
-    return output;
-}
-
-const fn generate_shortest_numeric_paths(
-) -> [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] {
-    let mut answer: [[[Path; MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS] =
-        [[[Path::new(); MAX_SHORTEST_NUMERIC_PATHS]; NUM_NUMERICS]; NUM_NUMERICS];
-
-    let mut start = 0;
-    loop {
-        let mut end = 0;
-        loop {
-            answer[start][end] = get_shortest_path_between_numbers(start, end);
+            answer[start][end] = get_shortest_path_between_numerics(start, end);
 
             end += 1;
             if end == NUM_NUMERICS {
@@ -412,46 +330,60 @@ const fn generate_shortest_numeric_paths(
     return answer;
 }
 
-const fn get_shortest_path_between_numbers(
-    start: usize,
-    end: usize,
-) -> [Path; MAX_SHORTEST_NUMERIC_PATHS] {
-    let mut output: [Path; MAX_SHORTEST_NUMERIC_PATHS] = [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
-    if start == end || start == NUMERIC_INVALID || end == NUMERIC_INVALID {
-        return output;
+const fn get_shortest_path_between_numerics(start: usize, end: usize) -> u64 {
+    if start == end {
+        // press A -> press A -> press A -> press end
+        return 1;
     }
 
-    let keyboard = NumericKeypad::new();
+    if start == NUMERIC_INVALID || end == NUMERIC_INVALID {
+        unreachable!();
+    }
+
+    let mut shortest: [Path; MAX_SHORTEST_NUMERIC_PATHS] =
+        [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
+    let mut shortest_index = 0;
+
     let mut pending: [Path; MAX_SHORTEST_NUMERIC_PATHS * MAX_SHORTEST_NUMERIC_PATHS] =
         [Path::new(); MAX_SHORTEST_NUMERIC_PATHS * MAX_SHORTEST_NUMERIC_PATHS];
-    let mut index = 0;
     let mut pending_index = 1;
-    let mut output_index = 0;
+
+    let mut index = 0;
 
     pending[index].positions[0] = start;
 
+    let keyboard = NumericKeypad::new();
+
     loop {
         if index == pending_index {
+            // completed FIFO queue.
             break;
         }
+
         let path = pending[index];
-        if output[0].steps > 0 && path.steps > output[0].steps {
+        if shortest[0].steps > 0 && path.steps > shortest[0].steps {
+            // skip this one, since it's longer than the shortest.
             index += 1;
+            // we probably could break here since it's BFS, but let's play it safe.
             continue;
         }
 
         let position = path.last();
         if position == end {
-            output[output_index] = path;
-            output_index += 1;
+            // We found a path to the end. let's remember it
+            shortest[shortest_index] = path;
+            shortest_index += 1;
             index += 1;
             continue;
         }
 
+        // Check every cardinal direction.
         let mut direction = ARROW_UP;
         loop {
             let next_pos = keyboard.states[position].next[direction];
             if next_pos != NUMERIC_INVALID && !path.has_been_to(next_pos) {
+                // if we are a valid move, and the current path hasn't cross the number
+                // before, let's add this to the FIFO queue.
                 pending[pending_index] = path.add(direction, next_pos);
                 pending_index += 1;
             }
@@ -466,93 +398,32 @@ const fn get_shortest_path_between_numbers(
             unreachable!();
         }
     }
-    return output;
-}
 
-const fn get_min_cost_of_numeric_path(path: Path) -> u64 {
-    let mut i = 0;
-    let mut best = 0;
-    let mut prev = NUMERIC_A;
-    loop {
-        let next_pos;
-        if i > path.steps {
-            break;
-        } else if i == path.steps {
-            next_pos = NUMERIC_A;
-        } else {
-            next_pos = path.directions[i];
-        }
-        let options = SHORTEST_ARROW_PATHS[prev][next_pos];
-
-        let mut best_step = u64::MAX;
-        if options[0].steps != 0 {
-            let mut option_index = 0;
-
-            loop {
-                if option_index >= options.len() || options[option_index].steps == 0 {
-                    break;
-                }
-
-                let cost = get_min_cost_of_key_pad_1_path(options[option_index]);
-                if cost < best_step {
-                    best_step = cost;
-                }
-                option_index += 1;
-            }
-            if best_step == u64::MAX {
-                unreachable!();
-            }
-        } else {
-            // just push A!
-            best_step = 1;
-        }
-
-        best += best_step;
-        prev = next_pos;
-        i += 1;
+    if shortest_index == 0 {
+        // there has to be at least one shortest path to check.
+        unreachable!();
     }
-    //
+
+    let mut best = u64::MAX;
+
+    loop {
+        shortest_index -= 1;
+
+        let mine = get_numeric_path_min_cost(shortest[shortest_index]);
+        if mine < best {
+            best = mine;
+        }
+
+        if shortest_index == 0 {
+            break;
+        }
+    }
+
     return best;
 }
 
-const fn get_min_cost_of_key_pad_1_path(path: Path) -> u64 {
-    if path.steps == 0 {
-        // just push A on my keypad!
-        return 1;
-    }
-
-    let mut i = 0;
-    let mut total = 0;
-    let mut prev = ARROW_A;
-    loop {
-        let next_pos;
-        if i > path.steps {
-            break;
-        } else if i == path.steps {
-            next_pos = ARROW_A;
-        } else {
-            next_pos = path.directions[i];
-        }
-        let options = SHORTEST_ARROW_PATHS[prev][next_pos];
-
-        let mut option_index = 0;
-        loop {
-            if option_index >= options.len() || options[option_index].steps == 0 {
-                break;
-            }
-            total += get_min_cost_of_key_pad_2_path(options[option_index]);
-            option_index += 1;
-        }
-        prev = next_pos;
-        i += 1;
-    }
-
-    return total;
-}
-
-const fn get_min_cost_of_key_pad_2_path(path: Path) -> u64 {
-    // all of the third keypad steps to get there + 1 for the A.
-    return path.steps as u64;
+const fn get_numeric_path_min_cost(numeric_path: Path) -> u64 {
+    return u64::MAX;
 }
 
 fn arrow_to_byte(arrow: usize) -> &'static str {
@@ -601,23 +472,8 @@ pub fn part1(input: &str) -> u64 {
         }
 
         let next_step = convert_to_number(input[i]);
-        let mut best = u64::MAX;
-        let mut numeric_path_index = 0;
-        let all_numeric_paths = SHORTEST_NUMERIC_PATHS[prev][next_step];
-        loop {
-            if all_numeric_paths[numeric_path_index].steps == 0 {
-                break;
-            }
-            let path = all_numeric_paths[numeric_path_index];
-            let cost = get_min_cost_of_numeric_path(path);
-            if cost < best {
-                best = cost;
-            }
-            numeric_path_index += 1;
-        }
-        if best != u64::MAX {
-            total_sequence_length += best;
-        }
+        total_sequence_length += SHORTEST_NUMERIC_PATHS[prev][next_step];
+
         prev = next_step;
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
