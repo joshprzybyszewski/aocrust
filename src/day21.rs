@@ -310,6 +310,17 @@ impl Path {
     const fn last(&self) -> usize {
         self.positions[self.steps]
     }
+
+    fn cache_index(&self) -> usize {
+        if self.steps > 3 {
+            return 625; // 5 * 5 * 5 * 5;
+        }
+        return self.directions[0] + (self.directions[1] * 5) + (self.directions[1] * 25);
+    }
+
+    fn to_string(&self) -> String {
+        return self.directions.map(arrow_to_byte).join("");
+    }
 }
 
 const fn generate_shortest_keyboard_costs<const DEPTH: usize>(
@@ -563,6 +574,7 @@ fn arrow_to_byte(arrow: usize) -> &'static str {
         ARROW_LEFT => return "<",
         ARROW_RIGHT => return ">",
         ARROW_A => return "A",
+        ARROW_INVALID => return "",
         _ => unreachable!(),
     }
 }
@@ -675,6 +687,10 @@ pub fn part2(input: &str) -> u64 {
 
     let mut prev = NUMERIC_A;
 
+    let mut cacher = ArrowCacher {
+        answers: [[0; 125]; 26],
+    };
+
     loop {
         if input[i] < b'A' {
             current_value *= 10;
@@ -682,7 +698,7 @@ pub fn part2(input: &str) -> u64 {
         }
 
         let next_step = convert_to_number(input[i]);
-        total_sequence_length += get_shortest_path_between_numerics::<25>(prev, next_step);
+        total_sequence_length += cacher.get_shortest_path_between_numerics2::<25>(prev, next_step);
         // total_sequence_length += SHORTEST_NUMERIC_PATHS_PART_2[prev][next_step];
 
         prev = next_step;
@@ -705,6 +721,183 @@ pub fn part2(input: &str) -> u64 {
     }
 
     return total;
+}
+
+struct ArrowCacher {
+    answers: [[u64; 125]; 26],
+}
+
+impl ArrowCacher {
+    fn get_shortest_path_between_numerics2<const DEPTH: usize>(
+        &mut self,
+        start: usize,
+        end: usize,
+    ) -> u64 {
+        if start == end {
+            // press A -> press A -> press A -> press end
+            return 1;
+        }
+
+        if start == NUMERIC_INVALID || end == NUMERIC_INVALID {
+            unreachable!();
+        }
+
+        let mut shortest: [Path; MAX_SHORTEST_NUMERIC_PATHS] =
+            [Path::new(); MAX_SHORTEST_NUMERIC_PATHS];
+        let mut shortest_index = 0;
+
+        let mut pending: [Path; MAX_SHORTEST_NUMERIC_PATHS * MAX_SHORTEST_NUMERIC_PATHS] =
+            [Path::new(); MAX_SHORTEST_NUMERIC_PATHS * MAX_SHORTEST_NUMERIC_PATHS];
+        let mut pending_index = 1;
+
+        let mut index = 0;
+
+        pending[index].positions[0] = start;
+
+        let keyboard = NumericKeypad::new();
+
+        loop {
+            if index == pending_index {
+                // completed FIFO queue.
+                break;
+            }
+
+            let path = pending[index];
+            if shortest[0].steps > 0 && path.steps > shortest[0].steps {
+                // skip this one, since it's longer than the shortest.
+                index += 1;
+                // we probably could break here since it's BFS, but let's play it safe.
+                continue;
+            }
+
+            let position = path.last();
+            if position == end {
+                // We found a path to the end. let's remember it
+                shortest[shortest_index] = path;
+                shortest_index += 1;
+                index += 1;
+                continue;
+            }
+
+            // Check every cardinal direction.
+            let mut direction = ARROW_UP;
+            loop {
+                let next_pos = keyboard.states[position].next[direction];
+                if next_pos != NUMERIC_INVALID && !path.has_been_to(next_pos) {
+                    // if we are a valid move, and the current path hasn't cross the number
+                    // before, let's add this to the FIFO queue.
+                    pending[pending_index] = path.add(direction, next_pos);
+                    pending_index += 1;
+                }
+                direction += 1;
+                if direction == ARROW_A {
+                    break;
+                }
+            }
+
+            index += 1;
+            if index > pending_index || index >= pending.len() {
+                unreachable!();
+            }
+        }
+
+        if shortest_index == 0 {
+            // there has to be at least one shortest path to check.
+            unreachable!();
+        }
+
+        let mut best = u64::MAX;
+
+        loop {
+            shortest_index -= 1;
+
+            let mine = self.get_numeric_path_min_cost2::<DEPTH>(shortest[shortest_index]);
+            if mine < best {
+                best = mine;
+            }
+
+            if shortest_index == 0 {
+                break;
+            }
+        }
+
+        return best;
+    }
+
+    fn get_numeric_path_min_cost2<const DEPTH: usize>(&mut self, numeric_path: Path) -> u64 {
+        return self.get_arrow_path_min_cost2(DEPTH, numeric_path);
+    }
+
+    fn get_arrow_path_min_cost2(&mut self, depth: usize, path: Path) -> u64 {
+        let answer_index = path.cache_index();
+        if answer_index < 125 && self.answers[depth][answer_index] != 0 {
+            return self.answers[depth][answer_index];
+        }
+
+        if depth == 0 {
+            // plus one to push A.
+            if answer_index >= 125 {
+                return path.steps as u64 + 1;
+            }
+            self.answers[depth][answer_index] = path.steps as u64 + 1;
+            return self.answers[depth][answer_index];
+        }
+
+        let mut total = 0;
+        let mut my_state = ARROW_A;
+        let mut i = 0;
+        loop {
+            let next: usize;
+            if i > path.steps {
+                break;
+            } else if i == path.steps {
+                next = ARROW_A;
+            } else {
+                next = path.directions[i];
+            }
+            i += 1;
+
+            let (paths, num_paths) = get_shortest_paths_between_arrows(my_state, next);
+            let mut path_index = 0;
+            if num_paths == 0 {
+                unreachable!();
+            }
+
+            let mut best_to_next = u64::MAX;
+            loop {
+                let path_cost = self.get_arrow_path_min_cost2(depth - 1, paths[path_index]);
+                path_index += 1;
+                if path_cost < best_to_next {
+                    best_to_next = path_cost;
+                }
+                if path_index == num_paths {
+                    break;
+                }
+            }
+            if best_to_next == u64::MAX {
+                unreachable!();
+            }
+            total += best_to_next;
+
+            my_state = next;
+        }
+
+        for _ in 0..(25 - depth) {
+            print!(" ")
+        }
+        println!(
+            "get_arrow_path_min_cost2({:#2}, {}) = {:#6}",
+            depth,
+            path.to_string(),
+            total
+        );
+        if answer_index >= 125 {
+            return total;
+        }
+        self.answers[depth][answer_index] = total;
+        return self.answers[depth][answer_index];
+        // return total;
+    }
 }
 
 #[cfg(test)]
