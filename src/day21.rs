@@ -887,7 +887,6 @@ impl ArrowCacher {
         }
         self.answers[depth][answer_index] = total;
         return self.answers[depth][answer_index];
-        // return total;
     }
 }
 

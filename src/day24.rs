@@ -311,37 +311,8 @@ impl Logic {
             || left_gate_type.gate_type == AND_2
             || right_gate_type.gate_type == AND_2
         {
-            if left_gate_type.gate_type == AND_1 {
-                if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != AND_2 {
-                    bad.insert(index);
-                    // unreachable!();
-                }
-            }
-            if left_gate_type.gate_type == AND_2 {
-                if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != AND_1 {
-                    bad.insert(index);
-                    // unreachable!();
-                }
-            }
-            if right_gate_type.gate_type == AND_1 {
-                if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != AND_2 {
-                    bad.insert(index);
-                    // unreachable!();
-                }
-            }
-            if right_gate_type.gate_type == AND_2 {
-                if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != AND_1 {
-                    bad.insert(index);
-                    // unreachable!();
-                }
-            }
-
-            let act_index: usize;
-            if left_gate_type.gate_type != UNKNOWN {
-                act_index = left_gate_type.bit_index;
-            } else if right_gate_type.gate_type != UNKNOWN {
-                act_index = right_gate_type.bit_index;
-            } else {
+            let act_index = left_gate_type.bit_index;
+            if act_index != right_gate_type.bit_index {
                 unreachable!();
             }
 
@@ -354,44 +325,30 @@ impl Logic {
 
         let expected_index;
         if left_gate_type.gate_type == XOR_1 {
-            if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != C_OUT {
-                bad.insert(index);
-                // unreachable!();
-            }
             expected_index = left_gate_type.bit_index;
         } else if left_gate_type.gate_type == C_OUT {
-            if right_gate_type.gate_type != UNKNOWN && right_gate_type.gate_type != C_OUT {
-                bad.insert(index);
-                // unreachable!();
-            }
             expected_index = left_gate_type.bit_index + 1;
         } else if right_gate_type.gate_type == XOR_1 {
-            if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != C_OUT {
-                bad.insert(index);
-                // unreachable!();
-            }
             expected_index = right_gate_type.bit_index;
         } else if right_gate_type.gate_type == C_OUT {
-            if left_gate_type.gate_type != UNKNOWN && left_gate_type.gate_type != C_OUT {
-                bad.insert(index);
-                // unreachable!();
-            }
             expected_index = right_gate_type.bit_index + 1;
         } else {
             unreachable!();
         }
 
-        if my_op == OPERATION_AND {
-            return GateType::and2(expected_index);
-        }
-        if my_op == OPERATION_XOR {
+        if index >= Z_OFFSET {
+            let my_index = index - Z_OFFSET;
+            if my_op != OPERATION_XOR || my_index != expected_index {
+                bad.insert(index);
+            }
             return GateType::xor2(expected_index);
         }
-        bad.insert(index);
 
-        return GateType::unknown();
+        if my_op != OPERATION_AND {
+            bad.insert(index);
+        }
 
-        //
+        return GateType::and2(expected_index);
     }
 }
 
