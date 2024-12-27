@@ -315,7 +315,7 @@ impl Path {
         if self.steps > 3 {
             return 625; // 5 * 5 * 5 * 5;
         }
-        return self.directions[0] + (self.directions[1] * 5) + (self.directions[1] * 25);
+        return self.directions[0] + (self.directions[1] * 5) + (self.directions[2] * 25);
     }
 
     fn to_string(&self) -> String {
@@ -882,15 +882,6 @@ impl ArrowCacher {
             my_state = next;
         }
 
-        for _ in 0..(25 - depth) {
-            print!(" ")
-        }
-        println!(
-            "get_arrow_path_min_cost2({:#2}, {}) = {:#6}",
-            depth,
-            path.to_string(),
-            total
-        );
         if answer_index >= 125 {
             return total;
         }
@@ -930,12 +921,7 @@ mod test {
     }
 
     #[test]
-    fn part2_example() {
-        assert_eq!(part2(&get_example_input()), 1)
-    }
-
-    #[test]
     fn part2_real_input() {
-        assert_eq!(part2(&get_input()), 1)
+        assert_eq!(part2(&get_input()), 217698355426872)
     }
 }
