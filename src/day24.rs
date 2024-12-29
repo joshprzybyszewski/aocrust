@@ -107,9 +107,110 @@ impl Gate {
 }
 
 #[derive(Copy, Clone)]
+struct FullAdder {
+    // the output wire producing the sum.
+    sum: usize,
+    // the output wire producing the carry digit (usually an OR gate, but it's an AND for bit_index = 0).
+    c_out: usize,
+
+    // the intermediate xor gate's output (if any. unpopulated for bit_index = 0)
+    xor1: usize,
+    // the intermediate and gate's output (if any. unpopulated for bit_index = 0)
+    and1: usize,
+    // the intermediate and gate's output (if any. unpopulated for bit_index = 0)
+    and2: usize,
+
+    bit_index: u8,
+}
+
+impl FullAdder {
+    fn invalid() -> Self {
+        FullAdder {
+            sum: NUM_GATES,
+            c_out: NUM_GATES,
+            xor1: NUM_GATES,
+            and1: NUM_GATES,
+            and2: NUM_GATES,
+            bit_index: 65,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Adder64 {
+    adders: [FullAdder; 64],
+
+    bad: [usize; 8],
+    bad_index: usize,
+}
+
+impl Adder64 {
+    fn new() -> Self {
+        let mut answer = Adder64 {
+            adders: [FullAdder::invalid(); 64],
+            bad: [0; 8],
+            bad_index: 0,
+        };
+
+        for i in 0u8..64 {
+            answer.adders[i as usize].bit_index = i;
+        }
+
+        return answer;
+    }
+
+    fn add_bad(&mut self, dest: usize) {
+        self.bad[self.bad_index] = dest;
+        self.bad_index += 1;
+    }
+
+    fn add_initial_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) {
+        if left < X_OFFSET {
+            if right >= X_OFFSET {
+                unreachable!();
+            }
+            return;
+        }
+        let bit_index: usize;
+        if left >= Y_OFFSET {
+            bit_index = left - Y_OFFSET;
+            if bit_index != right - X_OFFSET {
+                unreachable!();
+            }
+        } else {
+            bit_index = left - X_OFFSET;
+            if bit_index != right - Y_OFFSET {
+                unreachable!();
+            }
+        }
+
+        if op == OPERATION_AND {
+            if bit_index == 0 {
+                self.adders[bit_index].c_out = dest;
+            } else {
+                self.adders[bit_index].and1 = dest;
+            }
+        }
+
+        if op == OPERATION_XOR {
+            if bit_index == 0 {
+                if dest != Z_OFFSET + bit_index {
+                    self.add_bad(dest);
+                }
+                self.adders[bit_index].sum = dest;
+            } else {
+                self.adders[bit_index].xor1 = dest;
+            }
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
 struct Logic {
     values: [u8; NUM_GATES],
     gates: [Gate; NUM_GATES],
+
+    adder64: Adder64,
 }
 
 impl Logic {
@@ -120,6 +221,7 @@ impl Logic {
         let mut output = Logic {
             values: [0; NUM_GATES],
             gates: [Gate::empty(); NUM_GATES],
+            adder64: Adder64::new(),
         };
 
         // iterate through starting
@@ -160,9 +262,14 @@ impl Logic {
 
             let dest = output.parse_index(input, i);
             i += 4;
-            output.gates[dest] = Gate::new(left, right, op);
+            output.add_gate(left, right, dest, op)
         }
         return output;
+    }
+
+    fn add_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) {
+        self.gates[dest] = Gate::new(left, right, op);
+        self.adder64.add_initial_gate(left, right, dest, op);
     }
 
     fn parse_index(&self, input: &[u8], i: usize) -> usize {
@@ -226,7 +333,7 @@ impl Logic {
         }
     }
 
-    fn solve_part2(&self) -> String {
+    fn solve_part2(&mut self) -> String {
         let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
         let mut z = Z_OFFSET + 63;
@@ -248,6 +355,7 @@ impl Logic {
         }
 
         loop {
+            self.check_gate(z - Z_OFFSET);
             let gate_type = self.get_gate_type(&mut bad, z);
             if gate_type != GateType::sum(z - Z_OFFSET) {
                 println!("sum z ({}) should be SUM", z - Z_OFFSET);
@@ -271,6 +379,17 @@ impl Logic {
             .map(|&id| convert_to_string(id))
             .collect::<Vec<String>>()
             .join(",");
+    }
+
+    fn check_gate(&mut self, bit_index: usize) {
+        let sum = Z_OFFSET + bit_index;
+        self.adder64.adders[bit_index].sum = sum;
+
+        let sum_gate = &self.gates[sum];
+        if sum_gate.op != OPERATION_XOR {
+            self.adder64.add_bad(sum);
+        }
+        // TODO
     }
 
     fn get_gate_type(&self, bad: &mut HashSet<usize>, index: usize) -> GateType {
