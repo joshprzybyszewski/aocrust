@@ -11,80 +11,6 @@ const OPERATION_AND: u8 = 3;
 
 const VALUE_SET_MASK: u8 = 0x80;
 
-const INPUT: u8 = 1;
-const SUM: u8 = 2;
-const C_OUT: u8 = 3;
-const XOR_1: u8 = 4;
-const AND_1: u8 = 5;
-const AND_2: u8 = 6;
-const UNKNOWN: u8 = 7;
-
-#[derive(Eq, PartialEq, Debug)]
-struct GateType {
-    bit_index: usize,
-    gate_type: u8,
-}
-
-impl GateType {
-    fn input(index: usize) -> Self {
-        return Self {
-            bit_index: index,
-            gate_type: INPUT,
-        };
-    }
-
-    fn xor1(index: usize) -> Self {
-        return Self {
-            bit_index: index,
-            gate_type: XOR_1,
-        };
-    }
-
-    fn and1(index: usize) -> Self {
-        if index == 0 {
-            return Self {
-                bit_index: index,
-                gate_type: C_OUT,
-            };
-        }
-        return Self {
-            bit_index: index,
-            gate_type: AND_1,
-        };
-    }
-
-    fn xor2(index: usize) -> Self {
-        return Self {
-            bit_index: index,
-            gate_type: SUM,
-        };
-    }
-
-    fn sum(index: usize) -> Self {
-        return Self {
-            bit_index: index,
-            gate_type: SUM,
-        };
-    }
-
-    fn and2(index: usize) -> Self {
-        if index == 0 {
-            unreachable!();
-        }
-        return Self {
-            bit_index: index,
-            gate_type: AND_2,
-        };
-    }
-
-    fn c_out(index: usize) -> Self {
-        return Self {
-            bit_index: index,
-            gate_type: C_OUT,
-        };
-    }
-}
-
 #[derive(Copy, Clone)]
 struct Gate {
     left: usize,
@@ -110,6 +36,9 @@ impl Gate {
 struct Logic {
     values: [u8; NUM_GATES],
     gates: [Gate; NUM_GATES],
+    outs: [[usize; 2]; NUM_GATES],
+
+    n_bits: u8,
 }
 
 impl Logic {
@@ -120,6 +49,8 @@ impl Logic {
         let mut output = Logic {
             values: [0; NUM_GATES],
             gates: [Gate::empty(); NUM_GATES],
+            outs: [[NUM_GATES; 2]; NUM_GATES],
+            n_bits: 0,
         };
 
         // iterate through starting
@@ -160,9 +91,38 @@ impl Logic {
 
             let dest = output.parse_index(input, i);
             i += 4;
-            output.gates[dest] = Gate::new(left, right, op);
+
+            output.add_gate(left, right, dest, op);
         }
         return output;
+    }
+
+    fn add_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) {
+        self.gates[dest] = Gate::new(left, right, op);
+
+        if dest > Z_OFFSET {
+            let bits = (dest - Z_OFFSET) as u8;
+            if bits > self.n_bits {
+                self.n_bits = bits;
+            }
+        }
+
+        self.add_out(left, dest);
+        self.add_out(right, dest);
+    }
+
+    fn add_out(&mut self, input: usize, output: usize) {
+        if self.outs[input][0] == NUM_GATES {
+            self.outs[input][0] = output;
+            return;
+        }
+        if self.outs[input][1] == NUM_GATES {
+            self.outs[input][1] = output;
+            return;
+        }
+
+        println!("Input {input}. Output {output}");
+        unreachable!();
     }
 
     fn parse_index(&self, input: &[u8], i: usize) -> usize {
@@ -229,40 +189,41 @@ impl Logic {
     fn solve_part2(&self) -> String {
         let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
-        let mut z = Z_OFFSET + 63;
+        let mut bit = 0;
+
         loop {
+            let z = Z_OFFSET + bit as usize;
             if self.gates[z].op == 0 {
-                z -= 1;
-                continue;
-            }
-
-            let gate_type = self.get_gate_type(&mut bad, z);
-            z -= 1;
-            if gate_type != GateType::c_out(z - Z_OFFSET) {
-                println!("last set z ({}) should be C_OUT", z - Z_OFFSET);
-                println!(" exp: {:?}", GateType::c_out(z - Z_OFFSET));
-                println!(" act: {:?}", gate_type);
-                bad.insert(z);
-            }
-            break;
-        }
-
-        loop {
-            let gate_type = self.get_gate_type(&mut bad, z);
-            if gate_type != GateType::sum(z - Z_OFFSET) {
-                println!("sum z ({}) should be SUM", z - Z_OFFSET);
-                println!(" exp: {:?}", GateType::sum(z - Z_OFFSET));
-                println!(" act: {:?}", gate_type);
-                bad.insert(z);
-            }
-
-            if z == Z_OFFSET {
                 break;
             }
+            self.find_swapped(bit, &mut bad, z);
+            println!("Bit: {bit}");
+            println!(" - {}", self.to_ids(&bad));
 
-            z -= 1;
+            bit += 1;
+            if bad.len() > 8 {
+                // we were told 8 is the max size.
+                println!("exceeded max at {bit}");
+                // unreachable!();
+            }
+            // if bad.len() == 8 {
+            //     // we were told 8 is the max size.
+            //     break;
+            // }
         }
+        return self.to_ids(&bad);
 
+        // let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
+
+        // ids.sort();
+        // return ids
+        //     .iter()
+        //     .map(|&id| convert_to_string(id))
+        //     .collect::<Vec<String>>()
+        //     .join(",");
+    }
+
+    fn to_ids(&self, bad: &HashSet<usize>) -> String {
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
         ids.sort();
@@ -273,131 +234,181 @@ impl Logic {
             .join(",");
     }
 
-    fn get_gate_type(&self, bad: &mut HashSet<usize>, index: usize) -> GateType {
+    fn find_swapped(&self, bit: u8, bad: &mut HashSet<usize>, index: usize) {
         if index >= X_OFFSET && index < Z_OFFSET {
-            // no possible way to mess up input, right?
-            if index >= Y_OFFSET {
-                return GateType::input(index - Y_OFFSET);
-            }
-            return GateType::input(index - X_OFFSET);
+            // x and y cannot be swapped.
+            return;
         }
 
-        let actual = &self.gates[index];
-        let my_op = actual.op;
-
-        let left_gate_type = self.get_gate_type(bad, actual.left);
-        let right_gate_type = self.get_gate_type(bad, actual.right);
-
-        if my_op == OPERATION_OR {
-            let bit_index: usize;
-            if left_gate_type.gate_type == AND_1 {
-                if right_gate_type.gate_type != AND_2 {
-                    bad.insert(actual.right);
-                }
-                bit_index = left_gate_type.bit_index;
-            } else if right_gate_type.gate_type == AND_1 {
-                if left_gate_type.gate_type != AND_2 {
-                    bad.insert(actual.left);
-                }
-                bit_index = right_gate_type.bit_index;
-            } else if left_gate_type.gate_type == AND_2 {
-                if right_gate_type.gate_type != AND_1 {
-                    bad.insert(actual.right);
-                }
-                bit_index = left_gate_type.bit_index;
-            } else if right_gate_type.gate_type == AND_2 {
-                if left_gate_type.gate_type != AND_1 {
-                    bad.insert(actual.left);
-                }
-                bit_index = right_gate_type.bit_index;
-            } else {
-                unreachable!();
-            }
-            return GateType::c_out(bit_index);
-        }
-
-        if left_gate_type.gate_type == INPUT {
-            let bit_index = left_gate_type.bit_index;
-            if right_gate_type.gate_type != INPUT {
-                unreachable!();
-            }
-
-            if my_op == OPERATION_AND {
-                if bit_index == 0 {
-                    return GateType::c_out(bit_index);
-                }
-                return GateType::and1(bit_index);
-            }
-
-            if my_op != OPERATION_XOR {
-                unreachable!();
-            }
-            if bit_index == 0 {
-                return GateType::sum(bit_index);
-            }
-
-            return GateType::xor1(bit_index);
-        }
-
-        if index >= Z_OFFSET {
-            let bit_index = index - Z_OFFSET;
-            if my_op != OPERATION_XOR {
-                bad.insert(index);
-                // it's not actually, but it should be.
-                return GateType::sum(bit_index);
-            }
-
-            if left_gate_type.gate_type == C_OUT {
-                if left_gate_type.bit_index + 1 != bit_index {
-                    bad.insert(actual.left);
-                } else if right_gate_type.gate_type != XOR_1 {
-                    bad.insert(actual.right);
-                }
-            } else if left_gate_type.gate_type == XOR_1 {
-                if left_gate_type.bit_index != bit_index {
-                    bad.insert(actual.left);
-                } else if right_gate_type.gate_type != C_OUT {
-                    bad.insert(actual.right);
-                }
-            } else if right_gate_type.gate_type == C_OUT {
-                if right_gate_type.bit_index + 1 != bit_index {
-                    bad.insert(actual.right);
-                } else if left_gate_type.gate_type != XOR_1 {
-                    bad.insert(actual.left);
-                }
-            } else if right_gate_type.gate_type == XOR_1 {
-                if right_gate_type.bit_index != bit_index {
-                    bad.insert(actual.right);
-                } else if left_gate_type.gate_type != C_OUT {
-                    bad.insert(actual.left);
-                }
-            }
-
-            return GateType::xor2(bit_index);
-        }
-
-        if my_op != OPERATION_AND {
+        if self.is_swapped(bit, index) {
             bad.insert(index);
         }
 
-        let bit_index;
-        if !bad.contains(&actual.left) {
-            if left_gate_type.gate_type == C_OUT {
-                bit_index = left_gate_type.bit_index + 1;
-            } else {
-                bit_index = left_gate_type.bit_index;
-            }
-        } else if !bad.contains(&actual.right) {
-            if right_gate_type.gate_type == C_OUT {
-                bit_index = right_gate_type.bit_index + 1;
-            } else {
-                bit_index = right_gate_type.bit_index;
-            }
-        } else {
+        let gate = &self.gates[index];
+        if self.gates[index].op == 0 {
             unreachable!();
         }
 
-        return GateType::and2(bit_index);
+        self.find_swapped(bit, bad, gate.left);
+        self.find_swapped(bit, bad, gate.right);
+    }
+
+    fn is_swapped(&self, bit: u8, index: usize) -> bool {
+        let gate = &self.gates[index];
+
+        if gate.op == OPERATION_OR {
+            return self.is_swapped_or_gate(bit, index, gate);
+        }
+
+        if gate.op == OPERATION_AND {
+            return self.is_swapped_and_gate(bit, index, gate);
+        }
+
+        if gate.op != OPERATION_XOR {
+            println!("index: {index} = {}", convert_to_string(index));
+            unreachable!();
+        }
+
+        return self.is_swapped_xor_gate(bit, index, gate);
+    }
+
+    fn is_swapped_or_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+        if gate.op != OPERATION_OR {
+            unreachable!();
+        }
+
+        // it should go OUT to an XOR and to an AND, both for the next bit index up.
+
+        let outs = &self.outs[index];
+
+        if outs[1] == NUM_GATES {
+            let output_index = outs[0];
+            if output_index < Z_OFFSET {
+                // if there's only one output, it must be to z.
+                return true;
+            }
+            // should only output for the last bit.
+            return self.n_bits != bit;
+        }
+
+        let op0 = self.gates[outs[0]].op;
+        let op1 = self.gates[outs[1]].op;
+
+        if op0 == OPERATION_XOR {
+            if op1 != OPERATION_AND {
+                return true;
+            }
+        } else if op0 == OPERATION_AND {
+            if op1 != OPERATION_XOR {
+                return true;
+            }
+        }
+        // TODO get bit offset for the outs and compare them.
+
+        return false;
+    }
+
+    fn is_swapped_and_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+        if gate.op != OPERATION_AND {
+            unreachable!();
+        }
+
+        // NOTE: bit 0 uses an AND gate as the C_OUT.
+        // if the left and right are X/Y,
+        //   then it should go OUT to only an OR.
+        // else,
+        //   then it should go OUT to only an OR.
+
+        let outs = &self.outs[index];
+        if outs[1] != NUM_GATES {
+            // this goes OUT to two other gates.
+            // That's only expected for bit 0, where the AND gate is the carry out.
+            if bit != 0 {
+                return true;
+            }
+            // TODO consider what the output gates are for the C_OUT.
+            return false;
+        }
+
+        if index >= Z_OFFSET {
+            // should not output an AND to the z_offset. (unless it's the last carry out)
+            return self.n_bits != bit;
+        }
+
+        let output_index = outs[0];
+        let output_gate = &self.gates[output_index];
+        if output_gate.op != OPERATION_OR {
+            unreachable!();
+        }
+
+        return false;
+    }
+
+    fn is_swapped_xor_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+        if gate.op != OPERATION_XOR {
+            unreachable!();
+        }
+        // NOTE: bit 0 uses an XOR gate as the SUM.
+        //
+        // if the left and right are X/Y,
+        //   then it should go OUT to an XOR and an AND.
+        let outs = &self.outs[index];
+        if gate.left >= X_OFFSET {
+            if outs[1] == NUM_GATES {
+                if bit == 0 {
+                    // the first bit uses a single XOR as the SUM.
+                    if index != Z_OFFSET {
+                        // it _must_ output to the Z_OFFSET.
+                        return true;
+                    }
+                    return false;
+                }
+                // both outputs should be populated.
+                return true;
+            }
+
+            if outs[0] >= Z_OFFSET && outs[1] >= Z_OFFSET {
+                println!("index = {}", convert_to_string(index));
+                println!("bit = {}", bit);
+                println!("outs[0] = {}", convert_to_string(outs[0]));
+                println!("outs[1] = {}", convert_to_string(outs[1]));
+                // return true;
+                unreachable!();
+            }
+
+            let op0 = self.gates[outs[0]].op;
+            let op1 = self.gates[outs[1]].op;
+
+            if op0 == OPERATION_XOR {
+                if op1 != OPERATION_AND {
+                    return true;
+                }
+            } else if op0 == OPERATION_AND {
+                if op1 != OPERATION_XOR {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // else,
+        //   then it should go OUT to Z.
+        if outs[0] != NUM_GATES || outs[1] != NUM_GATES {
+            // there should only be one output gate: at `index``.
+            return true;
+        }
+
+        if index < Z_OFFSET {
+            // needs to be a sum output.
+            return true;
+        }
+        let z_out = (index - Z_OFFSET) as u8;
+        if z_out != bit {
+            // should be the same bit offset.
+            return true;
+        }
+        return false;
     }
 }
 
@@ -540,11 +551,13 @@ x05 AND y05 -> z00";
     fn part2_real_input() {
         // not "ffk,jsv,qjs,rrw,z00,z01,z21,z39"
         // not "ffk,jsv,rrw,z06,z21,z39"
+        // not "ckb,dnc,kbs,ksv,nbd,pgc,tqq,tsm"
         // not "ckb,ksv,tqq,z39"
         // not "ckb,ksv,tqq,z06,z20,z39"
         // not "ckb,jvr,ksv,nbd,qrm,tqq,z06,z20"
         // not "ckb,jvr,ksv,qrm,tqq,z06,z20,z39"
         // not "ffk,jsv,qjs,rrw,z01,z06,z21,z39"
+        // not "ckb,kbs,ksv,nbd,pgc,z06,z20,z39"
         assert_eq!(part2(&get_input()), "not known");
     }
 }
