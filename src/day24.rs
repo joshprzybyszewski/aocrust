@@ -11,31 +11,34 @@ const OPERATION_AND: u8 = 3;
 
 #[derive(Copy, Clone)]
 struct Gate {
+    output: usize,
     left: usize,
     right: usize,
     op: u8,
     _pad: [u8; 3],
-    _pad2: usize,
+    outs: [usize; 2],
 }
 
 impl Gate {
     fn empty() -> Self {
         Gate {
+            output: NUM_GATES + 1,
             left: NUM_GATES + 1,
             right: NUM_GATES + 1,
             op: 0,
             _pad: [0; 3],
-            _pad2: 0,
+            outs: [NUM_GATES + 1; 2],
         }
     }
 
-    fn new(left: usize, right: usize, op: u8) -> Self {
+    fn new(dest: usize, left: usize, right: usize, op: u8) -> Self {
         Gate {
+            output: dest,
             left,
             right,
             op,
             _pad: [0; 3],
-            _pad2: 0,
+            outs: [NUM_GATES + 1; 2],
         }
     }
 
@@ -56,10 +59,8 @@ impl Gate {
     }
 }
 
-#[derive(Copy, Clone)]
 struct Logic {
-    gates: [Gate; NUM_GATES],
-    outs: [[usize; 2]; NUM_GATES],
+    gates: Vec<Gate>,
     xs: [u8; 64],
     ys: [u8; 64],
 
@@ -72,8 +73,7 @@ impl Logic {
         let mut i = 0;
 
         let mut output = Logic {
-            gates: [Gate::empty(); NUM_GATES],
-            outs: [[NUM_GATES; 2]; NUM_GATES],
+            gates: Vec::with_capacity(5 * 64), // 5 gates for up to a 64 bit adder
             xs: [0; 64],
             ys: [0; 64],
             n_bits: 0,
@@ -96,6 +96,7 @@ impl Logic {
         i += 1;
 
         // iterate through gates
+        let mut all_outs: Vec<(usize, usize)> = Vec::with_capacity(5 * 64 * 2);
         loop {
             if i >= input.len() || input[i] == b'\n' {
                 break;
@@ -122,14 +123,20 @@ impl Logic {
             let dest = output.parse_index(input, i);
             i += 4;
 
-            output.add_gate(left, right, dest, op);
+            all_outs.extend(output.add_gate(left, right, dest, op));
         }
+
+        for (input_gate, output_gate) in all_outs {
+            // TODO.
+            output.gates[input_gate].outs[0] = output_gate;
+        }
+
         return output;
     }
 
     #[inline(always)]
-    fn add_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) {
-        self.gates[dest] = Gate::new(left, right, op);
+    fn add_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) -> Vec<(usize, usize)> {
+        self.gates.push(Gate::new(dest, left, right, op));
 
         if dest > Z_OFFSET {
             let bits = (dest - Z_OFFSET) as u8;
@@ -138,23 +145,7 @@ impl Logic {
             }
         }
 
-        self.add_out(left, dest);
-        self.add_out(right, dest);
-    }
-
-    #[inline(always)]
-    fn add_out(&mut self, input: usize, output: usize) {
-        if self.outs[input][0] == NUM_GATES {
-            self.outs[input][0] = output;
-            return;
-        }
-        if self.outs[input][1] == NUM_GATES {
-            self.outs[input][1] = output;
-            return;
-        }
-
-        println!("Input {input}. Output {output}");
-        unreachable!();
+        return Vec::from([(left, dest), (right, dest)]);
     }
 
     #[inline(always)]
@@ -190,6 +181,14 @@ impl Logic {
         return output;
     }
 
+    fn get_gate(&self, index: usize) -> &Gate {
+        let index = self.gates.iter().position(|g| g.output == index);
+        if index.is_none() {
+            unreachable!();
+        }
+        return &self.gates[index.unwrap()];
+    }
+
     fn get_value(&self, index: usize) -> u8 {
         if index >= X_OFFSET && index < Z_OFFSET {
             if index >= Y_OFFSET {
@@ -198,13 +197,14 @@ impl Logic {
             return self.xs[index - X_OFFSET];
         }
 
-        if self.gates[index].op == 0 {
+        let gate = self.get_gate(index);
+        if gate.op == 0 {
             unreachable!();
         }
 
-        let left_val = self.get_value(self.gates[index].left);
-        let right_val = self.get_value(self.gates[index].right);
-        match self.gates[index].op {
+        let left_val = self.get_value(gate.left);
+        let right_val = self.get_value(gate.right);
+        match gate.op {
             OPERATION_AND => return left_val & right_val,
             OPERATION_XOR => return left_val ^ right_val,
             OPERATION_OR => return left_val | right_val,
@@ -252,12 +252,12 @@ impl Logic {
             return;
         }
 
-        if self.is_swapped(bit, output) {
+        let gate = self.get_gate(output);
+        if self.is_swapped(bit, output, gate) {
             bad.insert(output);
         }
 
-        let gate = &self.gates[output];
-        if self.gates[output].op == 0 {
+        if gate.op == 0 {
             unreachable!();
         }
 
@@ -268,9 +268,7 @@ impl Logic {
     }
 
     #[inline(always)]
-    fn is_swapped(&self, bit: u8, output: usize) -> bool {
-        let gate = &self.gates[output];
-
+    fn is_swapped(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op == OPERATION_OR {
             return self.is_swapped_or_gate(bit, output, gate);
         }
@@ -295,7 +293,7 @@ impl Logic {
 
         // it should go OUT to an XOR and to an AND, both for the next bit index up.
 
-        let outs = &self.outs[output];
+        let outs = &gate.outs;
 
         if outs[1] == NUM_GATES {
             let output_index = outs[0];
@@ -307,8 +305,8 @@ impl Logic {
             return self.n_bits != bit;
         }
 
-        let op0 = self.gates[outs[0]].op;
-        let op1 = self.gates[outs[1]].op;
+        let op0 = self.get_gate(outs[0]).op;
+        let op1 = self.get_gate(outs[1]).op;
 
         if op0 == OPERATION_XOR {
             if op1 != OPERATION_AND {
@@ -336,7 +334,7 @@ impl Logic {
         // else,
         //   then it should go OUT to only an OR.
 
-        let outs = &self.outs[output];
+        let outs = &gate.outs;
         if outs[1] != NUM_GATES {
             // this goes OUT to two other gates.
             // That's only expected for bit 0, where the AND gate is the carry out.
@@ -346,8 +344,8 @@ impl Logic {
             }
 
             // verify that it goes out to the XOR and AND of the next bit offset up.
-            let op0 = self.gates[outs[0]].op;
-            let op1 = self.gates[outs[1]].op;
+            let op0 = self.get_gate(outs[0]).op;
+            let op1 = self.get_gate(outs[1]).op;
 
             if op0 == OPERATION_XOR {
                 if op1 != OPERATION_AND {
@@ -368,8 +366,7 @@ impl Logic {
         }
 
         let output_index = outs[0];
-        let output_gate = &self.gates[output_index];
-        if output_gate.op != OPERATION_OR {
+        if self.get_gate(output_index).op != OPERATION_OR {
             unreachable!();
         }
 
@@ -385,7 +382,7 @@ impl Logic {
         //
         // if the left and right are X/Y,
         //   then it should go OUT to an XOR and an AND.
-        let outs = &self.outs[output];
+        let outs = &gate.outs;
         if gate.left >= X_OFFSET {
             if outs[1] == NUM_GATES {
                 if bit == 0 {
@@ -404,8 +401,8 @@ impl Logic {
                 unreachable!();
             }
 
-            let op0 = self.gates[outs[0]].op;
-            let op1 = self.gates[outs[1]].op;
+            let op0 = self.get_gate(outs[0]).op;
+            let op1 = self.get_gate(outs[1]).op;
 
             if op0 == OPERATION_XOR {
                 if op1 != OPERATION_AND {
