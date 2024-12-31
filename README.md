@@ -4,6 +4,8 @@ I was on parental leave during AoC 2024, so I used the time away from my day job
 
 At first, I was going to use a familiar language (golang) and [did the first few days](https://github.com/joshprzybyszewski/aoc2022/tree/2024). However, I saw CodSpeed was a sponsor for AoC, and they were [hosting a competition](https://codspeed.io/advent) for "who can write the solver that solves the puzzle the fastest". I was intrigued, but it meant I had to learn Rust. I'd never read or written Rust before, but I thought that sounded fun.
 
+Once the day's puzzle was released, competitors had 36 hours (noon EST, the next day) to publish a working solution. It must solve the "secret input" that they had with the correct answer, and then the benchmarks would run. (The main product offering of CodSpeed seems to be a consistent benchmarking environment in Github Actions for Rust and Python, so results are comparable across time.)
+
 ### Setup
 
 To set up this repo, I followed the instructions [here](https://github.com/gobanos/cargo-aoc). 
@@ -16,7 +18,7 @@ I set up CodSpeed to run benchmarks using [these instructions](https://gist.gith
 
 I finished 21st out of [144 total competitors](https://codspeed.io/advent/leaderboard/global). I'm very happy with that, considering 1) I've never written Rust before and 2) the top 3 to 10 submissions every day were basically assembly wrapped in Rust (like [simd](https://github.com/indiv0/aoc-fastest) and stuff I didn't want to learn this year).
 
-Once the day's puzzle was released, competitors had 36 hours (noon EST, the next day) to publish a working solution. It must solve the "secret input" that they had with the correct answer, and then the benchmarks would run. (The main product offering of CodSpeed seems to be a consistent benchmarking environment in Github Actions for Rust and Python, so results are comparable across time.)
+I'm certainly no expert in Rust, but I've gotten to dabble in some of what it has to offer. Particularly, I love that the author must declare `mut` for mutable pieces of memory.
 
 My highest scoring day was [Day 20](https://codspeed.io/advent/day/20): 5th out of 32 submissions. I liked Day 20 because I was introduced to [the idea](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day20.rs#L163-L164) of only checking half of the diamond of N-nearest spaces by a fellow competitor.
 
