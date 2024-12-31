@@ -230,7 +230,7 @@ impl Logic {
     fn solve_part2(&self) -> String {
         let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
-        let mut bit = self.n_bits;
+        let mut bit = 0;
 
         loop {
             let z = Z_OFFSET + bit as usize;
@@ -239,10 +239,10 @@ impl Logic {
                 // we were told 8 is the max size.
                 break;
             }
-            if bit == 0 {
+            if bit == self.n_bits {
                 break;
             }
-            bit -= 1;
+            bit += 1;
         }
         // if bad.len() != 8 {
         //     // we were told 8 is the output size.
