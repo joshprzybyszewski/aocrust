@@ -9,13 +9,13 @@ const OPERATION_OR: u8 = 1;
 const OPERATION_XOR: u8 = 2;
 const OPERATION_AND: u8 = 3;
 
-const VALUE_SET_MASK: u8 = 0x80;
-
 #[derive(Copy, Clone)]
 struct Gate {
     left: usize,
     right: usize,
     op: u8,
+    _pad: [u8; 3],
+    _pad2: usize,
 }
 
 impl Gate {
@@ -24,11 +24,19 @@ impl Gate {
             left: NUM_GATES + 1,
             right: NUM_GATES + 1,
             op: 0,
+            _pad: [0; 3],
+            _pad2: 0,
         }
     }
 
     fn new(left: usize, right: usize, op: u8) -> Self {
-        Gate { left, right, op }
+        Gate {
+            left,
+            right,
+            op,
+            _pad: [0; 3],
+            _pad2: 0,
+        }
     }
 
     fn bit_offset(&self) -> u8 {
