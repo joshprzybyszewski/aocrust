@@ -187,7 +187,7 @@ impl Logic {
 
         let mut offset: usize = 0;
         for _ in 0..=self.n_bits {
-            output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
+            output |= self.get_value(Z_OFFSET + offset) << offset;
             offset += 1;
         }
 
@@ -203,12 +203,12 @@ impl Logic {
         return &self.gates[gate_index.unwrap()];
     }
 
-    fn get_value(&self, index: usize) -> u8 {
+    fn get_value(&self, index: usize) -> u64 {
         if index >= X_OFFSET && index < Z_OFFSET {
             if index >= Y_OFFSET {
-                return self.ys[index - Y_OFFSET];
+                return self.ys[index - Y_OFFSET] as u64;
             }
-            return self.xs[index - X_OFFSET];
+            return self.xs[index - X_OFFSET] as u64;
         }
 
         let gate = self.get_gate(index);
