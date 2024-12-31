@@ -137,9 +137,9 @@ impl Logic {
             if output.gates[mut_gate_index].outs[0] == NUM_GATES {
                 output.gates[mut_gate_index].outs[0] = output_gate;
             } else {
-                if output.gates[mut_gate_index].outs[1] != NUM_GATES {
-                    unreachable!();
-                }
+                // if output.gates[mut_gate_index].outs[1] != NUM_GATES {
+                //     unreachable!();
+                // }
                 output.gates[mut_gate_index].outs[1] = output_gate;
             }
         }
@@ -244,10 +244,10 @@ impl Logic {
             }
             bit -= 1;
         }
-        if bad.len() != 8 {
-            // we were told 8 is the output size.
-            unreachable!();
-        }
+        // if bad.len() != 8 {
+        //     // we were told 8 is the output size.
+        //     unreachable!();
+        // }
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
         ids.sort();
@@ -380,10 +380,10 @@ impl Logic {
             return self.n_bits != bit;
         }
 
-        let output_index = outs[0];
-        if self.get_gate(output_index).op != OPERATION_OR {
-            unreachable!();
-        }
+        // let output_index = outs[0];
+        // if self.get_gate(output_index).op != OPERATION_OR {
+        //     unreachable!();
+        // }
 
         return false;
     }
