@@ -29,8 +29,6 @@
 
 */
 
-use std::u64;
-
 const NUMERIC_INVALID: usize = 0;
 const NUMERIC_A: usize = 1;
 const NUMERIC_0: usize = 2;
@@ -181,7 +179,6 @@ const ARROW_LEFT: usize = 2;
 const ARROW_DOWN: usize = 3;
 const ARROW_RIGHT: usize = 4;
 const ARROW_A: usize = 5;
-const NUM_ARROWS: usize = 6;
 
 struct ArrowKeypad {
     states: [ArrowState; 6],
@@ -262,9 +259,8 @@ struct ArrowState {
 const SHORTEST_NUMERIC_PATHS: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
     generate_shortest_keyboard_costs::<2>();
 
-// #[allow(long_running_const_eval)]
-// const SHORTEST_NUMERIC_PATHS_PART_2: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
-//     generate_shortest_keyboard_costs::<25>();
+const SHORTEST_NUMERIC_PATHS_PART_2: [[u64; NUM_NUMERICS]; NUM_NUMERICS] =
+    generate_shortest_keyboard_costs::<25>();
 
 const MAX_PATH_LENGTH: usize = 10;
 const MAX_SHORTEST_ARROW_PATHS: usize = 2;
@@ -311,7 +307,7 @@ impl Path {
         self.positions[self.steps]
     }
 
-    fn cache_index(&self) -> usize {
+    const fn cache_index(&self) -> usize {
         if self.steps > 3 {
             return 625; // 5 * 5 * 5 * 5;
         }
@@ -327,11 +323,16 @@ const fn generate_shortest_keyboard_costs<const DEPTH: usize>(
 ) -> [[u64; NUM_NUMERICS]; NUM_NUMERICS] {
     let mut answer: [[u64; NUM_NUMERICS]; NUM_NUMERICS] = [[u64::MAX; NUM_NUMERICS]; NUM_NUMERICS];
 
+    let mut cacher = ArrowCacher {
+        answers: [[0; 125]; 26],
+    };
+
     let mut start = NUMERIC_A;
     loop {
         let mut end = NUMERIC_A;
         loop {
-            answer[start][end] = get_shortest_path_between_numerics::<DEPTH>(start, end);
+            answer[start][end] = cacher.get_shortest_path_between_numerics2::<DEPTH>(start, end);
+            // answer[start][end] = get_shortest_path_between_numerics::<DEPTH>(start, end);
 
             end += 1;
             if end == NUM_NUMERICS {
@@ -619,7 +620,6 @@ pub fn part1(input: &str) -> u64 {
         prev = next_step;
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
-            // println!("total += {total_sequence_length} * {current_value}");
             total += current_value * total_sequence_length;
 
             if i >= input.len() {
@@ -659,25 +659,6 @@ fn convert_to_number(byte: u8) -> usize {
 
 #[aoc(day21, part2)]
 pub fn part2(input: &str) -> u64 {
-    // println!("const SHORTEST_NUMERIC_PATHS_PART_2: [[u64; NUM_NUMERICS]; NUM_NUMERICS] = [");
-    // for start in 0..NUM_NUMERICS {
-    //     print!("[");
-    //     for end in 0..NUM_NUMERICS {
-    //         let shortest: u64;
-    //         if start < NUMERIC_A || end < NUMERIC_A {
-    //             shortest = u64::MAX;
-    //         } else {
-    //             shortest = get_shortest_path_between_numerics::<25>(start, end);
-    //         }
-    //         print!("{}", shortest); // SHORTEST_NUMERIC_PATHS_PART_2[start][end]);
-    //         if end < NUM_NUMERICS -1 {
-    //             print!(", ");
-    //         }
-    //     }
-    //     println!("], ");
-    // }
-    // println!("];");
-
     let input = input.as_bytes();
     let mut i: usize = 0;
 
@@ -687,9 +668,9 @@ pub fn part2(input: &str) -> u64 {
 
     let mut prev = NUMERIC_A;
 
-    let mut cacher = ArrowCacher {
-        answers: [[0; 125]; 26],
-    };
+    // let mut cacher = ArrowCacher {
+    //     answers: [[0; 125]; 26],
+    // };
 
     loop {
         if input[i] < b'A' {
@@ -698,8 +679,8 @@ pub fn part2(input: &str) -> u64 {
         }
 
         let next_step = convert_to_number(input[i]);
-        total_sequence_length += cacher.get_shortest_path_between_numerics2::<25>(prev, next_step);
-        // total_sequence_length += SHORTEST_NUMERIC_PATHS_PART_2[prev][next_step];
+        // total_sequence_length += cacher.get_shortest_path_between_numerics2::<25>(prev, next_step);
+        total_sequence_length += SHORTEST_NUMERIC_PATHS_PART_2[prev][next_step];
 
         prev = next_step;
         i += 1;
@@ -728,7 +709,7 @@ struct ArrowCacher {
 }
 
 impl ArrowCacher {
-    fn get_shortest_path_between_numerics2<const DEPTH: usize>(
+    const fn get_shortest_path_between_numerics2<const DEPTH: usize>(
         &mut self,
         start: usize,
         end: usize,
@@ -824,11 +805,11 @@ impl ArrowCacher {
         return best;
     }
 
-    fn get_numeric_path_min_cost2<const DEPTH: usize>(&mut self, numeric_path: Path) -> u64 {
+    const fn get_numeric_path_min_cost2<const DEPTH: usize>(&mut self, numeric_path: Path) -> u64 {
         return self.get_arrow_path_min_cost2(DEPTH, numeric_path);
     }
 
-    fn get_arrow_path_min_cost2(&mut self, depth: usize, path: Path) -> u64 {
+    const fn get_arrow_path_min_cost2(&mut self, depth: usize, path: Path) -> u64 {
         let answer_index = path.cache_index();
         if answer_index < 125 && self.answers[depth][answer_index] != 0 {
             return self.answers[depth][answer_index];
