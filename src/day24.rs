@@ -11,7 +11,7 @@ const OPERATION_AND: u8 = 3;
 
 #[derive(Copy, Clone)]
 struct Gate {
-    output: usize,
+    id: usize,
     left: usize,
     right: usize,
     op: u8,
@@ -20,25 +20,14 @@ struct Gate {
 }
 
 impl Gate {
-    fn empty() -> Self {
-        Gate {
-            output: NUM_GATES + 1,
-            left: NUM_GATES + 1,
-            right: NUM_GATES + 1,
-            op: 0,
-            _pad: [0; 3],
-            outs: [NUM_GATES + 1; 2],
-        }
-    }
-
     fn new(dest: usize, left: usize, right: usize, op: u8) -> Self {
         Gate {
-            output: dest,
+            id: dest,
             left,
             right,
             op,
             _pad: [0; 3],
-            outs: [NUM_GATES + 1; 2],
+            outs: [NUM_GATES; 2],
         }
     }
 
@@ -127,8 +116,41 @@ impl Logic {
         }
 
         for (input_gate, output_gate) in all_outs {
-            // TODO.
-            output.gates[input_gate].outs[0] = output_gate;
+            let mut_gate_index = output.gates.iter().position(|g| g.id == input_gate);
+            if mut_gate_index.is_none() {
+                if input_gate >= X_OFFSET && input_gate < Z_OFFSET {
+                    continue;
+                }
+                println!(
+                    "Couldn't find {input_gate} = {}",
+                    convert_to_string(input_gate)
+                );
+                unreachable!();
+            }
+            let mut_gate_index = mut_gate_index.unwrap();
+            if output.gates[mut_gate_index].outs[0] == NUM_GATES {
+                output.gates[mut_gate_index].outs[0] = output_gate;
+            } else {
+                if output.gates[mut_gate_index].outs[1] != NUM_GATES {
+                    println!(
+                        "Trying to add another output for gate ID {input_gate} = {}.",
+                        convert_to_string(input_gate),
+                    );
+                    println!(
+                        " outs[0] = {}, {}",
+                        output.gates[mut_gate_index].outs[0],
+                        convert_to_string(output.gates[mut_gate_index].outs[0]),
+                    );
+                    println!(
+                        " outs[1] = {}, {}",
+                        output.gates[mut_gate_index].outs[1],
+                        convert_to_string(output.gates[mut_gate_index].outs[1]),
+                    );
+                    println!(" new = {}, {}", output_gate, convert_to_string(output_gate),);
+                    unreachable!();
+                }
+                output.gates[mut_gate_index].outs[1] = output_gate;
+            }
         }
 
         return output;
@@ -182,11 +204,12 @@ impl Logic {
     }
 
     fn get_gate(&self, index: usize) -> &Gate {
-        let index = self.gates.iter().position(|g| g.output == index);
-        if index.is_none() {
+        let gate_index = self.gates.iter().position(|g| g.id == index);
+        if gate_index.is_none() {
+            println!("Couldn't find {index} = {}", convert_to_string(index));
             unreachable!();
         }
-        return &self.gates[index.unwrap()];
+        return &self.gates[gate_index.unwrap()];
     }
 
     fn get_value(&self, index: usize) -> u8 {
@@ -219,10 +242,10 @@ impl Logic {
         let mut bit = 0;
 
         loop {
-            let z = Z_OFFSET + bit as usize;
-            if self.gates[z].op == 0 {
+            if bit > self.n_bits {
                 break;
             }
+            let z = Z_OFFSET + bit as usize;
             self.find_swapped(bit, &mut bad, z);
 
             bit += 1;
@@ -398,6 +421,7 @@ impl Logic {
             }
 
             if outs[0] >= Z_OFFSET && outs[1] >= Z_OFFSET {
+                // return true;
                 unreachable!();
             }
 
@@ -484,6 +508,11 @@ mod test {
         fs::read_to_string(input_path).unwrap()
     }
 
+    fn get_competition_input() -> String {
+        let input_path = "input/2024/day24_competition.txt";
+        fs::read_to_string(input_path).unwrap()
+    }
+
     fn get_example_input() -> &'static str {
         return "x00: 1
 x01: 0
@@ -541,11 +570,16 @@ tnw OR pbm -> gnj";
 
     #[test]
     fn part1_real_input() {
-        assert_eq!(part1(&get_input()), 49574189473968)
+        assert_eq!(part1(&get_input()), 49574189473968);
+        assert_eq!(part1(&get_competition_input()), 50411513338638);
     }
 
     #[test]
     fn part2_real_input() {
         assert_eq!(part2(&get_input()), "ckb,kbs,ksv,nbd,tqq,z06,z20,z39");
+        assert_eq!(
+            part2(&get_competition_input()),
+            "gfv,hcm,kfs,tqm,vwr,z06,z11,z16"
+        );
     }
 }
