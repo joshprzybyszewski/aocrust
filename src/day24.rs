@@ -182,11 +182,9 @@ impl Logic {
                 return 0;
             }
             if index >= Y_OFFSET {
-                println!("not set y: {}", index - Y_OFFSET);
                 return 0;
             }
             if index >= X_OFFSET {
-                println!("not set x: {}", index - X_OFFSET);
                 return 0;
             }
             unreachable!();
@@ -213,24 +211,18 @@ impl Logic {
                 break;
             }
             self.find_swapped(bit, &mut bad, z);
-            println!("Bit: {bit}");
-            println!(" - {}", self.to_ids(&bad));
 
             bit += 1;
-            // if bad.len() == 8 {
-            //     // we were told 8 is the max size.
-            //     break;
-            // }
+            if bad.len() == 8 {
+                // we were told 8 is the max size.
+                break;
+            }
         }
-        if bad.len() != 8 {
-            // we were told 8 is the output size.
-            println!("Wrong answer: {}", self.to_ids(&bad));
-            unreachable!();
-        }
-        return self.to_ids(&bad);
-    }
-
-    fn to_ids(&self, bad: &HashSet<usize>) -> String {
+        // if bad.len() != 8 {
+        //     // we were told 8 is the output size.
+        //     println!("Wrong answer: {}", self.to_ids(&bad));
+        //     unreachable!();
+        // }
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
         ids.sort();
@@ -330,10 +322,6 @@ impl Logic {
 
         let outs = &self.outs[output];
         if outs[1] != NUM_GATES {
-            println!(
-                "is_swapped_and_gate({bit}, {output} = {})",
-                convert_to_string(output)
-            );
             // this goes OUT to two other gates.
             // That's only expected for bit 0, where the AND gate is the carry out.
             // if bit != 0 {
@@ -570,16 +558,6 @@ x05 AND y05 -> z00";
 
     #[test]
     fn part2_real_input() {
-        // not "ffk,jsv,qjs,rrw,z00,z01,z21,z39"
-        // not "ffk,jsv,rrw,z06,z21,z39"
-        // not "ckb,dnc,kbs,ksv,nbd,pgc,tqq,tsm"
-        // not "ckb,ksv,tqq,z39"
-        // not "ckb,ksv,tqq,z06,z20,z39"
-        // not "ckb,jvr,ksv,nbd,qrm,tqq,z06,z20"
-        // not "ckb,jvr,ksv,qrm,tqq,z06,z20,z39"
-        // not "ffk,jsv,qjs,rrw,z01,z06,z21,z39"
-        // not "ckb,kbs,ksv,nbd,pgc,z06,z20,z39"
-        //      ckb,kbs,ksv,nbd,tqq,z06,z20,z39
         assert_eq!(part2(&get_input()), "ckb,kbs,ksv,nbd,tqq,z06,z20,z39");
     }
 }
