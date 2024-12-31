@@ -136,21 +136,6 @@ impl Logic {
                 output.gates[mut_gate_index].outs[0] = output_gate;
             } else {
                 if output.gates[mut_gate_index].outs[1] != NUM_GATES {
-                    println!(
-                        "Trying to add another output for gate ID {input_gate} = {}.",
-                        convert_to_string(input_gate),
-                    );
-                    println!(
-                        " outs[0] = {}, {}",
-                        output.gates[mut_gate_index].outs[0],
-                        convert_to_string(output.gates[mut_gate_index].outs[0]),
-                    );
-                    println!(
-                        " outs[1] = {}, {}",
-                        output.gates[mut_gate_index].outs[1],
-                        convert_to_string(output.gates[mut_gate_index].outs[1]),
-                    );
-                    println!(" new = {}, {}", output_gate, convert_to_string(output_gate),);
                     unreachable!();
                 }
                 output.gates[mut_gate_index].outs[1] = output_gate;
