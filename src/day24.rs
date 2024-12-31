@@ -30,6 +30,22 @@ impl Gate {
     fn new(left: usize, right: usize, op: u8) -> Self {
         Gate { left, right, op }
     }
+
+    fn bit_offset(&self) -> u8 {
+        if self.left >= Y_OFFSET {
+            return (self.left - Y_OFFSET) as u8;
+        }
+        if self.left >= X_OFFSET {
+            return (self.left - X_OFFSET) as u8;
+        }
+        if self.right >= Y_OFFSET {
+            return (self.right - Y_OFFSET) as u8;
+        }
+        if self.right >= X_OFFSET {
+            return (self.right - X_OFFSET) as u8;
+        }
+        unreachable!();
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -201,26 +217,17 @@ impl Logic {
             println!(" - {}", self.to_ids(&bad));
 
             bit += 1;
-            if bad.len() > 8 {
-                // we were told 8 is the max size.
-                println!("exceeded max at {bit}");
-                // unreachable!();
-            }
             // if bad.len() == 8 {
             //     // we were told 8 is the max size.
             //     break;
             // }
         }
+        if bad.len() != 8 {
+            // we were told 8 is the output size.
+            println!("Wrong answer: {}", self.to_ids(&bad));
+            unreachable!();
+        }
         return self.to_ids(&bad);
-
-        // let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
-
-        // ids.sort();
-        // return ids
-        //     .iter()
-        //     .map(|&id| convert_to_string(id))
-        //     .collect::<Vec<String>>()
-        //     .join(",");
     }
 
     fn to_ids(&self, bad: &HashSet<usize>) -> String {
@@ -234,52 +241,54 @@ impl Logic {
             .join(",");
     }
 
-    fn find_swapped(&self, bit: u8, bad: &mut HashSet<usize>, index: usize) {
-        if index >= X_OFFSET && index < Z_OFFSET {
-            // x and y cannot be swapped.
+    fn find_swapped(&self, bit: u8, bad: &mut HashSet<usize>, output: usize) {
+        if output >= X_OFFSET && output < Z_OFFSET {
+            // x and y cannot be "outputs".
             return;
         }
 
-        if self.is_swapped(bit, index) {
-            bad.insert(index);
+        if self.is_swapped(bit, output) {
+            bad.insert(output);
         }
 
-        let gate = &self.gates[index];
-        if self.gates[index].op == 0 {
+        let gate = &self.gates[output];
+        if self.gates[output].op == 0 {
             unreachable!();
         }
 
+        // check the left input
         self.find_swapped(bit, bad, gate.left);
+        // check the right input
         self.find_swapped(bit, bad, gate.right);
     }
 
-    fn is_swapped(&self, bit: u8, index: usize) -> bool {
-        let gate = &self.gates[index];
+    fn is_swapped(&self, bit: u8, output: usize) -> bool {
+        let gate = &self.gates[output];
 
         if gate.op == OPERATION_OR {
-            return self.is_swapped_or_gate(bit, index, gate);
+            return self.is_swapped_or_gate(bit, output, gate);
         }
 
         if gate.op == OPERATION_AND {
-            return self.is_swapped_and_gate(bit, index, gate);
+            return self.is_swapped_and_gate(bit, output, gate);
         }
 
         if gate.op != OPERATION_XOR {
-            println!("index: {index} = {}", convert_to_string(index));
+            println!("output: {output} = {}", convert_to_string(output));
             unreachable!();
         }
 
-        return self.is_swapped_xor_gate(bit, index, gate);
+        return self.is_swapped_xor_gate(bit, output, gate);
     }
 
-    fn is_swapped_or_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+    fn is_swapped_or_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_OR {
             unreachable!();
         }
 
         // it should go OUT to an XOR and to an AND, both for the next bit index up.
 
-        let outs = &self.outs[index];
+        let outs = &self.outs[output];
 
         if outs[1] == NUM_GATES {
             let output_index = outs[0];
@@ -308,7 +317,7 @@ impl Logic {
         return false;
     }
 
-    fn is_swapped_and_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+    fn is_swapped_and_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_AND {
             unreachable!();
         }
@@ -319,18 +328,37 @@ impl Logic {
         // else,
         //   then it should go OUT to only an OR.
 
-        let outs = &self.outs[index];
+        let outs = &self.outs[output];
         if outs[1] != NUM_GATES {
+            println!(
+                "is_swapped_and_gate({bit}, {output} = {})",
+                convert_to_string(output)
+            );
             // this goes OUT to two other gates.
             // That's only expected for bit 0, where the AND gate is the carry out.
-            if bit != 0 {
+            // if bit != 0 {
+            if gate.bit_offset() != 0 {
                 return true;
             }
-            // TODO consider what the output gates are for the C_OUT.
+
+            // verify that it goes out to the XOR and AND of the next bit offset up.
+            let op0 = self.gates[outs[0]].op;
+            let op1 = self.gates[outs[1]].op;
+
+            if op0 == OPERATION_XOR {
+                if op1 != OPERATION_AND {
+                    return true;
+                }
+            } else if op0 == OPERATION_AND {
+                if op1 != OPERATION_XOR {
+                    return true;
+                }
+            }
+
             return false;
         }
 
-        if index >= Z_OFFSET {
+        if output >= Z_OFFSET {
             // should not output an AND to the z_offset. (unless it's the last carry out)
             return self.n_bits != bit;
         }
@@ -344,7 +372,7 @@ impl Logic {
         return false;
     }
 
-    fn is_swapped_xor_gate(&self, bit: u8, index: usize, gate: &Gate) -> bool {
+    fn is_swapped_xor_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_XOR {
             unreachable!();
         }
@@ -352,12 +380,12 @@ impl Logic {
         //
         // if the left and right are X/Y,
         //   then it should go OUT to an XOR and an AND.
-        let outs = &self.outs[index];
+        let outs = &self.outs[output];
         if gate.left >= X_OFFSET {
             if outs[1] == NUM_GATES {
                 if bit == 0 {
                     // the first bit uses a single XOR as the SUM.
-                    if index != Z_OFFSET {
+                    if output != Z_OFFSET {
                         // it _must_ output to the Z_OFFSET.
                         return true;
                     }
@@ -368,11 +396,6 @@ impl Logic {
             }
 
             if outs[0] >= Z_OFFSET && outs[1] >= Z_OFFSET {
-                println!("index = {}", convert_to_string(index));
-                println!("bit = {}", bit);
-                println!("outs[0] = {}", convert_to_string(outs[0]));
-                println!("outs[1] = {}", convert_to_string(outs[1]));
-                // return true;
                 unreachable!();
             }
 
@@ -395,20 +418,18 @@ impl Logic {
         // else,
         //   then it should go OUT to Z.
         if outs[0] != NUM_GATES || outs[1] != NUM_GATES {
-            // there should only be one output gate: at `index``.
+            // there should only be one output gate: at `output`.
             return true;
         }
 
-        if index < Z_OFFSET {
+        if output < Z_OFFSET {
             // needs to be a sum output.
             return true;
         }
-        let z_out = (index - Z_OFFSET) as u8;
-        if z_out != bit {
-            // should be the same bit offset.
-            return true;
-        }
-        return false;
+
+        let z_out = (output - Z_OFFSET) as u8;
+        // should be the same bit offset.
+        return z_out != bit;
     }
 }
 
@@ -558,6 +579,7 @@ x05 AND y05 -> z00";
         // not "ckb,jvr,ksv,qrm,tqq,z06,z20,z39"
         // not "ffk,jsv,qjs,rrw,z01,z06,z21,z39"
         // not "ckb,kbs,ksv,nbd,pgc,z06,z20,z39"
-        assert_eq!(part2(&get_input()), "not known");
+        //      ckb,kbs,ksv,nbd,tqq,z06,z20,z39
+        assert_eq!(part2(&get_input()), "ckb,kbs,ksv,nbd,tqq,z06,z20,z39");
     }
 }
