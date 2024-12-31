@@ -467,7 +467,9 @@ pub fn part1(input: &str) -> u64 {
 
     loop {
         if input[i] < b'A' {
-            current_value *= 10;
+            if current_value != 0 {
+                current_value *= 10;
+            }
             current_value += (input[i] - b'0') as u64;
         }
 
@@ -527,7 +529,9 @@ pub fn part2(input: &str) -> u64 {
 
     loop {
         if input[i] < b'A' {
-            current_value *= 10;
+            if current_value != 0 {
+                current_value *= 10;
+            }
             current_value += (input[i] - b'0') as u64;
         }
 
@@ -537,7 +541,6 @@ pub fn part2(input: &str) -> u64 {
         prev = next_step;
         i += 1;
         if i >= input.len() || input[i] == b'\n' {
-            // println!("total += {total_sequence_length} * {current_value}");
             total += current_value * total_sequence_length;
 
             if i >= input.len() {
