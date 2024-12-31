@@ -8,7 +8,9 @@ At first, I was going to use a familiar language (golang) and [did the first few
 
 To set up this repo, I followed the instructions [here](https://github.com/gobanos/cargo-aoc). 
 
-I am using CodSpeed [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/joshprzybyszewski/aocrust) to run benchmarks on my input, similar to how the competition is measured. Check it out [here](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks). I followed [these instructions](https://gist.github.com/art049/a824a8607898241a3fe061488817099e).
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks)
+
+I set up CodSpeed to run benchmarks using [these instructions](https://gist.github.com/art049/a824a8607898241a3fe061488817099e) (and then [added a 5m timeout](https://github.com/joshprzybyszewski/aocrust/commit/a55c25aa02b6a78d0229a60c1940d429b3915673) after running benchmarks for [6 hours](https://github.com/joshprzybyszewski/aocrust/actions/runs/12508202699/job/34895943036) :oops:).
 
 ## How'd it go?
 
