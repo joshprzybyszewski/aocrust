@@ -245,11 +245,10 @@ impl Logic {
                 break;
             }
         }
-        // if bad.len() != 8 {
-        //     // we were told 8 is the output size.
-        //     println!("Wrong answer: {}", self.to_ids(&bad));
-        //     unreachable!();
-        // }
+        if bad.len() != 8 {
+            // we were told 8 is the output size.
+            unreachable!();
+        }
         let mut ids = bad.iter().map(|&e| e).collect::<Vec<usize>>();
 
         ids.sort();
@@ -271,9 +270,9 @@ impl Logic {
             bad.insert(output);
         }
 
-        if gate.op == 0 {
-            unreachable!();
-        }
+        // if gate.op == 0 {
+        //     unreachable!();
+        // }
 
         // check the left input
         self.find_swapped(bit, bad, gate.left);
@@ -284,11 +283,11 @@ impl Logic {
     #[inline(always)]
     fn is_swapped(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op == OPERATION_OR {
-            return self.is_swapped_or_gate(bit, output, gate);
+            return self.is_swapped_or_gate(bit, gate);
         }
 
         if gate.op == OPERATION_AND {
-            return self.is_swapped_and_gate(bit, output, gate);
+            return self.is_swapped_and_gate(bit, gate);
         }
 
         if gate.op != OPERATION_XOR {
@@ -296,14 +295,14 @@ impl Logic {
             unreachable!();
         }
 
-        return self.is_swapped_xor_gate(bit, output, gate);
+        return self.is_swapped_xor_gate(bit, gate);
     }
 
     #[inline(always)]
-    fn is_swapped_or_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
-        if gate.op != OPERATION_OR {
-            unreachable!();
-        }
+    fn is_swapped_or_gate(&self, bit: u8, gate: &Gate) -> bool {
+        // if gate.op != OPERATION_OR {
+        //     unreachable!();
+        // }
 
         // it should go OUT to an XOR and to an AND, both for the next bit index up.
 
@@ -337,10 +336,10 @@ impl Logic {
     }
 
     #[inline(always)]
-    fn is_swapped_and_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
-        if gate.op != OPERATION_AND {
-            unreachable!();
-        }
+    fn is_swapped_and_gate(&self, bit: u8, gate: &Gate) -> bool {
+        // if gate.op != OPERATION_AND {
+        //     unreachable!();
+        // }
 
         // NOTE: bit 0 uses an AND gate as the C_OUT.
         // if the left and right are X/Y,
@@ -374,7 +373,7 @@ impl Logic {
             return false;
         }
 
-        if output >= Z_OFFSET {
+        if gate.id >= Z_OFFSET {
             // should not output an AND to the z_offset. (unless it's the last carry out)
             return self.n_bits != bit;
         }
@@ -388,10 +387,10 @@ impl Logic {
     }
 
     #[inline(always)]
-    fn is_swapped_xor_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
-        if gate.op != OPERATION_XOR {
-            unreachable!();
-        }
+    fn is_swapped_xor_gate(&self, bit: u8, gate: &Gate) -> bool {
+        // if gate.op != OPERATION_XOR {
+        //     unreachable!();
+        // }
         // NOTE: bit 0 uses an XOR gate as the SUM.
         //
         // if the left and right are X/Y,
@@ -401,7 +400,7 @@ impl Logic {
             if outs[1] == NUM_GATES {
                 if bit == 0 {
                     // the first bit uses a single XOR as the SUM.
-                    if output != Z_OFFSET {
+                    if gate.id != Z_OFFSET {
                         // it _must_ output to the Z_OFFSET.
                         return true;
                     }
@@ -439,12 +438,12 @@ impl Logic {
             return true;
         }
 
-        if output < Z_OFFSET {
+        if gate.id < Z_OFFSET {
             // needs to be a sum output.
             return true;
         }
 
-        let z_out = (output - Z_OFFSET) as u8;
+        let z_out = (gate.id - Z_OFFSET) as u8;
         // should be the same bit offset.
         return z_out != bit;
     }
