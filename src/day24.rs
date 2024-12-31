@@ -230,20 +230,19 @@ impl Logic {
     fn solve_part2(&self) -> String {
         let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
-        let mut bit = 0;
+        let mut bit = self.n_bits;
 
         loop {
-            if bit > self.n_bits {
-                break;
-            }
             let z = Z_OFFSET + bit as usize;
             self.find_swapped(bit, &mut bad, z);
-
-            bit += 1;
             if bad.len() == 8 {
                 // we were told 8 is the max size.
                 break;
             }
+            if bit == 0 {
+                break;
+            }
+            bit -= 1;
         }
         if bad.len() != 8 {
             // we were told 8 is the output size.
@@ -268,6 +267,9 @@ impl Logic {
         let gate = self.get_gate(output);
         if self.is_swapped(bit, output, gate) {
             bad.insert(output);
+            if bad.len() == 8 {
+                return;
+            }
         }
 
         // if gate.op == 0 {
@@ -282,20 +284,20 @@ impl Logic {
 
     #[inline(always)]
     fn is_swapped(&self, bit: u8, output: usize, gate: &Gate) -> bool {
-        if gate.op == OPERATION_OR {
-            return self.is_swapped_or_gate(bit, gate);
+        if gate.op == OPERATION_XOR {
+            return self.is_swapped_xor_gate(bit, gate);
         }
 
         if gate.op == OPERATION_AND {
             return self.is_swapped_and_gate(bit, gate);
         }
 
-        if gate.op != OPERATION_XOR {
-            println!("output: {output} = {}", convert_to_string(output));
-            unreachable!();
+        if gate.op == OPERATION_OR {
+            return self.is_swapped_or_gate(bit, gate);
         }
 
-        return self.is_swapped_xor_gate(bit, gate);
+        println!("output: {output} = {}", convert_to_string(output));
+        unreachable!();
     }
 
     #[inline(always)]
