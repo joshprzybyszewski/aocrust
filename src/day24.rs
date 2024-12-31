@@ -57,7 +57,7 @@ struct Logic {
 }
 
 impl Logic {
-    fn new(input: &str) -> Self {
+    fn new<const PART1: bool>(input: &str) -> Self {
         let input = input.as_bytes();
         let mut i = 0;
 
@@ -113,6 +113,10 @@ impl Logic {
             i += 4;
 
             all_outs.extend(output.add_gate(left, right, dest, op));
+        }
+
+        if PART1 {
+            return output;
         }
 
         for (input_gate, output_gate) in all_outs {
@@ -485,14 +489,14 @@ fn convert_to_string(node_id: usize) -> String {
 
 #[aoc(day24, part1)]
 pub fn part1(input: &str) -> u64 {
-    let logic = Logic::new(input);
+    let logic = Logic::new::<true>(input);
 
     return logic.solve_part1();
 }
 
 #[aoc(day24, part2)]
 pub fn part2(input: &str) -> String {
-    let logic = Logic::new(input);
+    let logic = Logic::new::<false>(input);
 
     return logic.solve_part2();
 }
