@@ -127,6 +127,7 @@ impl Logic {
         return output;
     }
 
+    #[inline(always)]
     fn add_gate(&mut self, left: usize, right: usize, dest: usize, op: u8) {
         self.gates[dest] = Gate::new(left, right, op);
 
@@ -141,6 +142,7 @@ impl Logic {
         self.add_out(right, dest);
     }
 
+    #[inline(always)]
     fn add_out(&mut self, input: usize, output: usize) {
         if self.outs[input][0] == NUM_GATES {
             self.outs[input][0] = output;
@@ -155,6 +157,7 @@ impl Logic {
         unreachable!();
     }
 
+    #[inline(always)]
     fn parse_index(&self, input: &[u8], i: usize) -> usize {
         if input[i] == b'x' {
             let index = (input[i + 1] - b'0') as usize * 10 + (input[i + 2] - b'0') as usize;
@@ -174,6 +177,7 @@ impl Logic {
             + (input[i + 2] - b'a') as usize;
     }
 
+    #[inline(always)]
     fn solve_part1(&self) -> u64 {
         let mut output: u64 = 0;
 
@@ -208,6 +212,7 @@ impl Logic {
         }
     }
 
+    #[inline(always)]
     fn solve_part2(&self) -> String {
         let mut bad: HashSet<usize> = HashSet::with_capacity(8);
 
@@ -262,6 +267,7 @@ impl Logic {
         self.find_swapped(bit, bad, gate.right);
     }
 
+    #[inline(always)]
     fn is_swapped(&self, bit: u8, output: usize) -> bool {
         let gate = &self.gates[output];
 
@@ -281,6 +287,7 @@ impl Logic {
         return self.is_swapped_xor_gate(bit, output, gate);
     }
 
+    #[inline(always)]
     fn is_swapped_or_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_OR {
             unreachable!();
@@ -317,6 +324,7 @@ impl Logic {
         return false;
     }
 
+    #[inline(always)]
     fn is_swapped_and_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_AND {
             unreachable!();
@@ -368,6 +376,7 @@ impl Logic {
         return false;
     }
 
+    #[inline(always)]
     fn is_swapped_xor_gate(&self, bit: u8, output: usize, gate: &Gate) -> bool {
         if gate.op != OPERATION_XOR {
             unreachable!();
@@ -429,6 +438,7 @@ impl Logic {
     }
 }
 
+#[inline(always)]
 fn convert_to_string(node_id: usize) -> String {
     let mut array: [u8; 3] = [0; 3];
     if node_id >= Z_OFFSET {
