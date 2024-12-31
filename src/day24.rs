@@ -115,6 +115,8 @@ impl Logic {
             all_outs.extend(output.add_gate(left, right, dest, op));
         }
 
+        output.gates.sort_by(|a, b| a.id.cmp(&b.id));
+
         if PART1 {
             return output;
         }
@@ -193,8 +195,8 @@ impl Logic {
     }
 
     fn get_gate(&self, index: usize) -> &Gate {
-        let gate_index = self.gates.iter().position(|g| g.id == index);
-        if gate_index.is_none() {
+        let gate_index = self.gates.binary_search_by(|g| g.id.cmp(&index));
+        if !gate_index.is_ok() {
             println!("Couldn't find {index} = {}", convert_to_string(index));
             unreachable!();
         }
