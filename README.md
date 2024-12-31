@@ -8,7 +8,7 @@ At first, I was going to use a familiar language (golang) and [did the first few
 
 To set up this repo, I followed the instructions [here](https://github.com/gobanos/cargo-aoc). 
 
-I am using CodSpeed to run benchmarks on my input, similar to how the competition is measured. Check it out [here](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks). I followed [these instructions](https://gist.github.com/art049/a824a8607898241a3fe061488817099e).
+I am using CodSpeed [![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/joshprzybyszewski/aocrust) to run benchmarks on my input, similar to how the competition is measured. Check it out [here](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks). I followed [these instructions](https://gist.github.com/art049/a824a8607898241a3fe061488817099e).
 
 ## How'd it go?
 
