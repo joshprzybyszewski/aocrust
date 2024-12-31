@@ -12,13 +12,13 @@ I am using CodSpeed to run benchmarks on my input, similar to how the competitio
 
 ## How'd it go?
 
-I finished 21st out of [144 total competitors](https://codspeed.io/advent/leaderboard/global). I'm very happy with that, considering 1) I've never written Rust before and 2) the top 3 to 10 submissions every day were basically assembly wrapped in Rust (like simd and stuff I didn't want to learn this year).
+I finished 21st out of [144 total competitors](https://codspeed.io/advent/leaderboard/global). I'm very happy with that, considering 1) I've never written Rust before and 2) the top 3 to 10 submissions every day were basically assembly wrapped in Rust (like [simd](https://github.com/indiv0/aoc-fastest) and stuff I didn't want to learn this year).
 
 Once the day's puzzle was released, competitors had 36 hours (noon EST, the next day) to publish a working solution. It must solve the "secret input" that they had with the correct answer, and then the benchmarks would run. (The main product offering of CodSpeed seems to be a consistent benchmarking environment in Github Actions for Rust and Python, so results are comparable across time.)
 
 My highest scoring day was [Day 20](https://codspeed.io/advent/day/20): 5th out of 32 submissions. I liked Day 20 because I was introduced to [the idea](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day20.rs#L163-L164) of only checking half of the diamond of N-nearest spaces by a fellow competitor.
 
-Perhaps my favorite algorithm from this year was on Day 23. I used [Bron-Kerbosch](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm) to [find the largest clique in an undirect graph](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day23.rs#L219-L272). I was able to find and adapt an implementation from a 2018 AoC solver, which taught me better ways to share (vs. clone) data structures in Rustlang.
+Perhaps my favorite algorithm from this year was on Day 23. I used [Bron-Kerbosch](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm) to [find the largest clique in an undirected graph](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day23.rs#L219-L272). I was able to find and adapt an implementation from a 2018 AoC solver, which taught me better ways to share (vs. clone) data structures in Rustlang.
 
 I had submissions for 20 of the 25 days. 
 
