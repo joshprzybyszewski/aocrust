@@ -284,12 +284,12 @@ impl Logic {
 
     #[inline(always)]
     fn is_swapped(&self, bit: u8, output: usize, gate: &Gate) -> bool {
-        if gate.op == OPERATION_XOR {
-            return self.is_swapped_xor_gate(bit, gate);
-        }
-
         if gate.op == OPERATION_AND {
             return self.is_swapped_and_gate(bit, gate);
+        }
+
+        if gate.op == OPERATION_XOR {
+            return self.is_swapped_xor_gate(bit, gate);
         }
 
         if gate.op == OPERATION_OR {
