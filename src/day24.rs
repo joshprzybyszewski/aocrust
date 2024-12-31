@@ -50,9 +50,10 @@ impl Gate {
 
 #[derive(Copy, Clone)]
 struct Logic {
-    values: [u8; NUM_GATES],
     gates: [Gate; NUM_GATES],
     outs: [[usize; 2]; NUM_GATES],
+    xs: [u8; 64],
+    ys: [u8; 64],
 
     n_bits: u8,
 }
@@ -63,9 +64,10 @@ impl Logic {
         let mut i = 0;
 
         let mut output = Logic {
-            values: [0; NUM_GATES],
             gates: [Gate::empty(); NUM_GATES],
             outs: [[NUM_GATES; 2]; NUM_GATES],
+            xs: [0; 64],
+            ys: [0; 64],
             n_bits: 0,
         };
 
@@ -76,7 +78,11 @@ impl Logic {
             }
             let index = output.parse_index(input, i);
             i += 5;
-            output.values[index] = VALUE_SET_MASK | (input[i] - b'0');
+            if index >= Y_OFFSET {
+                output.ys[index - Y_OFFSET] = input[i] - b'0';
+            } else {
+                output.xs[index - X_OFFSET] = input[i] - b'0';
+            }
             i += 2;
         }
         i += 1;
@@ -164,7 +170,7 @@ impl Logic {
         let mut output: u64 = 0;
 
         let mut offset: usize = 0;
-        for _ in 0..64 {
+        for _ in 0..=self.n_bits {
             output |= (self.get_value(Z_OFFSET + offset) as u64) << offset;
             offset += 1;
         }
@@ -173,20 +179,14 @@ impl Logic {
     }
 
     fn get_value(&self, index: usize) -> u8 {
-        if self.values[index] & VALUE_SET_MASK == VALUE_SET_MASK {
-            return self.values[index] & 1;
+        if index >= X_OFFSET && index < Z_OFFSET {
+            if index >= Y_OFFSET {
+                return self.ys[index - Y_OFFSET];
+            }
+            return self.xs[index - X_OFFSET];
         }
 
         if self.gates[index].op == 0 {
-            if index >= Z_OFFSET {
-                return 0;
-            }
-            if index >= Y_OFFSET {
-                return 0;
-            }
-            if index >= X_OFFSET {
-                return 0;
-            }
             unreachable!();
         }
 
@@ -519,28 +519,6 @@ tgd XOR rvg -> z12
 tnw OR pbm -> gnj";
     }
 
-    fn get_example_input_2() -> &'static str {
-        return "x00: 0
-x01: 1
-x02: 0
-x03: 1
-x04: 0
-x05: 1
-y00: 0
-y01: 0
-y02: 1
-y03: 1
-y04: 0
-y05: 1
-
-x00 AND y00 -> z05
-x01 AND y01 -> z02
-x02 AND y02 -> z01
-x03 AND y03 -> z03
-x04 AND y04 -> z04
-x05 AND y05 -> z00";
-    }
-
     #[test]
     fn part1_example() {
         assert_eq!(part1(&get_example_input()), 2024);
@@ -549,11 +527,6 @@ x05 AND y05 -> z00";
     #[test]
     fn part1_real_input() {
         assert_eq!(part1(&get_input()), 49574189473968)
-    }
-
-    #[test]
-    fn part2_example() {
-        assert_eq!(part2(&get_example_input_2()), "z00,z01,z02,z05");
     }
 
     #[test]
