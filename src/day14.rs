@@ -10,8 +10,6 @@ struct Robot {
 
     v_x: i32,
     v_y: i32,
-
-    time: i32,
 }
 
 #[inline(always)]
@@ -74,8 +72,7 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
 }
 
 #[inline(always)]
-fn step_through_time(robot: &mut Robot, cur_time: i32) {
-    let steps = cur_time - robot.time;
+fn step_through_time(robot: &mut Robot, steps: i32) {
     robot.x = (robot.x + (robot.v_x * steps)).rem_euclid(GRID_WIDTH_I32);
     robot.y = (robot.y + (robot.v_y * steps)).rem_euclid(GRID_HEIGHT_I32);
     if robot.x < 0 {
@@ -84,7 +81,6 @@ fn step_through_time(robot: &mut Robot, cur_time: i32) {
     if robot.y < 0 {
         robot.y += GRID_HEIGHT_I32;
     }
-    robot.time = cur_time;
 }
 
 #[aoc(day14, part1)]
@@ -207,7 +203,6 @@ pub fn part2(input: &str) -> i32 {
         y: 0,
         v_x: 0,
         v_y: 0,
-        time: 0,
     }; 500];
 
     let mut i = 0;
@@ -242,6 +237,8 @@ pub fn part2(input: &str) -> i32 {
         return num_steps;
     }
 
+    let mut current_time = [0_i32; 500];
+
     loop {
         num_steps += 1;
         for i in 0..exists.len() {
@@ -252,7 +249,8 @@ pub fn part2(input: &str) -> i32 {
         // same square. Hopefully, that's actually true, because that works for my input.
         good = true;
         for i in 0..robots.len() {
-            step_through_time(&mut robots[i], num_steps);
+            step_through_time(&mut robots[i], num_steps - current_time[i]);
+            current_time[i] = num_steps;
             let robot = robots[i];
             let index: usize;
             let b: u64;
