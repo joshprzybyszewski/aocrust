@@ -340,26 +340,22 @@ fn is_border(exists: &[u64; 202], row: usize, col: usize) -> bool {
         return false;
     }
 
-    let top_target: u64;
-    let bottom_target: u64;
-
     if row < 64 {
-        top_target = BITS[BORDER_SIZE] << row;
+        let top_target = BITS[BORDER_SIZE] << row;
+        if exists[index] & top_target != top_target {
+            return false;
+        }
         if row + BORDER_SIZE >= 64 {
-            bottom_target = BITS[BORDER_SIZE - (64 - row)];
-        } else {
-            bottom_target = 0;
+            let bottom_target = BITS[row + BORDER_SIZE - 64];
+            if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
+                return false;
+            }
         }
     } else {
-        top_target = 0;
-        bottom_target = BITS[BORDER_SIZE] << (row - 64);
-    }
-
-    if exists[index] & top_target != top_target {
-        return false;
-    }
-    if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
-        return false;
+        let bottom_target = BITS[BORDER_SIZE] << (row - 64);
+        if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
+            return false;
+        }
     }
 
     for delta in 1..BORDER_SIZE {
