@@ -185,7 +185,11 @@ pub fn part1(input: &str) -> u32 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> i32 {
-    let mut exists = [0u64; 202]; // index is x, since that is 101, not 103.
+    // The space is 101 tiles wide and 103 tall.
+    // index is based on x, since that is 101, not 103.
+    // exists[0..101] represents the 0th through 63rd rows of col x
+    // exists[101..202] represents the 64th through 102nd (aka last) row of col (x-101)
+    let mut exists = [0u64; 202];
     let mut num_steps = 0;
     let mut good: bool = true;
 
@@ -226,7 +230,7 @@ pub fn part2(input: &str) -> i32 {
         exists[index] |= b;
     }
 
-    if good {
+    if good && is_tree(&exists) {
         // print_robots(&exists);
         return num_steps;
     }
@@ -260,36 +264,98 @@ pub fn part2(input: &str) -> i32 {
         }
 
         if good {
+            // println!("At {num_steps}:");
             // print_robots(&exists);
-            return num_steps;
+            if is_tree(&exists) {
+                return num_steps;
+            }
+            // if num_steps > 10_000 {
+            //     unreachable!();
+            // }
         }
     }
 }
 
-// fn print_robots(exists: &[u64; 202]) {
-//     for r in 0..63 {
-//         print!("|");
-//         for c in 0..101 {
-//             if exists[c] & 1 << r == 0 {
-//                 print!(" ");
-//             } else {
-//                 print!("X");
-//             }
-//         }
-//         println!("|");
-//     }
-//     for r in 64..103 {
-//         print!("|");
-//         for c in 0..101 {
-//             if exists[101 + c] & 1 << (r - 64) == 0 {
-//                 print!(" ");
-//             } else {
-//                 print!("X");
-//             }
-//         }
-//         println!("|");
-//     }
-// }
+fn is_robot(exists: &[u64; 202], y: usize, x: usize) -> bool {
+    let index: usize;
+    let b: u64;
+    if y < 64 {
+        index = x;
+        b = 1 << y;
+    } else {
+        index = 101 + x;
+        b = 1 << (y - 64);
+    }
+
+    return exists[index] & b != 0;
+}
+
+fn is_tree(exists: &[u64; 202]) -> bool {
+    // the tree is encased in a 31x31 border of robots.
+    const BORDER_SIZE: usize = 30;
+
+    for row in 0..(103 - BORDER_SIZE) {
+        for col in 0..(101 - BORDER_SIZE) {
+            if !is_robot(exists, row, col) {
+                continue;
+            }
+            let mut complete = true;
+            for delta in 1..=BORDER_SIZE {
+                if !is_robot(exists, row, col + delta) {
+                    complete = false;
+                    break;
+                }
+                if !is_robot(exists, row + delta, col) {
+                    complete = false;
+                    break;
+                }
+            }
+            if complete {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+#[allow(dead_code)]
+fn print_robots(exists: &[u64; 202]) {
+    print!(".");
+    for _ in 0..101 {
+        print!("-");
+    }
+    println!(".");
+
+    for r in 0..63 {
+        print!("|");
+        for c in 0..101 {
+            if exists[c] & 1 << r == 0 {
+                print!(" ");
+            } else {
+                print!("X");
+            }
+        }
+        println!("|");
+    }
+    for r in 64..103 {
+        print!("|");
+        for c in 0..101 {
+            if exists[101 + c] & 1 << (r - 64) == 0 {
+                print!(" ");
+            } else {
+                print!("X");
+            }
+        }
+        println!("|");
+    }
+
+    print!("'");
+    for _ in 0..101 {
+        print!("-");
+    }
+    println!("'");
+}
 
 #[cfg(test)]
 mod test {
@@ -307,22 +373,22 @@ mod test {
         fs::read_to_string(input_path).unwrap()
     }
 
-    // fn get_input_2() -> String {
-    //     let input_path = "input/2024/day14_2.txt";
-    //     fs::read_to_string(input_path).unwrap()
-    // }
+    fn get_input_2() -> String {
+        let input_path = "input/2024/day14_2.txt";
+        fs::read_to_string(input_path).unwrap()
+    }
 
     #[test]
     fn part1_real_input() {
         assert_eq!(part1(&get_input()), 224438715);
         assert_eq!(part1(&get_competition_input()), 209409792);
-        // assert_eq!(part1(&get_input_2()), 231221760);
+        assert_eq!(part1(&get_input_2()), 231221760);
     }
 
     #[test]
     fn part2_real_input() {
         assert_eq!(part2(&get_input()), 7603);
         assert_eq!(part2(&get_competition_input()), 8006);
-        // assert_eq!(part2(&get_input_2()), 6771);
+        assert_eq!(part2(&get_input_2()), 6771);
     }
 }
