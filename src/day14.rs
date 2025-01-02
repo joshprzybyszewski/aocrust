@@ -73,8 +73,8 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
 
 #[inline(always)]
 fn step_through_time(robot: &mut Robot, steps: i32) {
-    robot.x = (robot.x + (robot.v_x * steps)).rem_euclid(GRID_WIDTH_I32);
-    robot.y = (robot.y + (robot.v_y * steps)).rem_euclid(GRID_HEIGHT_I32);
+    robot.x = (robot.x + (robot.v_x * steps)) % GRID_WIDTH_I32;
+    robot.y = (robot.y + (robot.v_y * steps)) % GRID_HEIGHT_I32;
     if robot.x < 0 {
         robot.x += GRID_WIDTH_I32;
     }
@@ -157,8 +157,8 @@ pub fn part1(input: &str) -> u32 {
         i += 1;
 
         // 100 steps, 101 is the width, 103 is the height.
-        x = (x + (v_x * NUM_STEPS)).rem_euclid(GRID_WIDTH_I32);
-        y = (y + (v_y * NUM_STEPS)).rem_euclid(GRID_HEIGHT_I32);
+        x = (x + (v_x * NUM_STEPS)) % GRID_WIDTH_I32;
+        y = (y + (v_y * NUM_STEPS)) % GRID_HEIGHT_I32;
         if x < 0 {
             x += GRID_WIDTH_I32;
         }
