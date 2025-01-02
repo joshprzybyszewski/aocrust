@@ -4,6 +4,41 @@ const GRID_HEIGHT: usize = 103;
 const GRID_HEIGHT_I32: i32 = GRID_HEIGHT as i32;
 const BORDER_SIZE: usize = 31;
 
+const BITS: [u64; BORDER_SIZE + 1] = [
+    0,
+    0x00_00_00_01,
+    0x00_00_00_03,
+    0x00_00_00_07,
+    0x00_00_00_0F,
+    0x00_00_00_1F,
+    0x00_00_00_3F,
+    0x00_00_00_7F,
+    0x00_00_00_FF,
+    0x00_00_01_FF,
+    0x00_00_03_FF,
+    0x00_00_07_FF,
+    0x00_00_0F_FF,
+    0x00_00_1F_FF,
+    0x00_00_3F_FF,
+    0x00_00_7F_FF,
+    0x00_00_FF_FF,
+    0x00_01_FF_FF,
+    0x00_03_FF_FF,
+    0x00_07_FF_FF,
+    0x00_0F_FF_FF,
+    0x00_1F_FF_FF,
+    0x00_3F_FF_FF,
+    0x00_7F_FF_FF,
+    0x00_FF_FF_FF,
+    0x01_FF_FF_FF,
+    0x03_FF_FF_FF,
+    0x07_FF_FF_FF,
+    0x0F_FF_FF_FF,
+    0x1F_FF_FF_FF,
+    0x3F_FF_FF_FF,
+    0xFF_FF_FF_FF,
+];
+
 #[derive(Copy, Clone, Debug)]
 struct Robot {
     x: i32,
@@ -305,30 +340,35 @@ fn is_border(exists: &[u64; 202], row: usize, col: usize) -> bool {
         return false;
     }
 
+    let top_target: u64;
+    let bottom_target: u64;
+
+    if row < 64 {
+        top_target = BITS[BORDER_SIZE] << row;
+        if row + BORDER_SIZE >= 64 {
+            bottom_target = BITS[BORDER_SIZE - (64 - row)];
+        } else {
+            bottom_target = 0;
+        }
+    } else {
+        top_target = 0;
+        bottom_target = BITS[BORDER_SIZE] << (row - 64);
+    }
+
+    if exists[index] & top_target != top_target {
+        return false;
+    }
+    if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
+        return false;
+    }
+
     for delta in 1..BORDER_SIZE {
         if exists[index + delta] & row_bit == 0 {
-            return false;
-        }
-        if !is_robot(exists, row + delta, col) {
             return false;
         }
     }
 
     return true;
-}
-
-fn is_robot(exists: &[u64; 202], y: usize, x: usize) -> bool {
-    let index: usize;
-    let b: u64;
-    if y < 64 {
-        index = x;
-        b = 1 << y;
-    } else {
-        index = GRID_WIDTH + x;
-        b = 1 << (y - 64);
-    }
-
-    return exists[index] & b != 0;
 }
 
 #[allow(dead_code)]
