@@ -108,9 +108,9 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
 }
 
 #[inline(always)]
-fn step_through_time(robot: &mut Robot, steps: i32) {
-    robot.x = (robot.x + (robot.v_x * steps)) % GRID_WIDTH_I32;
-    robot.y = (robot.y + (robot.v_y * steps)) % GRID_HEIGHT_I32;
+fn step_through_time(robot: &mut Robot) {
+    robot.x = (robot.x + robot.v_x) % GRID_WIDTH_I32;
+    robot.y = (robot.y + robot.v_y) % GRID_HEIGHT_I32;
     if robot.x < 0 {
         robot.x += GRID_WIDTH_I32;
     }
@@ -249,124 +249,47 @@ pub fn part2(input: &str) -> i32 {
         r_i += 1;
     }
 
-    // check zero steps
-    for i in 0..robots.len() {
-        let robot = robots[i];
-        let index: usize;
-        let b: u64;
-        if robot.y < 64 {
-            index = robot.x as usize;
-            b = 1 << robot.y;
+    // attempt to repro https://www.reddit.com/r/adventofcode/comments/1hdvhvu/comment/m1zws1g/
+    let mut bx = 0;
+    let mut bx_val = i32::MAX;
+    let mut by = 0;
+    let mut by_val = i32::MAX;
+    for val in 0..GRID_HEIGHT_I32 {
+        let (var_x, var_y) = get_variance(&mut robots);
+        if var_x < bx_val {
+            bx = val;
+            bx_val = var_x;
+        }
+        if var_y < by_val {
+            by = val;
+            by_val = var_y;
+        }
+    }
+
+    // pow(101, -1, 103) = 51
+    return bx + ((51 * (by - bx)) % GRID_HEIGHT_I32) * GRID_WIDTH_I32;
+}
+
+#[inline(always)]
+fn get_variance(robots: &mut [Robot; 500]) -> (i32, i32) {
+    let mut var_x: i32 = 0i32;
+    let mut var_y: i32 = 0i32;
+
+    for robot in robots.iter_mut() {
+        if robot.y < 51 {
+            var_y += 51 - robot.y;
         } else {
-            index = GRID_WIDTH + robot.x as usize;
-            b = 1 << (robot.y - 64);
+            var_y += robot.y - 51;
         }
-        if exists[index] & b != 0 {
-            good = false;
-            break;
+        if robot.x < 50 {
+            var_x += 50 - robot.x;
+        } else {
+            var_x += robot.x - 50;
         }
-        exists[index] |= b;
+        step_through_time(robot);
     }
 
-    if good && is_tree(&exists, &robots) {
-        // print_robots(&exists);
-        return num_steps;
-    }
-
-    let mut current_time = [0_i32; 500];
-
-    loop {
-        num_steps += 1;
-        for i in 0..exists.len() {
-            exists[i] = 0;
-        }
-
-        // it seems like the tree is a picture in the space and none of the robots are on the
-        // same square. Hopefully, that's actually true, because that works for my input.
-        good = true;
-        for i in 0..robots.len() {
-            step_through_time(&mut robots[i], num_steps - current_time[i]);
-            current_time[i] = num_steps;
-            let robot = &robots[i];
-            let index: usize;
-            let b: u64;
-            if robot.y < 64 {
-                index = robot.x as usize;
-                b = 1 << robot.y;
-            } else {
-                index = GRID_WIDTH + robot.x as usize;
-                b = 1 << (robot.y - 64);
-            }
-            if exists[index] & b != 0 {
-                good = false;
-                break;
-            }
-            exists[index] |= b;
-        }
-
-        if good && is_tree(&exists, &robots) {
-            // println!("At {num_steps}:");
-            // print_robots(&exists);
-            return num_steps;
-        }
-    }
-}
-
-#[inline(always)]
-fn is_tree(exists: &[u64; 202], robots: &[Robot; 500]) -> bool {
-    // the tree is encased in a 31x31 border of robots. (120 robots)
-    // the tree itself is 216 robots.
-    // There's 500 robots total.
-    for robot in robots.iter() {
-        if is_border(exists, robot.y as usize, robot.x as usize) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-#[inline(always)]
-fn is_border(exists: &[u64; 202], row: usize, col: usize) -> bool {
-    let index: usize;
-    let row_bit: u64;
-    if row < 64 {
-        index = col;
-        row_bit = 1 << row;
-    } else {
-        index = GRID_WIDTH + col;
-        row_bit = 1 << (row - 64);
-    }
-
-    if exists[index] & row_bit == 0 {
-        return false;
-    }
-
-    if row < 64 {
-        let top_target = BITS[BORDER_SIZE] << row;
-        if exists[index] & top_target != top_target {
-            return false;
-        }
-        if row + BORDER_SIZE >= 64 {
-            let bottom_target = BITS[row + BORDER_SIZE - 64];
-            if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
-                return false;
-            }
-        }
-    } else {
-        let bottom_target = BITS[BORDER_SIZE] << (row - 64);
-        if exists[GRID_WIDTH + col] & bottom_target != bottom_target {
-            return false;
-        }
-    }
-
-    for delta in 1..BORDER_SIZE {
-        if exists[index + delta] & row_bit == 0 {
-            return false;
-        }
-    }
-
-    return true;
+    return (var_x, var_y);
 }
 
 #[allow(dead_code)]
@@ -438,7 +361,7 @@ mod test {
     #[test]
     fn part2_real_input() {
         assert_eq!(part2(&get_input()), 7603);
-        assert_eq!(part2(&get_competition_input()), 8006);
         assert_eq!(part2(&get_input_2()), 6771);
+        assert_eq!(part2(&get_competition_input()), 8006);
     }
 }
