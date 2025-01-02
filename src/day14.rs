@@ -291,12 +291,22 @@ fn is_tree(exists: &[u64; 202]) -> bool {
 }
 
 fn is_border(exists: &[u64; 202], row: usize, col: usize) -> bool {
-    if !is_robot(exists, row, col) {
+    let index: usize;
+    let row_bit: u64;
+    if row < 64 {
+        index = col;
+        row_bit = 1 << row;
+    } else {
+        index = GRID_WIDTH + col;
+        row_bit = 1 << (row - 64);
+    }
+
+    if exists[index] & row_bit == 0 {
         return false;
     }
 
     for delta in 1..BORDER_SIZE {
-        if !is_robot(exists, row, col + delta) {
+        if exists[index + delta] & row_bit == 0 {
             return false;
         }
         if !is_robot(exists, row + delta, col) {
