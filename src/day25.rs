@@ -52,7 +52,7 @@ pub fn part1(input: &str) -> u32 {
 }
 
 #[aoc(day25, part2)]
-pub fn part2(input: &str) -> u32 {
+pub fn part2(_: &str) -> u32 {
     return 0;
 }
 
