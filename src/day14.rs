@@ -2,6 +2,7 @@ const GRID_WIDTH: usize = 101;
 const GRID_WIDTH_I32: i32 = GRID_WIDTH as i32;
 const GRID_HEIGHT: usize = 103;
 const GRID_HEIGHT_I32: i32 = GRID_HEIGHT as i32;
+const BORDER_SIZE: usize = 31;
 
 #[derive(Copy, Clone, Debug)]
 struct Robot {
@@ -276,6 +277,36 @@ pub fn part2(input: &str) -> i32 {
     }
 }
 
+fn is_tree(exists: &[u64; 202]) -> bool {
+    // the tree is encased in a 31x31 border of robots.
+    for row in 0..(GRID_HEIGHT - BORDER_SIZE) {
+        for col in 0..(GRID_WIDTH - BORDER_SIZE) {
+            if is_border(exists, row, col) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+fn is_border(exists: &[u64; 202], row: usize, col: usize) -> bool {
+    if !is_robot(exists, row, col) {
+        return false;
+    }
+
+    for delta in 1..BORDER_SIZE {
+        if !is_robot(exists, row, col + delta) {
+            return false;
+        }
+        if !is_robot(exists, row + delta, col) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 fn is_robot(exists: &[u64; 202], y: usize, x: usize) -> bool {
     let index: usize;
     let b: u64;
@@ -288,35 +319,6 @@ fn is_robot(exists: &[u64; 202], y: usize, x: usize) -> bool {
     }
 
     return exists[index] & b != 0;
-}
-
-fn is_tree(exists: &[u64; 202]) -> bool {
-    // the tree is encased in a 31x31 border of robots.
-    const BORDER_SIZE: usize = 30;
-
-    for row in 0..(GRID_HEIGHT - BORDER_SIZE) {
-        for col in 0..(GRID_WIDTH - BORDER_SIZE) {
-            if !is_robot(exists, row, col) {
-                continue;
-            }
-            let mut complete = true;
-            for delta in 1..=BORDER_SIZE {
-                if !is_robot(exists, row, col + delta) {
-                    complete = false;
-                    break;
-                }
-                if !is_robot(exists, row + delta, col) {
-                    complete = false;
-                    break;
-                }
-            }
-            if complete {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 #[allow(dead_code)]
