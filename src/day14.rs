@@ -251,7 +251,7 @@ pub fn part2(input: &str) -> i32 {
         for i in 0..robots.len() {
             step_through_time(&mut robots[i], num_steps - current_time[i]);
             current_time[i] = num_steps;
-            let robot = robots[i];
+            let robot = &robots[i];
             let index: usize;
             let b: u64;
             if robot.y < 64 {
@@ -268,12 +268,10 @@ pub fn part2(input: &str) -> i32 {
             exists[index] |= b;
         }
 
-        if good {
+        if good && is_tree(&exists) {
             // println!("At {num_steps}:");
             // print_robots(&exists);
-            if is_tree(&exists) {
-                return num_steps;
-            }
+            return num_steps;
         }
     }
 }
