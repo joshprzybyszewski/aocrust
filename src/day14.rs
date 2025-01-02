@@ -234,7 +234,7 @@ pub fn part2(input: &str) -> i32 {
 
     let input = input.as_bytes();
 
-    let mut robots = [Robot {
+    let mut robots: [Robot; 500] = [Robot {
         x: 0,
         y: 0,
         v_x: 0,
@@ -268,7 +268,7 @@ pub fn part2(input: &str) -> i32 {
         exists[index] |= b;
     }
 
-    if good && is_tree(&exists) {
+    if good && is_tree(&exists, &robots) {
         // print_robots(&exists);
         return num_steps;
     }
@@ -304,7 +304,7 @@ pub fn part2(input: &str) -> i32 {
             exists[index] |= b;
         }
 
-        if good && is_tree(&exists) {
+        if good && is_tree(&exists, &robots) {
             // println!("At {num_steps}:");
             // print_robots(&exists);
             return num_steps;
@@ -312,13 +312,11 @@ pub fn part2(input: &str) -> i32 {
     }
 }
 
-fn is_tree(exists: &[u64; 202]) -> bool {
+fn is_tree(exists: &[u64; 202], robots: &[Robot; 500]) -> bool {
     // the tree is encased in a 31x31 border of robots.
-    for row in 0..(GRID_HEIGHT - BORDER_SIZE) {
-        for col in 0..(GRID_WIDTH - BORDER_SIZE) {
-            if is_border(exists, row, col) {
-                return true;
-            }
+    for robot in robots.iter() {
+        if is_border(exists, robot.y as usize, robot.x as usize) {
+            return true;
         }
     }
 
