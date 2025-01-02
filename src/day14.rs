@@ -1,3 +1,8 @@
+const GRID_WIDTH: usize = 101;
+const GRID_WIDTH_I32: i32 = GRID_WIDTH as i32;
+const GRID_HEIGHT: usize = 103;
+const GRID_HEIGHT_I32: i32 = GRID_HEIGHT as i32;
+
 #[derive(Copy, Clone, Debug)]
 struct Robot {
     x: i32,
@@ -71,19 +76,21 @@ fn new_robot(input: &[u8], i: &mut usize, robot: &mut Robot) {
 #[inline(always)]
 fn step_through_time(robot: &mut Robot, cur_time: i32) {
     let steps = cur_time - robot.time;
-    robot.x = (robot.x + (robot.v_x * steps)).rem_euclid(101);
-    robot.y = (robot.y + (robot.v_y * steps)).rem_euclid(103);
+    robot.x = (robot.x + (robot.v_x * steps)).rem_euclid(GRID_WIDTH_I32);
+    robot.y = (robot.y + (robot.v_y * steps)).rem_euclid(GRID_HEIGHT_I32);
     if robot.x < 0 {
-        robot.x += 101;
+        robot.x += GRID_WIDTH_I32;
     }
     if robot.y < 0 {
-        robot.y += 103;
+        robot.y += GRID_HEIGHT_I32;
     }
     robot.time = cur_time;
 }
 
 #[aoc(day14, part1)]
 pub fn part1(input: &str) -> u32 {
+    const NUM_STEPS: i32 = 100;
+
     let input = input.as_bytes();
 
     let mut i = 0;
@@ -154,13 +161,13 @@ pub fn part1(input: &str) -> u32 {
         i += 1;
 
         // 100 steps, 101 is the width, 103 is the height.
-        x = (x + (v_x * 100)) % 101;
-        y = (y + (v_y * 100)) % 103;
+        x = (x + (v_x * NUM_STEPS)) % GRID_WIDTH_I32;
+        y = (y + (v_y * NUM_STEPS)) % GRID_HEIGHT_I32;
         if x < 0 {
-            x += 101;
+            x += GRID_WIDTH_I32;
         }
         if y < 0 {
-            y += 103;
+            y += GRID_HEIGHT_I32;
         }
         if y == 51 || x == 50 {
             continue;
@@ -220,7 +227,7 @@ pub fn part2(input: &str) -> i32 {
             index = robot.x as usize;
             b = 1 << robot.y;
         } else {
-            index = 101 + robot.x as usize;
+            index = GRID_WIDTH + robot.x as usize;
             b = 1 << (robot.y - 64);
         }
         if exists[index] & b != 0 {
@@ -253,7 +260,7 @@ pub fn part2(input: &str) -> i32 {
                 index = robot.x as usize;
                 b = 1 << robot.y;
             } else {
-                index = 101 + robot.x as usize;
+                index = GRID_WIDTH + robot.x as usize;
                 b = 1 << (robot.y - 64);
             }
             if exists[index] & b != 0 {
@@ -269,9 +276,6 @@ pub fn part2(input: &str) -> i32 {
             if is_tree(&exists) {
                 return num_steps;
             }
-            // if num_steps > 10_000 {
-            //     unreachable!();
-            // }
         }
     }
 }
@@ -283,7 +287,7 @@ fn is_robot(exists: &[u64; 202], y: usize, x: usize) -> bool {
         index = x;
         b = 1 << y;
     } else {
-        index = 101 + x;
+        index = GRID_WIDTH + x;
         b = 1 << (y - 64);
     }
 
@@ -294,8 +298,8 @@ fn is_tree(exists: &[u64; 202]) -> bool {
     // the tree is encased in a 31x31 border of robots.
     const BORDER_SIZE: usize = 30;
 
-    for row in 0..(103 - BORDER_SIZE) {
-        for col in 0..(101 - BORDER_SIZE) {
+    for row in 0..(GRID_HEIGHT - BORDER_SIZE) {
+        for col in 0..(GRID_WIDTH - BORDER_SIZE) {
             if !is_robot(exists, row, col) {
                 continue;
             }
@@ -322,14 +326,14 @@ fn is_tree(exists: &[u64; 202]) -> bool {
 #[allow(dead_code)]
 fn print_robots(exists: &[u64; 202]) {
     print!(".");
-    for _ in 0..101 {
+    for _ in 0..GRID_WIDTH {
         print!("-");
     }
     println!(".");
 
     for r in 0..63 {
         print!("|");
-        for c in 0..101 {
+        for c in 0..GRID_WIDTH {
             if exists[c] & 1 << r == 0 {
                 print!(" ");
             } else {
@@ -338,10 +342,10 @@ fn print_robots(exists: &[u64; 202]) {
         }
         println!("|");
     }
-    for r in 64..103 {
+    for r in 64..GRID_HEIGHT {
         print!("|");
-        for c in 0..101 {
-            if exists[101 + c] & 1 << (r - 64) == 0 {
+        for c in 0..GRID_WIDTH {
+            if exists[GRID_WIDTH + c] & 1 << (r - 64) == 0 {
                 print!(" ");
             } else {
                 print!("X");
@@ -351,7 +355,7 @@ fn print_robots(exists: &[u64; 202]) {
     }
 
     print!("'");
-    for _ in 0..101 {
+    for _ in 0..GRID_WIDTH {
         print!("-");
     }
     println!("'");
