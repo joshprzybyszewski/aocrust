@@ -313,7 +313,9 @@ pub fn part2(input: &str) -> i32 {
 }
 
 fn is_tree(exists: &[u64; 202], robots: &[Robot; 500]) -> bool {
-    // the tree is encased in a 31x31 border of robots.
+    // the tree is encased in a 31x31 border of robots. (120 robots)
+    // the tree itself is 216 robots.
+    // There's 500 robots total.
     for robot in robots.iter() {
         if is_border(exists, robot.y as usize, robot.x as usize) {
             return true;
