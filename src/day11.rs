@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 // u64 only supports 20 digit numbers.
 const TEN_POWERS: [u64; 20] = [
     1,
@@ -24,7 +22,7 @@ const TEN_POWERS: [u64; 20] = [
     10000000000000000000,
 ];
 
-const MAX_FUTURE_CACHE: usize = 1500;
+const MAX_FUTURE_CACHE: usize = 2024;
 const MAX_FUTURE_CACHE_U64: u64 = MAX_FUTURE_CACHE as u64;
 const MAX_ITERATION: usize = 76;
 
@@ -74,16 +72,12 @@ impl NextSplit {
 }
 
 struct StoneChanger {
-    // cache: HashMap<u64, NextSplit>,
-    // answers: HashMap<(u64, usize), usize>,
     future: [[usize; MAX_ITERATION]; MAX_FUTURE_CACHE],
 }
 
 impl StoneChanger {
     fn new() -> Self {
         StoneChanger {
-            // cache: HashMap::with_capacity(4096),
-            // answers: HashMap::with_capacity(78339),
             future: [[0; MAX_ITERATION]; MAX_FUTURE_CACHE],
         }
     }
@@ -104,18 +98,15 @@ impl StoneChanger {
             return 1;
         }
 
-        // if self.answers.contains_key(&(val, remaining)) {
-        //     return *self.answers.get(&(val, remaining)).unwrap();
-        // }
-
         let split = self.get_next_split(val);
         if val < MAX_FUTURE_CACHE_U64 {
+            // we're looking up the split for val anyway, let's cache off the results
             for i in 0..split.num_blinks {
                 self.future[val as usize][i] = 1;
             }
+            self.future[val as usize][split.num_blinks] = 2;
         }
         if split.num_blinks > remaining {
-            // self.answers.insert((val, remaining), 1);
             return 1;
         }
 
@@ -124,20 +115,12 @@ impl StoneChanger {
         if val < MAX_FUTURE_CACHE_U64 {
             self.future[val as usize][remaining] = answer;
         }
-        // self.answers.insert((val, remaining), answer);
         return answer;
     }
 
     fn get_next_split(&mut self, val: u64) -> NextSplit {
-        // if self.cache.contains_key(&val) {
-        //     return *self.cache.get(&val).unwrap();
-        // }
-
         if val == 0 {
-            let next = self.get_next_split(1);
-            let mine = next.one_farther();
-            // self.cache.insert(val, mine);
-            return mine;
+            return self.get_next_split(1).one_farther();
         }
 
         let mut ten_i = 1;
@@ -147,10 +130,7 @@ impl StoneChanger {
                 // [   1 ->   10 )
                 // [ 100 -> 1000 )
                 // ...
-                let next = self.get_next_split(val * 2024);
-                let mine = next.one_farther();
-                // self.cache.insert(val, mine);
-                return mine;
+                return self.get_next_split(val * 2024).one_farther();
             }
             ten_i += 1;
             if val < TEN_POWERS[ten_i] {
@@ -171,9 +151,7 @@ impl StoneChanger {
         let left = val / div;
         let right = val % div;
 
-        let mine = NextSplit::new(1, left, right);
-        // self.cache.insert(val, mine);
-        return mine;
+        return NextSplit::new(1, left, right);
     }
 }
 
