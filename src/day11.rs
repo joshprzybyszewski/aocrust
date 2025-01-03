@@ -74,17 +74,16 @@ impl NextSplit {
 }
 
 struct StoneChanger {
-    cache: HashMap<u64, NextSplit>,
-    answers: HashMap<(u64, usize), usize>,
-
+    // cache: HashMap<u64, NextSplit>,
+    // answers: HashMap<(u64, usize), usize>,
     future: [[usize; MAX_ITERATION]; MAX_FUTURE_CACHE],
 }
 
 impl StoneChanger {
     fn new() -> Self {
         StoneChanger {
-            cache: HashMap::with_capacity(4096),
-            answers: HashMap::with_capacity(78339),
+            // cache: HashMap::with_capacity(4096),
+            // answers: HashMap::with_capacity(78339),
             future: [[0; MAX_ITERATION]; MAX_FUTURE_CACHE],
         }
     }
@@ -105,9 +104,9 @@ impl StoneChanger {
             return 1;
         }
 
-        if self.answers.contains_key(&(val, remaining)) {
-            return *self.answers.get(&(val, remaining)).unwrap();
-        }
+        // if self.answers.contains_key(&(val, remaining)) {
+        //     return *self.answers.get(&(val, remaining)).unwrap();
+        // }
 
         let split = self.get_next_split(val);
         if val < MAX_FUTURE_CACHE_U64 {
@@ -116,7 +115,7 @@ impl StoneChanger {
             }
         }
         if split.num_blinks > remaining {
-            self.answers.insert((val, remaining), 1);
+            // self.answers.insert((val, remaining), 1);
             return 1;
         }
 
@@ -125,19 +124,19 @@ impl StoneChanger {
         if val < MAX_FUTURE_CACHE_U64 {
             self.future[val as usize][remaining] = answer;
         }
-        self.answers.insert((val, remaining), answer);
+        // self.answers.insert((val, remaining), answer);
         return answer;
     }
 
     fn get_next_split(&mut self, val: u64) -> NextSplit {
-        if self.cache.contains_key(&val) {
-            return *self.cache.get(&val).unwrap();
-        }
+        // if self.cache.contains_key(&val) {
+        //     return *self.cache.get(&val).unwrap();
+        // }
 
         if val == 0 {
             let next = self.get_next_split(1);
             let mine = next.one_farther();
-            self.cache.insert(val, mine);
+            // self.cache.insert(val, mine);
             return mine;
         }
 
@@ -150,7 +149,7 @@ impl StoneChanger {
                 // ...
                 let next = self.get_next_split(val * 2024);
                 let mine = next.one_farther();
-                self.cache.insert(val, mine);
+                // self.cache.insert(val, mine);
                 return mine;
             }
             ten_i += 1;
@@ -173,7 +172,7 @@ impl StoneChanger {
         let right = val % div;
 
         let mine = NextSplit::new(1, left, right);
-        self.cache.insert(val, mine);
+        // self.cache.insert(val, mine);
         return mine;
     }
 }
