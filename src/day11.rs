@@ -75,6 +75,7 @@ impl NextSplit {
 
 struct StoneChanger {
     cache: HashMap<u64, NextSplit>,
+    answers: HashMap<(u64, usize), usize>,
 
     future: [[usize; MAX_ITERATION]; MAX_FUTURE_CACHE],
 }
@@ -82,16 +83,17 @@ struct StoneChanger {
 impl StoneChanger {
     fn new() -> Self {
         StoneChanger {
-            cache: HashMap::with_capacity(256),
+            cache: HashMap::with_capacity(4096),
+            answers: HashMap::with_capacity(78339),
             future: [[0; MAX_ITERATION]; MAX_FUTURE_CACHE],
         }
     }
 
     fn get_stones_after_blinks(&mut self, val: u64, num_blinks: usize) -> usize {
-        return self.iterate(val, num_blinks);
+        return self.solve(val, num_blinks);
     }
 
-    fn iterate(&mut self, val: u64, remaining: usize) -> usize {
+    fn solve(&mut self, val: u64, remaining: usize) -> usize {
         if val < MAX_FUTURE_CACHE_U64 && self.future[val as usize][remaining] != 0 {
             return self.future[val as usize][remaining];
         }
@@ -103,6 +105,10 @@ impl StoneChanger {
             return 1;
         }
 
+        if self.answers.contains_key(&(val, remaining)) {
+            return *self.answers.get(&(val, remaining)).unwrap();
+        }
+
         let split = self.get_next_split(val);
         if val < MAX_FUTURE_CACHE_U64 {
             for i in 0..split.num_blinks {
@@ -110,14 +116,16 @@ impl StoneChanger {
             }
         }
         if split.num_blinks > remaining {
+            self.answers.insert((val, remaining), 1);
             return 1;
         }
 
         let steps = remaining - split.num_blinks;
-        let answer = self.iterate(split.left, steps) + self.iterate(split.right, steps);
+        let answer = self.solve(split.right, steps) + self.solve(split.left, steps);
         if val < MAX_FUTURE_CACHE_U64 {
             self.future[val as usize][remaining] = answer;
         }
+        self.answers.insert((val, remaining), answer);
         return answer;
     }
 
