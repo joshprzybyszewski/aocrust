@@ -204,7 +204,6 @@ pub fn part2(input: &str) -> usize {
     let _ = march(&mut grid, guard);
 
     let mut total: usize = 0;
-    let mut prev: [[u8; 130]; 130];
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
             if grid[r][c] & VISITED != VISITED {
@@ -215,12 +214,11 @@ pub fn part2(input: &str) -> usize {
                 continue;
             }
             // Consider running march_2 in concurrently with all the others
-            prev = grid;
+            let mut grid = grid;
             grid[r][c] = BLOCK;
             if march_2(&mut grid, guard) {
                 total += 1;
             }
-            grid = prev;
         }
     }
     return total;
