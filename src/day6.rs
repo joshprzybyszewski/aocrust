@@ -214,11 +214,12 @@ pub fn part2(input: &str) -> usize {
                 continue;
             }
             // Consider running march_2 in concurrently with all the others
-            let mut grid = grid;
+            let prev: [[u8; 130]; 130] = grid;
             grid[r][c] = BLOCK;
             if march_2(&mut grid, guard) {
                 total += 1;
             }
+            grid = prev;
         }
     }
     return total;
