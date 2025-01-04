@@ -8,8 +8,9 @@ const UP: u8 = 1 << 2;
 const RIGHT: u8 = 1 << 3;
 const DOWN: u8 = 1 << 4;
 const LEFT: u8 = 1 << 5;
+const FOUND: u8 = 1 << 6;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Guard {
     r: usize,
     c: usize,
@@ -118,58 +119,166 @@ pub fn part1(input: &str) -> usize {
     return march(&mut grid, guard);
 }
 
-fn march_2(grid: &mut [[u8; GRID_SIZE]; GRID_SIZE], guard: Guard) -> bool {
-    let mut guard = guard;
-    loop {
-        if grid[guard.r][guard.c] & guard.dir == guard.dir {
-            return true;
-        }
-        grid[guard.r][guard.c] |= guard.dir;
+fn march_2(grid: &mut [[u8; GRID_SIZE]; GRID_SIZE], guard: Guard) -> usize {
+    let start = guard;
 
+    let mut guard = guard;
+    grid[guard.r][guard.c] |= guard.dir;
+
+    let mut output = 0;
+    loop {
         match guard.dir {
             UP => {
                 if guard.r == 0 {
-                    return false;
+                    return output;
                 }
                 if grid[guard.r - 1][guard.c] == BLOCK {
                     guard.dir <<= 1;
                 } else {
+                    if grid[guard.r][guard.c] & guard.dir == 0 {
+                        let prev = grid[guard.r][guard.c] | guard.dir;
+                        grid[guard.r - 1][guard.c] = BLOCK;
+                        if guard != start && march_forward(grid, guard) {
+                            output += 1;
+                        }
+                        grid[guard.r][guard.c] = prev;
+                    } else {
+                        grid[guard.r][guard.c] |= guard.dir;
+                    }
                     guard.r -= 1;
                 }
             }
             RIGHT => {
                 if guard.c == GRID_SIZE - 1 {
-                    return false;
+                    return output;
                 }
                 if grid[guard.r][guard.c + 1] == BLOCK {
                     guard.dir <<= 1;
                 } else {
+                    if grid[guard.r][guard.c] & guard.dir == 0 {
+                        let prev = grid[guard.r][guard.c] | guard.dir;
+                        grid[guard.r][guard.c + 1] = BLOCK;
+                        if guard != start && march_forward(grid, guard) {
+                            output += 1;
+                        }
+                        grid[guard.r][guard.c] = prev;
+                    } else {
+                        grid[guard.r][guard.c] |= guard.dir;
+                    }
                     guard.c += 1;
                 }
             }
             DOWN => {
                 if guard.r == GRID_SIZE - 1 {
-                    return false;
+                    return output;
                 }
                 if grid[guard.r + 1][guard.c] == BLOCK {
                     guard.dir <<= 1;
                 } else {
+                    if grid[guard.r][guard.c] & guard.dir == 0 {
+                        let prev = grid[guard.r][guard.c] | guard.dir;
+                        grid[guard.r + 1][guard.c] = BLOCK;
+                        if guard != start && march_forward(grid, guard) {
+                            output += 1;
+                        }
+                        grid[guard.r][guard.c] = prev;
+                    } else {
+                        grid[guard.r][guard.c] |= guard.dir;
+                    }
                     guard.r += 1;
                 }
             }
             LEFT => {
                 if guard.c == 0 {
-                    return false;
+                    return output;
                 }
                 if grid[guard.r][guard.c - 1] == BLOCK {
                     guard.dir = UP;
                 } else {
+                    if grid[guard.r][guard.c] & guard.dir == 0 {
+                        let prev = grid[guard.r][guard.c] | guard.dir;
+                        grid[guard.r][guard.c - 1] = BLOCK;
+                        if guard != start && march_forward(grid, guard) {
+                            output += 1;
+                        }
+                        grid[guard.r][guard.c] = prev;
+                    } else {
+                        grid[guard.r][guard.c] |= guard.dir;
+                    }
                     guard.c -= 1;
                 }
             }
             _ => unreachable!(),
         }
     }
+}
+
+fn march_forward(grid: &mut [[u8; GRID_SIZE]; GRID_SIZE], mut guard: Guard) -> bool {
+    if grid[guard.r][guard.c] & guard.dir == guard.dir {
+        return true;
+    }
+
+    let prev = grid[guard.r][guard.c];
+    grid[guard.r][guard.c] |= guard.dir;
+    let prev_guard = guard;
+
+    match guard.dir {
+        UP => {
+            if guard.r == 0 {
+                grid[guard.r][guard.c] = prev;
+                return false;
+            }
+            if grid[guard.r - 1][guard.c] == BLOCK {
+                guard.dir <<= 1;
+            } else {
+                grid[guard.r][guard.c] |= guard.dir;
+                guard.r -= 1;
+            }
+        }
+        RIGHT => {
+            if guard.c == GRID_SIZE - 1 {
+                grid[guard.r][guard.c] = prev;
+                return false;
+            }
+            if grid[guard.r][guard.c + 1] == BLOCK {
+                guard.dir <<= 1;
+            } else {
+                grid[guard.r][guard.c] |= guard.dir;
+                guard.c += 1;
+            }
+        }
+        DOWN => {
+            if guard.r == GRID_SIZE - 1 {
+                grid[guard.r][guard.c] = prev;
+                return false;
+            }
+            if grid[guard.r + 1][guard.c] == BLOCK {
+                guard.dir <<= 1;
+            } else {
+                grid[guard.r][guard.c] |= guard.dir;
+                guard.r += 1;
+            }
+        }
+        LEFT => {
+            if guard.c == 0 {
+                grid[guard.r][guard.c] = prev;
+                return false;
+            }
+            if grid[guard.r][guard.c - 1] == BLOCK {
+                guard.dir = UP;
+            } else {
+                grid[guard.r][guard.c] |= guard.dir;
+                guard.c -= 1;
+            }
+        }
+        _ => unreachable!(),
+    }
+
+    let found = march_forward(grid, guard);
+
+    grid[prev_guard.r][prev_guard.c] = prev;
+
+    return found;
 }
 
 #[aoc(day6, part2)]
@@ -201,27 +310,27 @@ pub fn part2(input: &str) -> usize {
     }
     let guard = guard;
 
-    let _ = march(&mut grid, guard);
+    return march_2(&mut grid, guard);
 
-    let mut total: usize = 0;
-    for r in 0..GRID_SIZE {
-        for c in 0..GRID_SIZE {
-            if grid[r][c] & VISITED != VISITED {
-                continue;
-            }
-            if guard.r == r && guard.c == c {
-                // the guard's starting pos
-                continue;
-            }
-            // Consider running march_2 in concurrently with all the others
-            let mut grid = grid;
-            grid[r][c] = BLOCK;
-            if march_2(&mut grid, guard) {
-                total += 1;
-            }
-        }
-    }
-    return total;
+    // let mut total: usize = 0;
+    // for r in 0..GRID_SIZE {
+    //     for c in 0..GRID_SIZE {
+    //         if grid[r][c] & VISITED != VISITED {
+    //             continue;
+    //         }
+    //         if guard.r == r && guard.c == c {
+    //             // the guard's starting pos
+    //             continue;
+    //         }
+    //         // Consider running march_2 in concurrently with all the others
+    //         let mut grid = grid;
+    //         grid[r][c] = BLOCK;
+    //         if march_2(&mut grid, guard) {
+    //             total += 1;
+    //         }
+    //     }
+    // }
+    // return total;
 }
 
 #[cfg(test)]
