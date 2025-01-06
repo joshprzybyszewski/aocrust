@@ -2,42 +2,6 @@ const GRID_WIDTH: usize = 101;
 const GRID_WIDTH_I32: i32 = GRID_WIDTH as i32;
 const GRID_HEIGHT: usize = 103;
 const GRID_HEIGHT_I32: i32 = GRID_HEIGHT as i32;
-const BORDER_SIZE: usize = 31;
-
-const BITS: [u64; BORDER_SIZE + 1] = [
-    0,
-    0x00_00_00_01,
-    0x00_00_00_03,
-    0x00_00_00_07,
-    0x00_00_00_0F,
-    0x00_00_00_1F,
-    0x00_00_00_3F,
-    0x00_00_00_7F,
-    0x00_00_00_FF,
-    0x00_00_01_FF,
-    0x00_00_03_FF,
-    0x00_00_07_FF,
-    0x00_00_0F_FF,
-    0x00_00_1F_FF,
-    0x00_00_3F_FF,
-    0x00_00_7F_FF,
-    0x00_00_FF_FF,
-    0x00_01_FF_FF,
-    0x00_03_FF_FF,
-    0x00_07_FF_FF,
-    0x00_0F_FF_FF,
-    0x00_1F_FF_FF,
-    0x00_3F_FF_FF,
-    0x00_7F_FF_FF,
-    0x00_FF_FF_FF,
-    0x01_FF_FF_FF,
-    0x03_FF_FF_FF,
-    0x07_FF_FF_FF,
-    0x0F_FF_FF_FF,
-    0x1F_FF_FF_FF,
-    0x3F_FF_FF_FF,
-    0xFF_FF_FF_FF,
-];
 
 #[derive(Copy, Clone, Debug)]
 struct Robot {
@@ -224,14 +188,6 @@ pub fn part1(input: &str) -> u32 {
 
 #[aoc(day14, part2)]
 pub fn part2(input: &str) -> i32 {
-    // The space is 101 tiles wide and 103 tall.
-    // index is based on x, since that is 101, not 103.
-    // exists[0..101] represents the 0th through 63rd rows of col x
-    // exists[101..202] represents the 64th through 102nd (aka last) row of col (x-101)
-    let mut exists = [0u64; 202];
-    let mut num_steps = 0;
-    let mut good: bool = true;
-
     let input = input.as_bytes();
 
     let mut robots: [Robot; 500] = [Robot {
