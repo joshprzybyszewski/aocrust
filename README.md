@@ -35,112 +35,57 @@ On the days I missed, I learned something each time:
 
 ## Results
 
-Here's the results on my machine (`Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz`):
+Here's the results on my machine (`Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz`) vs. [CodSpeed](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks) (at f0d57b52ca0d48805e7ebc859df0f6380015909d):
 
-| Benchmark | Duration |
-| - | -: |
-| day1_part1 | 33.941 µs |
-| day1_part2 | 35.384 µs |
-| day2_part1 | 40.731 µs |
-| day2_part2 | 47.323 µs |
-| day3_part1 | 19.317 µs |
-| day3_part2 | 28.392 µs |
-| day4_part1 | 218.32 µs |
-| day4_part2 | 162.13 µs |
-| day5_part1 | 521.99 µs |
-| day5_part2 | 562.33 µs |
-| day6_part1 | 36.642 µs |
-| day6_part2 | 73.531 ms |
-| day7_part1 | 913.17 µs |
-| day7_part2 | 5.6330 ms |
-| day8_part1 | 5.6517 µs |
-| day8_part2 | 6.9268 µs |
-| day9_part1 | 42.611 µs |
-| day9_part2 | 2.1772 ms |
-| day10_part1 | 128.31 µs |
-| day10_part2 | 53.904 µs |
-| day11_part1 | 84.086 µs |
-| day11_part2 | 1.7363 ms |
-| day12_part1 | 398.77 µs |
-| day12_part2 | 539.74 µs |
-| day13_part1 | 9.3828 µs |
-| day13_part2 | 11.760 µs |
-| day14_part1 | 6.5758 µs |
-| day14_part2 | 379.72 µs |
-| day15_part1 | 325.98 µs |
-| day15_part2 | 329.60 µs |
-| day16_part1 | 3.1873 ms |
-| day16_part2 | 3.5521 ms |
-| day17_part1 | 226.34 ns |
-| day17_part2 | 97.860 µs |
-| day18_part1 | 53.137 µs |
-| day18_part2 | 102.14 µs |
-| day19_part1 | 494.81 µs |
-| day19_part2 | 487.61 µs |
-| day20_part1 | 150.57 µs |
-| day20_part2 | 10.683 ms |
-| day21_part1 | 41.736 ns |
-| day21_part2 | 41.426 ns |
-| day22_part1 | 8.9992 ms |
-| day22_part2 | 27.416 ms |
-| day23_part1 | 1.3607 ms |
-| day23_part2 | 2.0715 ms |
-| day24_part1 | 162.73 µs |
-| day24_part2 | 234.03 µs |
-| day25_part1 | 16.400 µs |
-| day25_part2 | 272.06 ps |
-
-Here's the results from [CodSpeed](https://codspeed.io/joshprzybyszewski/aocrust/benchmarks) (as of f0d57b52ca0d48805e7ebc859df0f6380015909d):
-
-| Benchmark | Duration |
-| - | -: |
-|day1_part1|142.1 µs|
-|day1_part2|147.8 µs|
-|day2_part1|118.3 µs|
-|day2_part2|148.4 µs|
-|day3_part1|61.8 µs|
-|day3_part2|92.1 µs|
-|day4_part1|544.7 µs|
-|day4_part2|187.5 µs|
-|day5_part1|15.5 ms|
-|day5_part2|16.4 ms|
-|day6_part1|142.2 µs|
-|day6_part2|247.9 ms|
-|day7_part1|4.9 ms|
-|day7_part2|79.6 ms|
-|day8_part1|32.2 µs|
-|day8_part2|37.4 µs|
-|day9_part1|117.2 µs|
-|day9_part2|8.2 ms|
-|day10_part1|680.3 µs|
-|day10_part2|229.7 µs|
-|day11_part1|1.4 ms|
-|day11_part2|5.2 ms|
-|day12_part1|1.4 ms|
-|day12_part2|1.6 ms|
-|day13_part1|38 µs|
-|day13_part2|37.7 µs|
-|day14_part1|27.3 µs|
-|day14_part2|749.1 µs|
-|day15_part1|630.2 µs|
-|day15_part2|668.4 µs|
-|day16_part1|14.6 ms|
-|day16_part2|15.2 ms|
-|day17_part1|3.2 µs|
-|day17_part2|271 µs|
-|day18_part1|249.2 µs|
-|day18_part2|426.5 µs|
-|day19_part1|830.1 µs|
-|day19_part2|829.9 µs|
-|day20_part1|724.9 µs|
-|day20_part2|19.7 ms|
-|day21_part1|985 ns|
-|day21_part2|926.7 ns|
-|day22_part1|14.5 ms|
-|day22_part2|102.2 ms|
-|day23_part1|4.5 ms|
-|day23_part2|6.8 ms|
-|day24_part1|357.6 µs|
-|day24_part2|547.5 µs|
-|day25_part1|89.5 µs|
-|day25_part2|0 s|
+| Benchmark | my i5 | CodSpeed |
+| - | -: | -: |
+| day1_part1 | 33.941 µs | 142.1 µs |
+| day1_part2 | 35.384 µs | 147.8 µs |
+| day2_part1 | 40.731 µs | 118.3 µs |
+| day2_part2 | 47.323 µs | 148.4 µs |
+| day3_part1 | 19.317 µs | 61.8 µs |
+| day3_part2 | 28.392 µs | 92.1 µs |
+| day4_part1 | 218.32 µs | 544.7 µs |
+| day4_part2 | 162.13 µs | 187.5 µs |
+| day5_part1 | 521.99 µs | 15.5 ms |
+| day5_part2 | 562.33 µs | 16.4 ms |
+| day6_part1 | 36.642 µs | 142.2 µs |
+| day6_part2 | 73.531 ms | 247.9 ms |
+| day7_part1 | 913.17 µs | 4.9 ms |
+| day7_part2 | 5.6330 ms | 79.6 ms |
+| day8_part1 | 5.6517 µs | 32.2 µs |
+| day8_part2 | 6.9268 µs | 37.4 µs |
+| day9_part1 | 42.611 µs | 117.2 µs |
+| day9_part2 | 2.1772 ms | 8.2 ms |
+| day10_part1 | 128.31 µs | 680.3 µs |
+| day10_part2 | 53.904 µs | 229.7 µs |
+| day11_part1 | 84.086 µs | 1.4 ms |
+| day11_part2 | 1.7363 ms | 5.2 ms |
+| day12_part1 | 398.77 µs | 1.4 ms |
+| day12_part2 | 539.74 µs | 1.6 ms |
+| day13_part1 | 9.3828 µs | 38 µs |
+| day13_part2 | 11.760 µs | 37.7 µs |
+| day14_part1 | 6.5758 µs | 27.3 µs |
+| day14_part2 | 379.72 µs | 749.1 µs |
+| day15_part1 | 325.98 µs | 630.2 µs |
+| day15_part2 | 329.60 µs | 668.4 µs |
+| day16_part1 | 3.1873 ms | 14.6 ms |
+| day16_part2 | 3.5521 ms | 15.2 ms |
+| day17_part1 | 226.34 ns | 3.2 µs |
+| day17_part2 | 97.860 µs | 271 µs |
+| day18_part1 | 53.137 µs | 249.2 µs |
+| day18_part2 | 102.14 µs | 426.5 µs |
+| day19_part1 | 494.81 µs | 830.1 µs |
+| day19_part2 | 487.61 µs | 829.9 µs |
+| day20_part1 | 150.57 µs | 724.9 µs |
+| day20_part2 | 10.683 ms | 19.7 ms |
+| day21_part1 | 41.736 ns | 985 ns |
+| day21_part2 | 41.426 ns | 926.7 ns |
+| day22_part1 | 8.9992 ms | 14.5 ms |
+| day22_part2 | 27.416 ms | 102.2 ms |
+| day23_part1 | 1.3607 ms | 4.5 ms |
+| day23_part2 | 2.0715 ms | 6.8 ms |
+| day24_part1 | 162.73 µs | 357.6 µs |
+| day24_part2 | 234.03 µs | 547.5 µs |
+| day25_part1 | 16.400 µs | 89.5 µs |
+| day25_part2 | 272.06 ps | 0 s |
