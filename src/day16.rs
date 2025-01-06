@@ -268,44 +268,14 @@ impl Finder {
         self.fifo.push(Position::new(1, self.start));
         let mut i: usize = 1;
 
-        // let mut next_forward;
-
         while i < self.fifo.len() {
             if self.check_cost(i) {
                 i += 1;
                 continue;
             }
 
-            // TODO push forward until hitting a wall.
-            let good = self.fifo[i].forward(self.fifo.len());
-            // next_forward = good.forward(good.id + 1);
-            self.fifo.push(good);
-            // loop {
-            //     let coord = &next_forward.coord;
-            //     if self.best[coord.row][coord.col][0] == 0 {
-            //         // hit a wall
-            //         break;
-            //     }
-            //     if coord.row == 0
-            //         || coord.col == 0
-            //         || coord.row == GRID_SIZE - 1
-            //         || coord.col == GRID_SIZE - 1
-            //     {
-            //         self.fifo.push(next_forward);
-            //         break;
-            //     }
-            //     let good = next_forward;
-            //     next_forward = good.forward(good.id + 1);
-            //     self.fifo.push(good);
-            // }
+            self.send_out_branches(i);
 
-            if self.choose_left(i) {
-                self.fifo.push(self.fifo[i].left(self.fifo.len()));
-                self.fifo.push(self.fifo[i].right(self.fifo.len()));
-            } else {
-                self.fifo.push(self.fifo[i].right(self.fifo.len()));
-                self.fifo.push(self.fifo[i].left(self.fifo.len()));
-            }
             i += 1;
         }
         if PART1 {
@@ -315,6 +285,54 @@ impl Finder {
         return self.get_best_paths_length();
     }
 
+    #[inline(always)]
+    fn send_out_branches(&mut self, id: usize) {
+        if self.send_forward(id) {
+            let good = self.fifo[id].forward(self.fifo.len());
+            let mut next_forward = good.forward(self.fifo.len() + 1);
+            if self.check_push(good) {
+                // not a wall/buffer
+                loop {
+                    let good = next_forward;
+                    next_forward = good.forward(self.fifo.len() + 1);
+                    if !self.check_push(good) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if self.choose_left(id) {
+            self.check_push(self.fifo[id].left(self.fifo.len()));
+            self.check_push(self.fifo[id].right(self.fifo.len()));
+        } else {
+            self.check_push(self.fifo[id].right(self.fifo.len()));
+            self.check_push(self.fifo[id].left(self.fifo.len()));
+        }
+    }
+
+    #[inline(always)]
+    fn send_forward(&self, id: usize) -> bool {
+        if id == 1 {
+            // the starting spot should send forward.
+            return true;
+        }
+
+        if self.fifo[id].prev_ids.len() > 1 {
+            // Two ways to get here? definitely don't need to send forward.
+            return false;
+        }
+
+        // if I myself were a forward from a previous forward, then I trust what's ahead of me
+        // has also been added to the queue.
+        let prev_cost = self.fifo[self.fifo[id].prev_ids[0]].cost;
+        if self.fifo[id].cost == prev_cost + 1 {
+            return false;
+        }
+        return true;
+    }
+
+    #[inline(always)]
     fn choose_left(&self, id: usize) -> bool {
         let pos = &self.fifo[id];
 
@@ -347,6 +365,20 @@ impl Finder {
             )
         }
         return best_cost;
+    }
+
+    #[inline(always)]
+    fn check_push(&mut self, pos: Position) -> bool {
+        if self.best[pos.coord.row][pos.coord.col][pos.direction.index()] < pos.cost {
+            return false;
+        }
+
+        let id = pos.id;
+        self.fifo.push(pos);
+        if id != self.fifo.len() - 1 {
+            unreachable!();
+        }
+        return true;
     }
 
     #[inline(always)]
