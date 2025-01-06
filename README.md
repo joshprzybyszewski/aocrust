@@ -22,16 +22,16 @@ I'm certainly no expert in Rust, but I've gotten to dabble in some of what it ha
 
 My highest scoring day was [Day 20](https://codspeed.io/advent/day/20): 5th out of 32 submissions. I liked Day 20 because I was introduced to [the idea](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day20.rs#L163-L164) of only checking half of the diamond of N-nearest spaces by a fellow competitor.
 
-Perhaps my favorite algorithm from this year was on Day 23. I used [Bron-Kerbosch](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm) to [find the largest clique in an undirected graph](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day23.rs#L219-L272). I was able to find and adapt an implementation from a 2018 AoC solver, which taught me better ways to share (vs. clone) data structures in Rustlang.
+Perhaps my favorite algorithm from this year was on Day 23. I used [Bron-Kerbosch](https://en.wikipedia.org/wiki/Bron%E2%80%93Kerbosch_algorithm) to [find the largest clique in an undirected graph](https://github.com/joshprzybyszewski/aocrust/blob/c47f48c7ae533b0d9cfaddc541a78fa2333b7813/src/day23.rs#L219-L272). After writing it myself, I found and adapted an implementation from a 2018 AoC solver: this taught me better ways to share (vs. clone) structs in Rustlang.
 
 I had submissions for 20 of the 25 days. 
 
 On the days I missed, I learned something each time:
 -  Day 7 because I didn't understand the compiler error about `Result<usize>` vs. `usize` ([oops](https://github.com/joshprzybyszewski/aocrust/commit/a1aaf3d6b729f674f8500f1fc7c4259da0e4b324)). 
 - Day 10 because the grid could be up to 64x64, but [I assumed it was always 57x57](https://github.com/joshprzybyszewski/aocrust/commit/f1c5d2204bc38f00afe2afcc171c80e91279beab).
-- Day 14 because I assumed, at first, that the correct output is the first where no two robots are on the same position -- which is true for my input, but [not the competition one](https://github.com/joshprzybyszewski/aocrust/commit/9be02107d5e604f21737e8faed706162e0fdf5cf). I'm guessing a second check (i.e. for a border around the tree) is necessary to get the "correct" answer. On third pass, I learned about the Chinese remainder theorem.
+- Day 14 because I assumed, at first, that the correct output is the first where no two robots are on the same position -- which is true for my input, but [not the competition one](https://github.com/joshprzybyszewski/aocrust/commit/9be02107d5e604f21737e8faed706162e0fdf5cf). After more digging, I learned about the Chinese remainder theorem and how to "guess" what the right answer is by detecting the modulo with the lowest variance (aka the lowest entropy).
 - Day 21 because I knew it was basically pre-computable, so I was greedy and only wanted to submit a solver that did an array lookup. I wasn't able to grok the recursion using `const fn`s in time to submit (wasn't until the [26th](https://github.com/joshprzybyszewski/aocrust/commit/58a2aafbfcf6c89d4a09fbb1873fc852ece08804)).
-- Day 24 because I was celebrating Christmas with family... Also recursing through an N-bit ripple adder to identify "output gates" that were _wrong_ was really throwing me off. I had to re-think the solver for this 3 or 4 times to be feel sort of confident in "[the right way to detect a bad gate](https://github.com/joshprzybyszewski/aocrust/commit/af9fe38a163d671d83469bdaf244c3e1175349bd)".
+- Day 24 because I was celebrating Christmas with family... Also recursing through an N-bit ripple adder to identify "output gates" that were _wrong_ was really throwing me for a loop. I had to re-think the solver for this 3 or 4 times to be feel sort of confident in "[the right way to detect a bad gate](https://github.com/joshprzybyszewski/aocrust/commit/af9fe38a163d671d83469bdaf244c3e1175349bd)".
 
 ## Results
 
