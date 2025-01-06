@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-const GRID_SIZE: usize = 141;
+const GRID_SIZE: usize = 141 + 2;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct Coord {
@@ -194,13 +194,38 @@ impl Finder {
         let input = input.as_bytes();
         let mut start: Option<Coord> = None;
         let mut goal: Option<Coord> = None;
-        let mut best: [[[u64; 4]; GRID_SIZE]; GRID_SIZE] =
-            [[[0xFF_FF_FF_FF_FF_FF_FF_FF; 4]; GRID_SIZE]; GRID_SIZE];
+        let mut best: [[[u64; 4]; GRID_SIZE]; GRID_SIZE] = [[[u64::MAX; 4]; GRID_SIZE]; GRID_SIZE];
 
         let mut i: usize = 0;
 
-        for r in 0..GRID_SIZE {
-            for c in 0..GRID_SIZE {
+        for x in 0..GRID_SIZE {
+            // all rows, col 0
+            best[x][0][0] = 0;
+            best[x][0][1] = 0;
+            best[x][0][2] = 0;
+            best[x][0][3] = 0;
+
+            // all cols, row 0
+            best[0][x][0] = 0;
+            best[0][x][1] = 0;
+            best[0][x][2] = 0;
+            best[0][x][3] = 0;
+
+            // all rows, last col
+            best[x][GRID_SIZE - 1][0] = 0;
+            best[x][GRID_SIZE - 1][1] = 0;
+            best[x][GRID_SIZE - 1][2] = 0;
+            best[x][GRID_SIZE - 1][3] = 0;
+
+            // all cols, last row
+            best[GRID_SIZE - 1][x][0] = 0;
+            best[GRID_SIZE - 1][x][1] = 0;
+            best[GRID_SIZE - 1][x][2] = 0;
+            best[GRID_SIZE - 1][x][3] = 0;
+        }
+
+        for r in 1..GRID_SIZE - 1 {
+            for c in 1..GRID_SIZE - 1 {
                 match input[i] {
                     b'#' => {
                         best[r][c][0] = 0;
