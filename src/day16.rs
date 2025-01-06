@@ -232,15 +232,18 @@ impl Finder {
             goal: goal.unwrap(),
             best,
             best_index: [[[0; 4]; GRID_SIZE]; GRID_SIZE],
-            fifo: Vec::new(),
+            fifo: Vec::with_capacity(3 * GRID_SIZE * GRID_SIZE),
         };
     }
 
+    #[inline(always)]
     fn find<const PART1: bool>(&mut self) -> u64 {
         // zero'th element represents invalid for backwards lookup.
         self.fifo.push(Position::new(0, Coord::new(0, 0)));
         self.fifo.push(Position::new(1, self.start));
         let mut i: usize = 1;
+
+        // let mut next_forward;
 
         while i < self.fifo.len() {
             if self.check_cost(i) {
@@ -249,7 +252,28 @@ impl Finder {
             }
 
             // TODO push forward until hitting a wall.
-            self.fifo.push(self.fifo[i].forward(self.fifo.len()));
+            let good = self.fifo[i].forward(self.fifo.len());
+            // next_forward = good.forward(good.id + 1);
+            self.fifo.push(good);
+            // loop {
+            //     let coord = &next_forward.coord;
+            //     if self.best[coord.row][coord.col][0] == 0 {
+            //         // hit a wall
+            //         break;
+            //     }
+            //     if coord.row == 0
+            //         || coord.col == 0
+            //         || coord.row == GRID_SIZE - 1
+            //         || coord.col == GRID_SIZE - 1
+            //     {
+            //         self.fifo.push(next_forward);
+            //         break;
+            //     }
+            //     let good = next_forward;
+            //     next_forward = good.forward(good.id + 1);
+            //     self.fifo.push(good);
+            // }
+
             if self.choose_left(i) {
                 self.fifo.push(self.fifo[i].left(self.fifo.len()));
                 self.fifo.push(self.fifo[i].right(self.fifo.len()));
@@ -285,6 +309,7 @@ impl Finder {
         }
     }
 
+    #[inline(always)]
     fn get_best_goal_cost(&self) -> u64 {
         let mut best_cost = min(
             self.best[self.goal.row as usize][self.goal.col as usize][0],
@@ -299,6 +324,7 @@ impl Finder {
         return best_cost;
     }
 
+    #[inline(always)]
     fn check_cost(&mut self, id: usize) -> bool {
         let pos = &self.fifo[id];
         if self.best[pos.coord.row][pos.coord.col][pos.direction.index()] < pos.cost {
@@ -315,6 +341,7 @@ impl Finder {
         return false;
     }
 
+    #[inline(always)]
     fn get_best_paths_length(&self) -> u64 {
         let mut seen: [[bool; GRID_SIZE]; GRID_SIZE] = [[false; GRID_SIZE]; GRID_SIZE];
         let best_goal_cost = self.get_best_goal_cost();
